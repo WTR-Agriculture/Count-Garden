@@ -12,7 +12,14 @@
  * 8. Copy the Web App URL and set it as VITE_GAS_URL in your React project.
  */
 
-const SS = SpreadsheetApp.getActiveSpreadsheet();
+// Function to get active spreadsheet with error handling
+function getSS() {
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  if (!ss) {
+    throw new Error("ไม่พบ Google Sheet! กรุณาตรวจสอบว่าคุณสร้างสคริปต์จากเมนู 'ส่วนขยาย -> Apps Script' ใน Google Sheet หรือยัง (Container-bound script)");
+  }
+  return ss;
+}
 
 function doGet(e) {
   const action = e.parameter.action;
@@ -40,27 +47,31 @@ function doPost(e) {
 }
 
 function getMasterData() {
+  const SS = getSS();
   const fruitSheet = SS.getSheetByName('Fruits');
   const catSheet = SS.getSheetByName('Categories');
   
+  if (!fruitSheet || !catSheet) {
+    return jsonResponse({ error: 'Sheets not found. Please run setup() first.' });
+  }
+
   const fruits = fruitSheet.getDataRange().getValues().slice(1);
   const cats = catSheet.getDataRange().getValues().slice(1);
   
-  // Structure: { fruit: [cat1, cat2] }
   const master = {};
   fruits.forEach(f => {
-    const fruitName = f[1]; // Assuming Col B is name
-    master[fruitName] = cats.filter(c => c[1] === fruitName).map(c => c[2]); // Filter by fruit name, map category name
+    const fruitName = f[1];
+    master[fruitName] = cats.filter(c => c[1] === fruitName).map(c => c[2]);
   });
   
   return jsonResponse(master);
 }
 
 function saveRecord(payload) {
+  const SS = getSS();
   const recordSheet = SS.getSheetByName('Records');
   const itemSheet = SS.getSheetByName('RecordItems');
   
-  // Append to Records
   const recordId = Utilities.getUuid();
   recordSheet.appendRow([
     recordId,
@@ -71,7 +82,6 @@ function saveRecord(payload) {
     new Date()
   ]);
   
-  // Append to RecordItems
   payload.items.forEach(item => {
     itemSheet.appendRow([
       Utilities.getUuid(),
@@ -86,9 +96,14 @@ function saveRecord(payload) {
 }
 
 function getHistory() {
+  const SS = getSS();
   const recordSheet = SS.getSheetByName('Records');
   const itemSheet = SS.getSheetByName('RecordItems');
   
+  if (!recordSheet || !itemSheet) {
+    return jsonResponse([]);
+  }
+
   const records = recordSheet.getDataRange().getValues().slice(1);
   const items = itemSheet.getDataRange().getValues().slice(1);
   
@@ -96,7 +111,6 @@ function getHistory() {
     const recordId = r[0];
     const recordItems = items.filter(i => i[1] === recordId);
     
-    // Group items by category for details
     const detailsMap = {};
     recordItems.forEach(i => {
       const cat = i[2];
@@ -128,10 +142,8 @@ function jsonResponse(data) {
     .setMimeType(ContentService.MimeType.JSON);
 }
 
-/** 
- * Setup Sheets with initial data if empty
- */
 function setup() {
+  const SS = getSS();
   const sheets = ['Fruits', 'Categories', 'Records', 'RecordItems'];
   sheets.forEach(name => {
     if (!SS.getSheetByName(name)) {
@@ -139,7 +151,6 @@ function setup() {
     }
   });
   
-  // Seed initial fruits if empty
   const fruitSheet = SS.getSheetByName('Fruits');
   if (fruitSheet.getLastRow() === 0) {
     fruitSheet.appendRow(['ID', 'Name']);
