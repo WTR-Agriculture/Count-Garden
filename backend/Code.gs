@@ -1,156 +1,167 @@
 /**
  * Count-Garden GAS Backend
- * 
- * Instructions:
- * 1. Create a new Google Sheet.
- * 2. Rename the following sheets: "Fruits", "Categories", "Records", "RecordItems".
- * 3. Go to Extensions -> Apps Script.
- * 4. Paste this code into Code.gs.
- * 5. Click "Deploy" -> "New Deployment".
- * 6. Select "Web App".
- * 7. Set "Execute as" to "Me" and "Who has access" to "Anyone".
- * 8. Copy the Web App URL and set it as VITE_GAS_URL in your React project.
+ * v2 - Added Settings persistence (Fruits & Categories)
  */
 
-// Function to get active spreadsheet with error handling
 function getSS() {
   const ss = SpreadsheetApp.getActiveSpreadsheet();
-  if (!ss) {
-    throw new Error("ไม่พบ Google Sheet! กรุณาตรวจสอบว่าคุณสร้างสคริปต์จากเมนู 'ส่วนขยาย -> Apps Script' ใน Google Sheet หรือยัง (Container-bound script)");
-  }
+  if (!ss) throw new Error("ไม่พบ Google Sheet!");
   return ss;
 }
 
 function doGet(e) {
   const action = e.parameter.action;
-  
-  if (action === 'getMasterData') {
-    return getMasterData();
-  }
-  
-  if (action === 'getHistory') {
-    return getHistory();
-  }
-  
+  if (action === 'getMasterData') return getMasterData();
+  if (action === 'getHistory') return getHistory();
   return jsonResponse({ error: 'Invalid action' });
 }
 
 function doPost(e) {
   const data = JSON.parse(e.postData.contents);
   const action = data.action;
-  
-  if (action === 'saveRecord') {
-    return saveRecord(data.payload);
-  }
-  
+  if (action === 'saveRecord') return saveRecord(data.payload);
+  if (action === 'addFruit') return addFruit(data.payload);
+  if (action === 'deleteFruit') return deleteFruit(data.payload);
+  if (action === 'addCategory') return addCategory(data.payload);
+  if (action === 'deleteCategory') return deleteCategory(data.payload);
   return jsonResponse({ error: 'Invalid action' });
 }
 
+// --- READ ---
 function getMasterData() {
   const SS = getSS();
   const fruitSheet = SS.getSheetByName('Fruits');
   const catSheet = SS.getSheetByName('Categories');
-  
-  if (!fruitSheet || !catSheet) {
-    return jsonResponse({ error: 'Sheets not found. Please run setup() first.' });
-  }
+  if (!fruitSheet || !catSheet) return jsonResponse({ error: 'Sheets not found. Run setup() first.' });
 
   const fruits = fruitSheet.getDataRange().getValues().slice(1);
   const cats = catSheet.getDataRange().getValues().slice(1);
-  
+
   const master = {};
   fruits.forEach(f => {
     const fruitName = f[1];
-    master[fruitName] = cats.filter(c => c[1] === fruitName).map(c => c[2]);
+    if (fruitName) master[fruitName] = cats.filter(c => c[1] === fruitName).map(c => c[2]);
   });
-  
   return jsonResponse(master);
-}
-
-function saveRecord(payload) {
-  const SS = getSS();
-  const recordSheet = SS.getSheetByName('Records');
-  const itemSheet = SS.getSheetByName('RecordItems');
-  
-  const recordId = Utilities.getUuid();
-  recordSheet.appendRow([
-    recordId,
-    payload.date,
-    payload.round,
-    payload.fruit,
-    payload.totalWeight,
-    new Date()
-  ]);
-  
-  payload.items.forEach(item => {
-    itemSheet.appendRow([
-      Utilities.getUuid(),
-      recordId,
-      item.category,
-      item.weight,
-      new Date()
-    ]);
-  });
-  
-  return jsonResponse({ success: true, recordId: recordId });
 }
 
 function getHistory() {
   const SS = getSS();
   const recordSheet = SS.getSheetByName('Records');
   const itemSheet = SS.getSheetByName('RecordItems');
-  
-  if (!recordSheet || !itemSheet) {
-    return jsonResponse([]);
-  }
+  if (!recordSheet || !itemSheet) return jsonResponse([]);
 
   const records = recordSheet.getDataRange().getValues().slice(1);
   const items = itemSheet.getDataRange().getValues().slice(1);
-  
+
   const history = records.map(r => {
     const recordId = r[0];
     const recordItems = items.filter(i => i[1] === recordId);
-    
     const detailsMap = {};
     recordItems.forEach(i => {
-      const cat = i[2];
-      const weight = i[3];
-      if (!detailsMap[cat]) {
-        detailsMap[cat] = { category: cat, total: 0, count: 0, items: [] };
-      }
+      const cat = i[2]; const weight = i[3];
+      if (!detailsMap[cat]) detailsMap[cat] = { category: cat, total: 0, count: 0, items: [] };
       detailsMap[cat].total += weight;
       detailsMap[cat].count += 1;
       detailsMap[cat].items.push(weight);
     });
-    
     return {
-      id: recordId,
-      date: r[1],
-      round: r[2],
-      fruit: r[3],
-      totalWeight: r[4],
-      timestamp: Utilities.formatDate(new Date(r[5]), "GMT+7", "HH:mm"),
+      id: recordId, date: r[1], round: r[2], fruit: r[3], totalWeight: r[4],
+      timestamp: r[5] ? Utilities.formatDate(new Date(r[5]), "GMT+7", "HH:mm") : '',
       details: Object.values(detailsMap)
     };
   }).reverse();
-  
   return jsonResponse(history);
 }
 
+// --- WRITE: Records ---
+function saveRecord(payload) {
+  const SS = getSS();
+  const recordSheet = SS.getSheetByName('Records');
+  const itemSheet = SS.getSheetByName('RecordItems');
+  const recordId = Utilities.getUuid();
+  recordSheet.appendRow([recordId, payload.date, payload.round, payload.fruit, payload.totalWeight, new Date()]);
+  payload.items.forEach(item => {
+    itemSheet.appendRow([Utilities.getUuid(), recordId, item.category, item.weight, new Date()]);
+  });
+  return jsonResponse({ success: true, recordId });
+}
+
+// --- WRITE: Settings - Fruits ---
+function addFruit(payload) {
+  const SS = getSS();
+  const fruitSheet = SS.getSheetByName('Fruits');
+  const fruitName = payload.fruitName;
+  if (!fruitName) return jsonResponse({ error: 'fruitName required' });
+
+  // Check duplicate
+  const existing = fruitSheet.getDataRange().getValues().slice(1);
+  if (existing.find(r => r[1] === fruitName)) return jsonResponse({ success: true, message: 'Already exists' });
+
+  const newId = existing.length + 1;
+  fruitSheet.appendRow([newId.toString(), fruitName]);
+  return jsonResponse({ success: true });
+}
+
+function deleteFruit(payload) {
+  const SS = getSS();
+  const fruitSheet = SS.getSheetByName('Fruits');
+  const catSheet = SS.getSheetByName('Categories');
+  const fruitName = payload.fruitName;
+
+  // Delete from Fruits sheet
+  const fruitData = fruitSheet.getDataRange().getValues();
+  for (let i = fruitData.length - 1; i >= 1; i--) {
+    if (fruitData[i][1] === fruitName) { fruitSheet.deleteRow(i + 1); break; }
+  }
+
+  // Delete all categories for this fruit
+  const catData = catSheet.getDataRange().getValues();
+  for (let i = catData.length - 1; i >= 1; i--) {
+    if (catData[i][1] === fruitName) catSheet.deleteRow(i + 1);
+  }
+  return jsonResponse({ success: true });
+}
+
+// --- WRITE: Settings - Categories ---
+function addCategory(payload) {
+  const SS = getSS();
+  const catSheet = SS.getSheetByName('Categories');
+  const { fruitName, categoryName } = payload;
+  if (!fruitName || !categoryName) return jsonResponse({ error: 'fruitName and categoryName required' });
+
+  // Check duplicate
+  const existing = catSheet.getDataRange().getValues().slice(1);
+  if (existing.find(r => r[1] === fruitName && r[2] === categoryName)) return jsonResponse({ success: true, message: 'Already exists' });
+
+  const newId = existing.length + 1;
+  catSheet.appendRow([newId.toString(), fruitName, categoryName]);
+  return jsonResponse({ success: true });
+}
+
+function deleteCategory(payload) {
+  const SS = getSS();
+  const catSheet = SS.getSheetByName('Categories');
+  const { fruitName, categoryName } = payload;
+
+  const catData = catSheet.getDataRange().getValues();
+  for (let i = catData.length - 1; i >= 1; i--) {
+    if (catData[i][1] === fruitName && catData[i][2] === categoryName) { catSheet.deleteRow(i + 1); break; }
+  }
+  return jsonResponse({ success: true });
+}
+
+// --- UTIL ---
 function jsonResponse(data) {
-  return ContentService.createTextOutput(JSON.stringify(data))
-    .setMimeType(ContentService.MimeType.JSON);
+  return ContentService.createTextOutput(JSON.stringify(data)).setMimeType(ContentService.MimeType.JSON);
 }
 
 function setup() {
   const SS = getSS();
-  const sheets = ['Fruits', 'Categories', 'Records', 'RecordItems'];
-  sheets.forEach(name => {
-    if (!SS.getSheetByName(name)) {
-      SS.insertSheet(name);
-    }
+  ['Fruits', 'Categories', 'Records', 'RecordItems'].forEach(name => {
+    if (!SS.getSheetByName(name)) SS.insertSheet(name);
   });
-  
+
   const fruitSheet = SS.getSheetByName('Fruits');
   if (fruitSheet.getLastRow() === 0) {
     fruitSheet.appendRow(['ID', 'Name']);
@@ -158,7 +169,7 @@ function setup() {
     fruitSheet.appendRow(['2', 'มะม่วง']);
     fruitSheet.appendRow(['3', 'กล้วย']);
   }
-  
+
   const catSheet = SS.getSheetByName('Categories');
   if (catSheet.getLastRow() === 0) {
     catSheet.appendRow(['ID', 'FruitName', 'CategoryName']);
@@ -170,12 +181,12 @@ function setup() {
     catSheet.appendRow(['6', 'มะม่วง', 'น้ำดอกไม้']);
     catSheet.appendRow(['7', 'มะม่วง', 'เขียวเสวย']);
   }
-  
+
   const recordSheet = SS.getSheetByName('Records');
   if (recordSheet.getLastRow() === 0) {
     recordSheet.appendRow(['RecordID', 'Date', 'Round', 'Fruit', 'TotalWeight', 'CreatedAt']);
   }
-  
+
   const itemSheet = SS.getSheetByName('RecordItems');
   if (itemSheet.getLastRow() === 0) {
     itemSheet.appendRow(['ItemID', 'RecordID', 'Category', 'Weight', 'CreatedAt']);

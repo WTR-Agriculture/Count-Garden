@@ -903,37 +903,55 @@ export default function App() {
   };
 
   const renderSettingsScreen = () => {
-    const handleAddFruit = () => {
+    const handleAddFruit = async () => {
       if (!newFruit.trim()) return;
-      if (!masterData[newFruit.trim()]) {
-         setMasterData(prev => ({...prev, [newFruit.trim()]: []}));
-         setSettingsActiveFruit(newFruit.trim());
+      const name = newFruit.trim();
+      if (!masterData[name]) {
+        setMasterData(prev => ({...prev, [name]: []}));
+        setSettingsActiveFruit(name);
       }
       setNewFruit('');
+      if (GAS_URL) {
+        try { await fetch(GAS_URL, { method: 'POST', body: JSON.stringify({ action: 'addFruit', payload: { fruitName: name } }) }); }
+        catch(e) { console.error('GAS addFruit failed', e); }
+      }
     };
 
-    const handleRemoveFruit = (f) => {
+    const handleRemoveFruit = async (f) => {
       const newData = {...masterData};
       delete newData[f];
       setMasterData(newData);
       if (setupData.fruit === f) setSetupData(prev => ({...prev, fruit: Object.keys(newData)[0] || ''}));
+      if (GAS_URL) {
+        try { await fetch(GAS_URL, { method: 'POST', body: JSON.stringify({ action: 'deleteFruit', payload: { fruitName: f } }) }); }
+        catch(e) { console.error('GAS deleteFruit failed', e); }
+      }
     };
 
-    const handleAddCat = () => {
+    const handleAddCat = async () => {
       if (!newCat.trim() || !settingsActiveFruit) return;
+      const catName = newCat.trim();
       setMasterData(prev => ({
-         ...prev,
-         [settingsActiveFruit]: [...(prev[settingsActiveFruit] || []), newCat.trim()]
+        ...prev,
+        [settingsActiveFruit]: [...(prev[settingsActiveFruit] || []), catName]
       }));
       setNewCat('');
+      if (GAS_URL) {
+        try { await fetch(GAS_URL, { method: 'POST', body: JSON.stringify({ action: 'addCategory', payload: { fruitName: settingsActiveFruit, categoryName: catName } }) }); }
+        catch(e) { console.error('GAS addCategory failed', e); }
+      }
     };
 
-    const handleRemoveCat = (c) => {
+    const handleRemoveCat = async (c) => {
       setMasterData(prev => ({
-         ...prev,
-         [settingsActiveFruit]: prev[settingsActiveFruit].filter(item => item !== c)
+        ...prev,
+        [settingsActiveFruit]: prev[settingsActiveFruit].filter(item => item !== c)
       }));
       if (activeCategory === c) setActiveCategory('');
+      if (GAS_URL) {
+        try { await fetch(GAS_URL, { method: 'POST', body: JSON.stringify({ action: 'deleteCategory', payload: { fruitName: settingsActiveFruit, categoryName: c } }) }); }
+        catch(e) { console.error('GAS deleteCategory failed', e); }
+      }
     };
 
     return (

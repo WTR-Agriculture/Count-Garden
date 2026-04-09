@@ -153,6 +153,98 @@ code = code.replace(
       )}`
 );
 
+// 6. Patch handleAddFruit to also save to GAS
+code = code.replace(
+  `    const handleAddFruit = () => {
+      if (!newFruit.trim()) return;
+      if (!masterData[newFruit.trim()]) {
+         setMasterData(prev => ({...prev, [newFruit.trim()]: []}));
+         setSettingsActiveFruit(newFruit.trim());
+      }
+      setNewFruit('');
+    };`,
+  `    const handleAddFruit = async () => {
+      if (!newFruit.trim()) return;
+      const name = newFruit.trim();
+      if (!masterData[name]) {
+        setMasterData(prev => ({...prev, [name]: []}));
+        setSettingsActiveFruit(name);
+      }
+      setNewFruit('');
+      if (GAS_URL) {
+        try { await fetch(GAS_URL, { method: 'POST', body: JSON.stringify({ action: 'addFruit', payload: { fruitName: name } }) }); }
+        catch(e) { console.error('GAS addFruit failed', e); }
+      }
+    };`
+);
+
+// 7. Patch handleRemoveFruit to also delete from GAS
+code = code.replace(
+  `    const handleRemoveFruit = (f) => {
+      const newData = {...masterData};
+      delete newData[f];
+      setMasterData(newData);
+      if (setupData.fruit === f) setSetupData(prev => ({...prev, fruit: Object.keys(newData)[0] || ''}));
+    };`,
+  `    const handleRemoveFruit = async (f) => {
+      const newData = {...masterData};
+      delete newData[f];
+      setMasterData(newData);
+      if (setupData.fruit === f) setSetupData(prev => ({...prev, fruit: Object.keys(newData)[0] || ''}));
+      if (GAS_URL) {
+        try { await fetch(GAS_URL, { method: 'POST', body: JSON.stringify({ action: 'deleteFruit', payload: { fruitName: f } }) }); }
+        catch(e) { console.error('GAS deleteFruit failed', e); }
+      }
+    };`
+);
+
+// 8. Patch handleAddCat to also save to GAS
+code = code.replace(
+  `    const handleAddCat = () => {
+      if (!newCat.trim() || !settingsActiveFruit) return;
+      setMasterData(prev => ({
+         ...prev,
+         [settingsActiveFruit]: [...(prev[settingsActiveFruit] || []), newCat.trim()]
+      }));
+      setNewCat('');
+    };`,
+  `    const handleAddCat = async () => {
+      if (!newCat.trim() || !settingsActiveFruit) return;
+      const catName = newCat.trim();
+      setMasterData(prev => ({
+        ...prev,
+        [settingsActiveFruit]: [...(prev[settingsActiveFruit] || []), catName]
+      }));
+      setNewCat('');
+      if (GAS_URL) {
+        try { await fetch(GAS_URL, { method: 'POST', body: JSON.stringify({ action: 'addCategory', payload: { fruitName: settingsActiveFruit, categoryName: catName } }) }); }
+        catch(e) { console.error('GAS addCategory failed', e); }
+      }
+    };`
+);
+
+// 9. Patch handleRemoveCat to also delete from GAS
+code = code.replace(
+  `    const handleRemoveCat = (c) => {
+      setMasterData(prev => ({
+         ...prev,
+         [settingsActiveFruit]: prev[settingsActiveFruit].filter(item => item !== c)
+      }));
+      if (activeCategory === c) setActiveCategory('');
+    };`,
+  `    const handleRemoveCat = async (c) => {
+      setMasterData(prev => ({
+        ...prev,
+        [settingsActiveFruit]: prev[settingsActiveFruit].filter(item => item !== c)
+      }));
+      if (activeCategory === c) setActiveCategory('');
+      if (GAS_URL) {
+        try { await fetch(GAS_URL, { method: 'POST', body: JSON.stringify({ action: 'deleteCategory', payload: { fruitName: settingsActiveFruit, categoryName: c } }) }); }
+        catch(e) { console.error('GAS deleteCategory failed', e); }
+      }
+    };`
+);
+
 // Write output
 fs.writeFileSync('src/App.jsx', code, 'utf8');
 console.log('App.jsx written successfully! Lines:', code.split('\n').length);
