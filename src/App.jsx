@@ -189,18 +189,31 @@ export default function App() {
   const [showInstallBanner, setShowInstallBanner] = useState(false);
 
   useEffect(() => {
+    const isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone;
+    if (isStandalone) return;
+
     const handleBeforeInstallPrompt = (e) => {
       e.preventDefault();
       setDeferredPrompt(e);
       const dismissed = sessionStorage.getItem('cg_install_dismissed');
       if (!dismissed) setShowInstallBanner(true);
     };
+
     const handleAppInstalled = () => {
       setDeferredPrompt(null);
       setShowInstallBanner(false);
     };
+
     window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
     window.addEventListener('appinstalled', handleAppInstalled);
+
+    // iOS support: Show banner regardless since beforeinstallprompt isn't supported
+    const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+    const dismissed = sessionStorage.getItem('cg_install_dismissed');
+    if (isIOS && !dismissed) {
+      setShowInstallBanner(true);
+    }
+
     return () => {
       window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
       window.removeEventListener('appinstalled', handleAppInstalled);
@@ -208,11 +221,19 @@ export default function App() {
   }, []);
 
   const handleInstallClick = async () => {
-    if (!deferredPrompt) return;
+    if (!deferredPrompt) {
+      // Logic for iOS (Manual instruction)
+      alert('📌 สำหรับ iPhone: ให้กดปุ่ม "แชร์" (Share) แล้วเลือก "เพิ่มไปยังหน้าจอโฮม" (Add to Home Screen) นะค๊าา 😊');
+      setShowInstallBanner(false);
+      sessionStorage.setItem('cg_install_dismissed', 'true');
+      return;
+    }
     deferredPrompt.prompt();
-    await deferredPrompt.userChoice;
-    setDeferredPrompt(null);
-    setShowInstallBanner(false);
+    const { outcome } = await deferredPrompt.userChoice;
+    if (outcome === 'accepted') {
+      setDeferredPrompt(null);
+      setShowInstallBanner(false);
+    }
   };
 
 
@@ -1507,7 +1528,22 @@ export default function App() {
                 {(!settingsActiveFruit || masterData[settingsActiveFruit]?.length === 0) && <p className="text-center text-xs text-neutral-400 py-4">ไม่มีข้อมูลประเภท</p>}
               </div>
             </div>
+          </div>
 
+          {/* System Utilities */}
+          <div className="bg-white p-5 lg:p-6 rounded-3xl border border-neutral-100 shadow-[0_2px_15px_rgb(0,0,0,0.02)] max-w-2xl">
+            <h3 className="font-extrabold text-neutral-800 mb-4 flex items-center gap-2">
+              <div className="w-8 h-8 rounded-full bg-neutral-100 text-neutral-500 flex items-center justify-center"><Monitor className="w-4 h-4" /></div>
+              อรรถประโยชน์ (System Utilities)
+            </h3>
+            <p className="text-[11px] text-neutral-500 mb-4">ส่วนนี้ใช้สำหรับการทดสอบระบบและการตั้งค่าขั้นสูง</p>
+            <button 
+              onClick={() => { setShowInstallBanner(true); sessionStorage.removeItem('cg_install_dismissed'); }}
+              className="w-full bg-neutral-900 hover:bg-black text-white px-5 py-3 rounded-xl font-bold text-sm shadow-md transition-all active:scale-95 flex items-center justify-center gap-2"
+            >
+              <Plus className="w-4 h-4" /> ทดสอบแถบติดตั้ง (Test PWA Banner)
+            </button>
+            <p className="text-[10px] text-neutral-400 mt-3 text-center italic">ระบบจะบังคับให้แถบติดตั้งสีเขียวด้านบนแสดงขึ้นเพื่อให้คุณตรวจสอบความสวยงาม</p>
           </div>
         </div>
       </div>
@@ -1576,7 +1612,7 @@ export default function App() {
 
       {/* --- PWA Install Banner --- */}
       {showInstallBanner && (
-        <div className="fixed bottom-24 left-4 right-4 z-[150] animate-in slide-in-from-bottom-10 fade-in duration-500 lg:left-auto lg:right-6 lg:bottom-6 lg:w-[400px]">
+        <div className="fixed top-4 left-4 right-4 z-[150] animate-in slide-in-from-top-10 fade-in duration-500 lg:left-auto lg:right-6 lg:top-6 lg:w-[400px]">
           <div className="bg-white/95 backdrop-blur-md border border-neutral-100 rounded-2xl shadow-[0_10px_40px_rgba(0,0,0,0.08)] p-4 flex items-center gap-4 relative overflow-hidden group">
             {/* Background Decorative Sparkle */}
             <div className="absolute -right-4 -top-4 w-20 h-20 bg-[#4ADE80]/10 rounded-full blur-2xl group-hover:bg-[#C084FC]/10 transition-colors duration-700"></div>
