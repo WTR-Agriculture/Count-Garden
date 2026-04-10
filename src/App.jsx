@@ -1262,157 +1262,148 @@ export default function App() {
                   } catch (e) { console.error(e); showToast('เกิดข้อผิดพลาด'); } finally { setIsGeneratingImg(false); }
                 };
 
-                return (
-                  // Handle View Mode
-                  if (viewMode === 'list') {
-                    return (
-                      <div key={bill.id} id={`master-card-${bill.id}`} className="bg-white rounded-2xl border border-neutral-100 shadow-[0_2px_8px_rgb(0,0,0,0.02)] overflow-hidden transition-all hover:border-neutral-200 scroll-mt-24">
-                        <div className="p-3 flex justify-between items-center cursor-pointer" onClick={() => setExpandedMasterBill(isExpanded ? null : bill.id)}>
-                          <div className="flex items-center gap-3">
-                            <div className="w-9 h-9 rounded-full bg-purple-50 flex items-center justify-center shrink-0 border border-purple-100">
-                               <span className="text-[10px] font-black text-[#C084FC]">MB</span>
-                            </div>
-                            <div className="min-w-0">
-                              <div className="font-bold text-neutral-900 text-sm flex items-center gap-2">
-                                {bill.fruit && <span className="text-[8px] bg-[#C084FC] text-white px-1.5 py-0.5 rounded font-black uppercase tracking-tighter">{bill.fruit}</span>}
-                                <span className="truncate">{dateLabel}</span>
-                              </div>
-                              <div className="text-[9px] text-neutral-400 font-medium flex items-center gap-1 mt-0.5"><Calendar className="w-2.5 h-2.5" />{bill.roundCount} รอบ • {catEntries.length} ประเภท</div>
-                            </div>
-                          </div>
-                          <div className="text-right flex items-center gap-3">
-                            <div className="text-lg font-black tracking-tight text-neutral-900">{Number(bill.totalWeight).toLocaleString()} <span className="text-[9px] font-bold text-neutral-500 font-normal">กก.</span></div>
-                            <ChevronDown className={`w-4 h-4 text-neutral-300 transition-transform ${isExpanded ? 'rotate-180' : ''}`} />
-                          </div>
+                return viewMode === 'list' ? (
+                  <div key={bill.id} id={`master-card-${bill.id}`} className="bg-white rounded-2xl border border-neutral-100 shadow-[0_2px_8px_rgb(0,0,0,0.02)] overflow-hidden transition-all hover:border-neutral-200 scroll-mt-24">
+                    <div className="p-3 flex justify-between items-center cursor-pointer" onClick={() => setExpandedMasterBill(isExpanded ? null : bill.id)}>
+                      <div className="flex items-center gap-3">
+                        <div className="w-9 h-9 rounded-full bg-purple-50 flex items-center justify-center shrink-0 border border-purple-100">
+                           <span className="text-[10px] font-black text-[#C084FC]">MB</span>
                         </div>
-                        {isExpanded && (
-                          <div className="bg-neutral-50/50 border-t border-neutral-100 p-4">
-                            <div className="flex flex-wrap gap-2 mb-4">
-                              {catEntries.map(([cat, w]) => (
-                                <div key={cat} className="bg-white px-2.5 py-1.5 rounded-xl border border-neutral-100 flex items-center gap-2 shadow-sm">
-                                  <div className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: getCategoryHex(cat) }}></div>
-                                  <span className="text-[10px] font-bold text-neutral-700">{cat}:</span>
-                                  <span className="text-[10px] font-black text-neutral-900">{Number(w).toLocaleString()}</span>
-                                </div>
-                              ))}
-                            </div>
-                            {/* Re-use shared sub-round list and share buttons for list mode */}
-                            <div className="text-[9px] font-bold text-[#C084FC] mb-2 uppercase tracking-widest">รอบในบิลนี้:</div>
-                            <div className="flex flex-wrap gap-1.5 mb-4">
-                              {bill.roundIds.map(rid => {
-                                const r = historyRecords.find(hr => hr.id === rid);
-                                return r ? (
-                                  <button key={rid} onClick={(e) => { e.stopPropagation(); handleJumpToRound(rid, bill.id); }} className="bg-white border border-[#C084FC]/20 px-2 py-1 rounded-lg text-[9px] font-bold hover:bg-purple-50 active:scale-95 transition-all">
-                                    ร.{r.round}
-                                  </button>
-                                ) : null;
-                              })}
-                            </div>
-                            <div className="flex gap-2">
-                              <button onClick={handleReshareText} className="flex-1 py-2 bg-neutral-900 text-white rounded-lg text-[10px] font-bold">แชร์ข้อความ</button>
-                              <button onClick={handleReshareImage} disabled={isGeneratingImg} className="flex-1 py-2 bg-white border border-[#C084FC] text-[#7C3AED] rounded-lg text-[10px] font-bold flex items-center justify-center gap-1">
-                                {isGeneratingImg ? <RotateCcw className="w-3 h-3 animate-spin"/> : <ImageIcon className="w-3 h-3"/>} รูปภาพ
-                              </button>
-                            </div>
+                        <div className="min-w-0">
+                          <div className="font-bold text-neutral-900 text-sm flex items-center gap-2">
+                            {bill.fruit && <span className="text-[8px] bg-[#C084FC] text-white px-1.5 py-0.5 rounded font-black uppercase tracking-tighter">{bill.fruit}</span>}
+                            <span className="truncate">{dateLabel}</span>
                           </div>
-                        )}
+                          <div className="text-[9px] text-neutral-400 font-medium flex items-center gap-1 mt-0.5"><Calendar className="w-2.5 h-2.5" />{bill.roundCount} รอบ • {catEntries.length} ประเภท</div>
+                        </div>
                       </div>
-                    );
-                  }
-
-                  return (
-                    <div key={bill.id} id={`master-card-${bill.id}`} className="bg-white rounded-2xl border border-neutral-100 shadow-[0_2px_10px_rgb(0,0,0,0.03)] overflow-hidden transition-all hover:border-neutral-200 scroll-mt-24">
-                      {/* Bill Card Header */}
-                      <div className="p-4 flex items-center gap-4 cursor-pointer" onClick={() => setExpandedMasterBill(isExpanded ? null : bill.id)}>
-                        <div className="flex-1 min-w-0">
-                          {/* Stacked Layout for Fruit and Date */}
-                          <div className="flex flex-col gap-1.5">
-                            {bill.fruit && (
-                              <div className="flex">
-                                <span className="bg-[#C084FC] text-white px-2.5 py-0.5 rounded-lg text-[10px] font-black shadow-md shadow-purple-100 border border-white/20 animate-in zoom-in-50 duration-300 uppercase tracking-widest whitespace-nowrap">
-                                  {bill.fruit}
-                                </span>
-                              </div>
-                            )}
-                            <div className="font-black text-neutral-900 text-[15px] leading-tight">
-                              {dateLabel}
-                            </div>
-                          </div>
-                          <div className="flex items-center gap-2 mt-2">
-                            <span className="text-[10px] font-medium text-neutral-500">{bill.roundCount} รอบ</span>
-                            <span className="w-1 h-1 rounded-full bg-neutral-200"></span>
-                            <span className="text-[11px] font-bold text-[#C084FC]">{catEntries.length} ประเภท</span>
-                          </div>
-                        </div>
-                        <div className="text-right shrink-0">
-                          <div className="text-2xl font-black text-neutral-900 leading-none">{Number(bill.totalWeight).toLocaleString()}</div>
-                          <div className="text-[10px] font-bold text-neutral-400 mt-1">กก.</div>
-                        </div>
-                        <ChevronDown className={`w-5 h-5 text-neutral-300 transition-transform shrink-0 ml-1 ${isExpanded ? 'rotate-180' : ''}`} />
+                      <div className="text-right flex items-center gap-3">
+                        <div className="text-lg font-black tracking-tight text-neutral-900">{Number(bill.totalWeight).toLocaleString()} <span className="text-[9px] font-bold text-neutral-500 font-normal">กก.</span></div>
+                        <ChevronDown className={`w-4 h-4 text-neutral-300 transition-transform ${isExpanded ? 'rotate-180' : ''}`} />
                       </div>
-
-                      {/* Expanded Detail */}
-                      {isExpanded && (
-                        <div className="border-t border-neutral-100 bg-neutral-50/50 pb-4">
-                          <div className="p-4 space-y-2">
-                            <div className="text-[10px] font-bold text-neutral-400 uppercase tracking-widest mb-2 flex items-center gap-2">
-                              <List className="w-3 h-3" /> ยอดตามประเภท (รวม)
-                            </div>
-                            {catEntries.map(([cat, w]) => (
-                              <div key={cat} className="flex justify-between items-center bg-white p-2.5 rounded-xl border border-neutral-100/60 shadow-sm">
-                                <div className="flex items-center gap-2">
-                                  <div className="w-2 h-2 rounded-full" style={{ backgroundColor: getCategoryHex(cat) }}></div>
-                                  <span className="text-sm font-bold text-neutral-700">{cat}</span>
-                                </div>
-                                <span className="text-sm font-black text-neutral-900">{Number(w).toLocaleString()} <span className="text-neutral-400 font-medium text-xs">กก.</span></span>
-                              </div>
-                            ))}
-                          </div>
-
-                          {/* Drill-down Round List */}
-                          <div className="px-4 pb-4">
-                            <div className="text-[10px] font-bold text-[#C084FC] uppercase tracking-widest mb-3 mt-2 flex items-center gap-2">
-                              <RotateCcw className="w-3 h-3" /> รอบที่รวมอยู่ในบิลนี้ (คลิกเพื่อดูรายละเอียด)
-                            </div>
-                            <div className="flex flex-wrap gap-2">
-                              {bill.roundIds.map(rid => {
-                                const r = historyRecords.find(hr => hr.id === rid);
-                                if (!r) return null;
-                                return (
-                                  <button
-                                    key={rid}
-                                    onClick={() => handleJumpToRound(rid, bill.id)}
-                                    className="bg-white border border-[#C084FC]/30 hover:border-[#C084FC] hover:bg-purple-50 px-3 py-2 rounded-xl flex flex-col items-center gap-0.5 transition-all active:scale-95 group"
-                                  >
-                                    <span className="text-[10px] font-bold text-neutral-400 group-hover:text-[#C084FC]">รอบที่</span>
-                                    <span className="text-sm font-black text-neutral-900 group-hover:text-[#C084FC]">{r.round}</span>
-                                    <span className="text-[8px] font-medium text-neutral-400">{r.date.split('/')[0]}/{r.date.split('/')[1]}</span>
-                                  </button>
-                                );
-                              })}
-                            </div>
-                          </div>
-
-                          <div className="px-4 flex gap-2">
-                            <button
-                              onClick={handleReshareText}
-                              className="flex-1 flex items-center justify-center gap-2 py-2.5 bg-neutral-900 text-white rounded-xl text-xs font-bold hover:bg-neutral-700 active:scale-95 transition-all"
-                            >
-                              <MessageSquare className="w-3.5 h-3.5 text-[#4ADE80]" /> แชร์เป็นข้อความ
-                            </button>
-                            <button
-                              onClick={handleReshareImage}
-                              disabled={isGeneratingImg}
-                              className="flex-1 flex items-center justify-center gap-2 py-2.5 bg-white border-2 border-[#C084FC] text-[#7C3AED] rounded-xl text-xs font-bold hover:bg-[#C084FC]/5 active:scale-95 transition-all disabled:opacity-60"
-                            >
-                              {isGeneratingImg ? <><RotateCcw className="w-3.5 h-3.5 animate-spin" /> สร้าง...</> : <><ImageIcon className="w-3.5 h-3.5" /> แชร์เป็นรูป</>}
-                            </button>
-                          </div>
-                        </div>
-                      )}
                     </div>
-                  );
+                    {isExpanded && (
+                      <div className="bg-neutral-50/50 border-t border-neutral-100 p-4">
+                        <div className="flex flex-wrap gap-2 mb-4">
+                          {catEntries.map(([cat, w]) => (
+                            <div key={cat} className="bg-white px-2.5 py-1.5 rounded-xl border border-neutral-100 flex items-center gap-2 shadow-sm">
+                              <div className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: getCategoryHex(cat) }}></div>
+                              <span className="text-[10px] font-bold text-neutral-700">{cat}:</span>
+                              <span className="text-[10px] font-black text-neutral-900">{Number(w).toLocaleString()}</span>
+                            </div>
+                          ))}
+                        </div>
+                        <div className="text-[9px] font-bold text-[#C084FC] mb-2 uppercase tracking-widest">รอบในบิลนี้:</div>
+                        <div className="flex flex-wrap gap-1.5 mb-4">
+                          {bill.roundIds.map(rid => {
+                            const r = historyRecords.find(hr => hr.id === rid);
+                            return r ? (
+                              <button key={rid} onClick={(e) => { e.stopPropagation(); handleJumpToRound(rid, bill.id); }} className="bg-white border border-[#C084FC]/20 px-2 py-1 rounded-lg text-[9px] font-bold hover:bg-purple-50 active:scale-95 transition-all">
+                                ร.{r.round}
+                              </button>
+                            ) : null;
+                          })}
+                        </div>
+                        <div className="flex gap-2">
+                          <button onClick={handleReshareText} className="flex-1 py-2 bg-neutral-900 text-white rounded-lg text-[10px] font-bold">แชร์ข้อความ</button>
+                          <button onClick={handleReshareImage} disabled={isGeneratingImg} className="flex-1 py-2 bg-white border border-[#C084FC] text-[#7C3AED] rounded-lg text-[10px] font-bold flex items-center justify-center gap-1">
+                            {isGeneratingImg ? <RotateCcw className="w-3 h-3 animate-spin"/> : <ImageIcon className="w-3 h-3"/>} รูปภาพ
+                          </button>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                ) : (
+                  <div key={bill.id} id={`master-card-${bill.id}`} className="bg-white rounded-2xl border border-neutral-100 shadow-[0_2px_10px_rgb(0,0,0,0.03)] overflow-hidden transition-all hover:border-neutral-200 scroll-mt-24">
+                    {/* Bill Card Header */}
+                    <div className="p-4 flex items-center gap-4 cursor-pointer" onClick={() => setExpandedMasterBill(isExpanded ? null : bill.id)}>
+                      <div className="flex-1 min-w-0">
+                        {/* Stacked Layout for Fruit and Date */}
+                        <div className="flex flex-col gap-1.5">
+                          {bill.fruit && (
+                            <div className="flex">
+                              <span className="bg-[#C084FC] text-white px-2.5 py-0.5 rounded-lg text-[10px] font-black shadow-md shadow-purple-100 border border-white/20 animate-in zoom-in-50 duration-300 uppercase tracking-widest whitespace-nowrap">
+                                {bill.fruit}
+                              </span>
+                            </div>
+                          )}
+                          <div className="font-black text-neutral-900 text-[15px] leading-tight">
+                            {dateLabel}
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-2 mt-2">
+                          <span className="text-[10px] font-medium text-neutral-500">{bill.roundCount} รอบ</span>
+                          <span className="w-1 h-1 rounded-full bg-neutral-200"></span>
+                          <span className="text-[11px] font-bold text-[#C084FC]">{catEntries.length} ประเภท</span>
+                        </div>
+                      </div>
+                      <div className="text-right shrink-0">
+                        <div className="text-2xl font-black text-neutral-900 leading-none">{Number(bill.totalWeight).toLocaleString()}</div>
+                        <div className="text-[10px] font-bold text-neutral-400 mt-1">กก.</div>
+                      </div>
+                      <ChevronDown className={`w-5 h-5 text-neutral-300 transition-transform shrink-0 ml-1 ${isExpanded ? 'rotate-180' : ''}`} />
+                    </div>
 
+                    {/* Expanded Detail */}
+                    {isExpanded && (
+                      <div className="border-t border-neutral-100 bg-neutral-50/50 pb-4">
+                        <div className="p-4 space-y-2">
+                          <div className="text-[10px] font-bold text-neutral-400 uppercase tracking-widest mb-2 flex items-center gap-2">
+                            <List className="w-3 h-3" /> ยอดตามประเภท (รวม)
+                          </div>
+                          {catEntries.map(([cat, w]) => (
+                            <div key={cat} className="flex justify-between items-center bg-white p-2.5 rounded-xl border border-neutral-100/60 shadow-sm">
+                              <div className="flex items-center gap-2">
+                                <div className="w-2 h-2 rounded-full" style={{ backgroundColor: getCategoryHex(cat) }}></div>
+                                <span className="text-sm font-bold text-neutral-700">{cat}</span>
+                              </div>
+                              <span className="text-sm font-black text-neutral-900">{Number(w).toLocaleString()} <span className="text-neutral-400 font-medium text-xs">กก.</span></span>
+                            </div>
+                          ))}
+                        </div>
+
+                        {/* Drill-down Round List */}
+                        <div className="px-4 pb-4">
+                          <div className="text-[10px] font-bold text-[#C084FC] uppercase tracking-widest mb-3 mt-2 flex items-center gap-2">
+                            <RotateCcw className="w-3 h-3" /> รอบที่รวมอยู่ในบิลนี้ (คลิกเพื่อดูรายละเอียด)
+                          </div>
+                          <div className="flex flex-wrap gap-2">
+                            {bill.roundIds.map(rid => {
+                              const r = historyRecords.find(hr => hr.id === rid);
+                              if (!r) return null;
+                              return (
+                                <button
+                                  key={rid}
+                                  onClick={() => handleJumpToRound(rid, bill.id)}
+                                  className="bg-white border border-[#C084FC]/30 hover:border-[#C084FC] hover:bg-purple-50 px-3 py-2 rounded-xl flex flex-col items-center gap-0.5 transition-all active:scale-95 group"
+                                >
+                                  <span className="text-[10px] font-bold text-neutral-400 group-hover:text-[#C084FC]">รอบที่</span>
+                                  <span className="text-sm font-black text-neutral-900 group-hover:text-[#C084FC]">{r.round}</span>
+                                  <span className="text-[8px] font-medium text-neutral-400">{r.date.split('/')[0]}/{r.date.split('/')[1]}</span>
+                                </button>
+                              );
+                            })}
+                          </div>
+                        </div>
+
+                        <div className="px-4 flex gap-2">
+                          <button
+                            onClick={handleReshareText}
+                            className="flex-1 flex items-center justify-center gap-2 py-2.5 bg-neutral-900 text-white rounded-xl text-xs font-bold hover:bg-neutral-700 active:scale-95 transition-all"
+                          >
+                            <MessageSquare className="w-3.5 h-3.5 text-[#4ADE80]" /> แชร์เป็นข้อความ
+                          </button>
+                          <button
+                            onClick={handleReshareImage}
+                            disabled={isGeneratingImg}
+                            className="flex-1 flex items-center justify-center gap-2 py-2.5 bg-white border-2 border-[#C084FC] text-[#7C3AED] rounded-xl text-xs font-bold hover:bg-[#C084FC]/5 active:scale-95 transition-all disabled:opacity-60"
+                          >
+                            {isGeneratingImg ? <><RotateCcw className="w-3.5 h-3.5 animate-spin" /> สร้าง...</> : <><ImageIcon className="w-3.5 h-3.5" /> แชร์เป็นรูป</>}
+                          </button>
+                        </div>
+                      </div>
+                    )}
+                  </div>
                 );
               })}
             </div>
