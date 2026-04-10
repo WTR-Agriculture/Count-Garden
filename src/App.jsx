@@ -1371,60 +1371,6 @@ export default function App() {
         </div>
       </div>
 
-      {/* --- Hidden Receipt Template for Share as Image --- */}
-      {activeShareRecord && (
-        <div ref={receiptRef} className="bg-white p-10 w-[450px] text-neutral-900 font-sans shadow-2xl rounded-sm border-t-[12px] border-[#FDE047] flex flex-col" style={{ position: 'absolute', left: '-2000px', top: '0', zIndex: -100 }}>
-           <div className="text-center mb-10">
-              <div className="text-3xl font-black flex items-center justify-center gap-3 mb-2">
-                 <span className="text-4xl">🍎</span> Count-Garden
-              </div>
-              <div className="text-[11px] font-bold text-neutral-400 tracking-[0.3em] uppercase">Digital Weight Certificate</div>
-           </div>
-           
-           <div className="flex justify-between items-end border-b-4 border-dashed border-neutral-100 pb-8 mb-8">
-              <div className="space-y-2">
-                 <div className="text-[10px] font-bold text-neutral-400 uppercase tracking-widest">วันที่ / Date</div>
-                 <div className="text-lg font-bold text-neutral-800">{activeShareRecord.date}</div>
-                 <div className="text-[10px] font-bold text-neutral-400 uppercase mt-4 tracking-widest">ผลไม้ / Fruit</div>
-                 <div className="text-2xl font-black text-neutral-900">{activeShareRecord.fruit}</div>
-              </div>
-              <div className="text-right">
-                 <div className="text-[10px] font-bold text-neutral-400 uppercase mb-2 tracking-widest">รอบที่ / Round</div>
-                 <div className="text-4xl font-black text-neutral-900 bg-[#FDE047] px-6 py-2 rounded-2xl shadow-sm inline-block">{activeShareRecord.round}</div>
-              </div>
-           </div>
-
-           <div className="space-y-6 mb-10 flex-1">
-              {activeShareRecord.details.map(d => (
-                 <div key={d.category} className="space-y-2.5">
-                    <div className="flex justify-between items-center bg-neutral-50/50 p-2 rounded-lg">
-                       <span className="text-sm font-black text-neutral-800 uppercase tracking-wider">{d.category}</span>
-                       <span className="text-lg font-black text-neutral-900">{d.total.toLocaleString()} <span className="text-xs text-neutral-400">กก.</span></span>
-                    </div>
-                    <div className="bg-neutral-50 p-5 rounded-2xl text-xs font-bold text-neutral-500 leading-relaxed border border-neutral-100 shadow-inner">
-                       {d.items.join(', ')}
-                    </div>
-                 </div>
-              ))}
-           </div>
-
-           <div className="bg-neutral-900 text-white p-8 rounded-[2rem] flex justify-between items-center shadow-xl mb-4">
-              <div>
-                 <div className="text-[10px] font-bold text-neutral-500 uppercase mb-1 tracking-[0.2em]">ยอดรวมสุทธิ / Total Weight</div>
-                 <div className="text-xs font-bold opacity-60 italic">Verified via Count-Garden App</div>
-              </div>
-              <div className="text-5xl font-black tracking-tighter leading-none">{activeShareRecord.totalWeight.toLocaleString()} <span className="text-sm font-bold text-neutral-500 ml-1">กก.</span></div>
-           </div>
-
-           <div className="mt-10 pt-8 border-t border-neutral-50 text-center">
-              <div className="text-[10px] font-bold text-neutral-300 uppercase tracking-[0.5em] mb-4">ขอบคุณที่วางใจให้เราดูแลผลผลิตของคุณ</div>
-              <div className="inline-flex items-center gap-2 px-4 py-2 bg-neutral-50 rounded-full border border-neutral-100">
-                 <span className="w-2 h-2 rounded-full bg-[#4ADE80] animate-pulse"></span>
-                 <span className="text-[9px] font-bold text-neutral-400 uppercase tracking-widest">Secure Secure Digital Report</span>
-              </div>
-           </div>
-        </div>
-      )}
 
       {/* Inline Styles */}
       <style dangerouslySetInnerHTML={{__html: `
@@ -1458,23 +1404,35 @@ export default function App() {
         }
       `}} />
       {activeShareRecord && (
-        <div ref={receiptRef} className="bg-white p-10 w-[450px] text-neutral-900 font-sans shadow-2xl rounded-sm border-t-[12px] border-[#FDE047] flex flex-col" style={{ position: 'absolute', left: '-2000px', top: '0', zIndex: -100 }}>
+        <div 
+          ref={receiptRef} 
+          className="bg-white p-10 text-neutral-900 font-sans shadow-2xl rounded-sm border-t-[12px] border-[#FDE047] flex flex-col" 
+          style={{ 
+            position: 'fixed', 
+            top: '0', 
+            left: '-9999px',
+            width: '450px',
+            minHeight: '600px',
+            zIndex: -100,
+            backgroundColor: '#ffffff'
+          }}
+        >
            <div className="text-center mb-10">
               <div className="text-3xl font-black flex items-center justify-center gap-3 mb-2">
                  Count-Garden
               </div>
-              <div className="text-[11px] font-bold text-neutral-400 tracking-[0.3em] uppercase">Digital Weight Certificate</div>
+              <div className="text-[11px] font-bold text-neutral-400 tracking-[0.3em] uppercase underline decoration-[#FDE047] decoration-4 underline-offset-8">Digital Weight Certificate</div>
            </div>
            
            <div className="flex justify-between items-end border-b-4 border-dashed border-neutral-100 pb-8 mb-8">
               <div className="space-y-2">
-                 <div className="text-[10px] font-bold text-neutral-400 uppercase tracking-widest">Date</div>
+                 <div className="text-[10px] font-bold text-neutral-400 uppercase tracking-widest">วันที่ / Date</div>
                  <div className="text-lg font-bold text-neutral-800">{activeShareRecord.date}</div>
-                 <div className="text-[10px] font-bold text-neutral-400 uppercase mt-4 tracking-widest">Fruit</div>
+                 <div className="text-[10px] font-bold text-neutral-400 uppercase mt-4 tracking-widest">ผลไม้ / Fruit</div>
                  <div className="text-2xl font-black text-neutral-900">{activeShareRecord.fruit}</div>
               </div>
               <div className="text-right">
-                 <div className="text-[10px] font-bold text-neutral-400 uppercase mb-2 tracking-widest">Round</div>
+                 <div className="text-[10px] font-bold text-neutral-400 uppercase mb-2 tracking-widest">รอบที่ / Round</div>
                  <div className="text-4xl font-black text-neutral-900 bg-[#FDE047] px-6 py-2 rounded-2xl shadow-sm inline-block">{activeShareRecord.round}</div>
               </div>
            </div>
@@ -1484,9 +1442,9 @@ export default function App() {
                  <div key={d.category} className="space-y-2.5">
                     <div className="flex justify-between items-center bg-neutral-50/50 p-2 rounded-lg">
                        <span className="text-sm font-black text-neutral-800 uppercase tracking-wider">{d.category}</span>
-                       <span className="text-lg font-black text-neutral-900">{d.total.toLocaleString()} <span className="text-xs text-neutral-400">kg.</span></span>
+                       <span className="text-lg font-black text-neutral-900">{d.total.toLocaleString()} <span className="text-xs text-neutral-400">กก. / kg.</span></span>
                     </div>
-                    <div className="bg-neutral-50 p-5 rounded-2xl text-xs font-bold text-neutral-500 leading-relaxed border border-neutral-100 shadow-inner">
+                    <div className="bg-neutral-50 p-5 rounded-2xl text-xs font-bold text-neutral-600 leading-relaxed border border-neutral-100 shadow-inner">
                        {d.items.join(', ')}
                     </div>
                  </div>
@@ -1495,7 +1453,7 @@ export default function App() {
 
            <div className="bg-neutral-900 text-white p-8 rounded-[2rem] flex justify-between items-center shadow-xl mb-4">
               <div>
-                 <div className="text-[10px] font-bold text-neutral-500 uppercase mb-1 tracking-[0.2em]">Total Weight</div>
+                 <div className="text-[10px] font-bold text-neutral-500 uppercase mb-1 tracking-[0.2em]">ยอดรวมสุทธิ / Total Weight</div>
                  <div className="text-xs font-bold opacity-60 italic">Verified via Count-Garden App</div>
               </div>
               <div className="text-5xl font-black tracking-tighter leading-none">{activeShareRecord.totalWeight.toLocaleString()} <span className="text-sm font-bold text-neutral-500 ml-1">kg.</span></div>
