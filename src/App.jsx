@@ -1184,12 +1184,12 @@ export default function App() {
         <div className="flex gap-2 items-center w-full mt-3">
           <div className="flex-1 bg-neutral-50 border border-neutral-200 rounded-full flex items-center px-3 py-1.5 shadow-sm focus-within:ring-2 focus-within:ring-[#C084FC]/20 focus-within:border-[#C084FC] transition-all">
             <Search className="w-3.5 h-3.5 text-neutral-400 mr-1.5" />
-            <input 
-              type="text" 
-              placeholder={historySubTab === 'rounds' ? "ค้นหา... (ผลไม้, รอบ, สวน)" : "ค้นหาบิลรวม... (ระบุชนิดผลไม้)"} 
-              value={searchTerm} 
-              onChange={(e) => setSearchTerm(e.target.value)} 
-              className="bg-transparent border-none outline-none text-xs w-full text-neutral-700 font-medium placeholder-neutral-300" 
+            <input
+              type="text"
+              placeholder={historySubTab === 'rounds' ? "ค้นหา... (ผลไม้, รอบ, สวน)" : "ค้นหาบิลรวม... (ระบุชนิดผลไม้)"}
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="bg-transparent border-none outline-none text-xs w-full text-neutral-700 font-medium placeholder-neutral-300"
             />
             {searchTerm && (<button onClick={() => setSearchTerm('')} className="text-neutral-400 hover:text-neutral-600 px-1 transition-colors"><X className="w-3.5 h-3.5" /></button>)}
           </div>
@@ -1235,286 +1235,286 @@ export default function App() {
             return (
               <div className="space-y-4 max-w-3xl mx-auto">
                 {filteredMasterBills.map(bill => {
-                const isExpanded = expandedMasterBill === bill.id;
-                const dateFrom = bill.dateFrom ? formatDisplayDate(bill.dateFrom) : '-';
-                const dateTo = bill.dateTo ? formatDisplayDate(bill.dateTo) : '-';
-                const dateLabel = bill.dateFrom === bill.dateTo ? dateFrom : `${dateFrom} - ${dateTo}`;
-                const catEntries = Object.entries(bill.categorySummary || {}).sort((a, b) => b[1] - a[1]);
+                  const isExpanded = expandedMasterBill === bill.id;
+                  const dateFrom = bill.dateFrom ? formatDisplayDate(bill.dateFrom) : '-';
+                  const dateTo = bill.dateTo ? formatDisplayDate(bill.dateTo) : '-';
+                  const dateLabel = bill.dateFrom === bill.dateTo ? dateFrom : `${dateFrom} - ${dateTo}`;
+                  const catEntries = Object.entries(bill.categorySummary || {}).sort((a, b) => b[1] - a[1]);
 
-                const handleReshareText = () => {
-                  let text = `📋 สรุปบิลรวมน้ำหนัก ${bill.fruit || ''}\n`;
-                  text += `📅 ช่วงวันที่: ${dateLabel}\n`;
-                  text += `📦 จำนวน ${bill.roundCount} รอบ\n\n─────────────────\nสรุปตามประเภท:\n`;
-                  catEntries.forEach(([cat, w]) => { text += `✅ ${cat}: ${Number(w).toLocaleString()} กก.\n`; });
-                  text += `─────────────────\n💰 ยอดรวมสุทธิ: ${Number(bill.totalWeight).toLocaleString()} กก.\n\n🌾 บันทึกโดย AgriWeigh Pro`;
-                  if (navigator.share) {
-                    navigator.share({ 
-                      title: `สรุปบิลรวมน้ำหนัก ${bill.fruit || ''} (${dateLabel})`,
-                      text 
-                    }).catch(console.error);
-                  }
-                  else navigator.clipboard.writeText(text).then(() => showToast('คัดลอกสำเร็จ!')).catch(() => showToast('ไม่สามารถคัดลอกได้'));
-                };
+                  const handleReshareText = () => {
+                    let text = `📋 สรุปบิลรวมน้ำหนัก ${bill.fruit || ''}\n`;
+                    text += `📅 ช่วงวันที่: ${dateLabel}\n`;
+                    text += `📦 จำนวน ${bill.roundCount} รอบ\n\n─────────────────\nสรุปตามประเภท:\n`;
+                    catEntries.forEach(([cat, w]) => { text += `✅ ${cat}: ${Number(w).toLocaleString()} กก.\n`; });
+                    text += `─────────────────\n💰 ยอดรวมสุทธิ: ${Number(bill.totalWeight).toLocaleString()} กก.\n\n`;
+                    if (navigator.share) {
+                      navigator.share({
+                        title: `สรุปบิลรวมน้ำหนัก ${bill.fruit || ''} (${dateLabel})`,
+                        text
+                      }).catch(console.error);
+                    }
+                    else navigator.clipboard.writeText(text).then(() => showToast('คัดลอกสำเร็จ!')).catch(() => showToast('ไม่สามารถคัดลอกได้'));
+                  };
 
-                const handleReshareImage = async () => {
-                  setIsGeneratingImg(true);
-                  try {
-                    const sortedRounds = (bill.roundIds || [])
-                      .map(rid => historyRecords.find(r => r.id === rid))
-                      .filter(Boolean)
-                      .sort((a, b) => new Date(a.date) - new Date(b.date) || a.round - b.round);
+                  const handleReshareImage = async () => {
+                    setIsGeneratingImg(true);
+                    try {
+                      const sortedRounds = (bill.roundIds || [])
+                        .map(rid => historyRecords.find(r => r.id === rid))
+                        .filter(Boolean)
+                        .sort((a, b) => new Date(a.date) - new Date(b.date) || a.round - b.round);
 
-                    const SCALE = 2, W = 420, PADDING = 32, CONTENT_W = W - PADDING * 2;
-                    const catSectionH = catEntries.length * 68 + 60;
-                    const auditLogH = (sortedRounds.length * 28) + 60;
-                    const H = 240 + catSectionH + 100 + auditLogH + 60;
-                    const canvas = document.createElement('canvas');
-                    canvas.width = W * SCALE; canvas.height = H * SCALE;
-                    const ctx = canvas.getContext('2d');
-                    ctx.scale(SCALE, SCALE);
-                    ctx.fillStyle = '#FDFBF7'; ctx.fillRect(0, 0, W, H);
-                    ctx.strokeStyle = '#E5E5E5'; ctx.lineWidth = 1; ctx.strokeRect(0.5, 0.5, W - 1, H - 1);
+                      const SCALE = 2, W = 420, PADDING = 32, CONTENT_W = W - PADDING * 2;
+                      const catSectionH = catEntries.length * 68 + 60;
+                      const auditLogH = (sortedRounds.length * 28) + 60;
+                      const H = 240 + catSectionH + 100 + auditLogH + 60;
+                      const canvas = document.createElement('canvas');
+                      canvas.width = W * SCALE; canvas.height = H * SCALE;
+                      const ctx = canvas.getContext('2d');
+                      ctx.scale(SCALE, SCALE);
+                      ctx.fillStyle = '#FDFBF7'; ctx.fillRect(0, 0, W, H);
+                      ctx.strokeStyle = '#E5E5E5'; ctx.lineWidth = 1; ctx.strokeRect(0.5, 0.5, W - 1, H - 1);
 
-                    let y = PADDING;
-                    // --- Logo ---
-                    const logoSize = 48;
-                    ctx.fillStyle = '#1A1A1A';
-                    ctx.beginPath(); ctx.arc(W / 2, y + logoSize / 2, logoSize / 2, 0, Math.PI * 2); ctx.fill();
-                    ctx.fillStyle = '#FFFFFF'; ctx.font = 'bold 24px sans-serif'; ctx.textAlign = 'center';
-                    ctx.fillText('✻', W / 2, y + logoSize / 2 + 8);
-                    y += logoSize + 32;
+                      let y = PADDING;
+                      // --- Logo ---
+                      const logoSize = 48;
+                      ctx.fillStyle = '#1A1A1A';
+                      ctx.beginPath(); ctx.arc(W / 2, y + logoSize / 2, logoSize / 2, 0, Math.PI * 2); ctx.fill();
+                      ctx.fillStyle = '#FFFFFF'; ctx.font = 'bold 24px sans-serif'; ctx.textAlign = 'center';
+                      ctx.fillText('✻', W / 2, y + logoSize / 2 + 8);
+                      y += logoSize + 32;
 
-                    // --- Farm Name ---
-                    ctx.fillStyle = '#1A1A1A'; ctx.font = 'bold 28px sans-serif'; ctx.textAlign = 'center';
-                    ctx.fillText(setupData.farmName || 'AgriWeigh Pro', W / 2, y);
-                    y += 28;
-
-                    // --- Header Label ---
-                    ctx.fillStyle = '#888'; ctx.font = 'bold 16px sans-serif';
-                    ctx.fillText(`บิลชั่งน้ำหนัก ${bill.fruit || ''}`, W / 2, y);
-                    y += 22;
-
-                    // --- Date Range ---
-                    ctx.fillStyle = '#AAA'; ctx.font = 'bold 12px sans-serif';
-                    ctx.fillText(`ช่วงวันที่: ${dateLabel}`, W / 2, y);
-                    y += 20;
-
-                    // --- Summary Line ---
-                    ctx.fillStyle = '#BBB'; ctx.font = '11px sans-serif';
-                    ctx.fillText(`จำนวน ${bill.roundCount} รอบ  •  น้ำหนักสุทธิ ${Number(bill.totalWeight).toLocaleString()} กก.`, W / 2, y);
-                    y += 28;
-
-                    // --- Dashed Line ---
-                    ctx.strokeStyle = '#D4D4D4'; ctx.lineWidth = 1.5; ctx.setLineDash([5, 4]);
-                    ctx.beginPath(); ctx.moveTo(PADDING, y); ctx.lineTo(W - PADDING, y); ctx.stroke();
-                    ctx.setLineDash([]);
-                    y += 32;
-
-                    // --- Summary Cards ---
-                    ctx.fillStyle = '#C084FC'; ctx.font = 'bold 11px sans-serif'; ctx.textAlign = 'left';
-                    ctx.fillText('สรุปยอดตามประเภท', PADDING, y); y += 18;
-                    catEntries.forEach(([cat, weight]) => {
-                      const catHex = getCategoryHex(cat);
-                      ctx.fillStyle = '#FFF'; ctx.beginPath(); ctx.roundRect(PADDING, y, CONTENT_W, 56, 14); ctx.fill();
-                      ctx.strokeStyle = '#F0F0F0'; ctx.lineWidth = 1; ctx.strokeRect(PADDING + 0.5, y + 0.5, CONTENT_W - 1, 56 - 1);
-                      ctx.fillStyle = catHex; ctx.beginPath(); ctx.arc(PADDING + 20, y + 28, 6, 0, Math.PI * 2); ctx.fill();
-                      ctx.fillStyle = '#1A1A1A'; ctx.font = 'bold 17px sans-serif'; ctx.textAlign = 'left'; ctx.fillText(cat, PADDING + 34, y + 33);
-                      ctx.font = 'bold 20px sans-serif'; ctx.textAlign = 'right'; ctx.fillText(Number(weight).toLocaleString(), W - PADDING - 40, y + 33);
-                      ctx.fillStyle = '#888'; ctx.font = '12px sans-serif'; ctx.fillText('กก.', W - PADDING - 10, y + 33); y += 64;
-                    });
-                    y += 12;
-
-                    // --- Grand Total ---
-                    ctx.fillStyle = '#1A1A1A'; ctx.beginPath(); ctx.roundRect(PADDING, y, CONTENT_W, 72, 16); ctx.fill();
-                    ctx.fillStyle = '#999'; ctx.font = 'bold 12px sans-serif'; ctx.textAlign = 'left'; ctx.fillText('ยอดรวมสุทธิ', PADDING + 20, y + 28);
-                    ctx.fillStyle = '#FDE047'; ctx.font = 'bold 32px sans-serif'; ctx.textAlign = 'right'; ctx.fillText(Number(bill.totalWeight).toLocaleString(), W - PADDING - 46, y + 50);
-                    ctx.fillStyle = '#999'; ctx.font = 'bold 13px sans-serif'; ctx.fillText('กก.', W - PADDING - 15, y + 50); y += 100;
-
-                    // --- Audit Log ---
-                    ctx.strokeStyle = '#E5E5E5'; ctx.lineWidth = 1; ctx.setLineDash([4, 4]);
-                    ctx.beginPath(); ctx.moveTo(PADDING, y); ctx.lineTo(W - PADDING, y); ctx.stroke();
-                    ctx.setLineDash([]); y += 24;
-                    ctx.fillStyle = '#AAA'; ctx.font = 'bold 10px sans-serif'; ctx.textAlign = 'left'; ctx.fillText('AUDIT LOG - รายละเอียดรายรอบ', PADDING, y); y += 20;
-
-                    sortedRounds.forEach(r => {
-                      ctx.fillStyle = '#555'; ctx.font = 'bold 12px sans-serif'; ctx.textAlign = 'left';
-                      ctx.fillText(`รอบ ${r.round}  •  ${formatDisplayDate(r.date)}`, PADDING, y);
-                      ctx.fillStyle = '#1A1A1A'; ctx.font = 'bold 12px sans-serif'; ctx.textAlign = 'right';
-                      ctx.fillText(`${Number(r.totalWeight).toLocaleString()} กก.`, W - PADDING, y);
+                      // --- Farm Name ---
+                      ctx.fillStyle = '#1A1A1A'; ctx.font = 'bold 28px sans-serif'; ctx.textAlign = 'center';
+                      ctx.fillText(setupData.farmName || 'AgriWeigh Pro', W / 2, y);
                       y += 28;
-                    });
-                    y += 24;
 
-                    // --- Footer ---
-                    ctx.fillStyle = '#CCC'; ctx.font = '10px sans-serif'; ctx.textAlign = 'center'; ctx.fillText('บันทึกโดย AgriWeigh Pro', W / 2, y);
+                      // --- Header Label ---
+                      ctx.fillStyle = '#888'; ctx.font = 'bold 16px sans-serif';
+                      ctx.fillText(`บิลชั่งน้ำหนัก ${bill.fruit || ''}`, W / 2, y);
+                      y += 22;
 
-                    const dataUrl = canvas.toDataURL('image/png');
-                    if (navigator.share && navigator.canShare) {
-                      const res = await fetch(dataUrl); const blob = await res.blob();
-                      const file = new File([blob], `master-bill-${bill.id}.png`, { type: 'image/png' });
-                      if (navigator.canShare({ files: [file] })) { 
-                        await navigator.share({ 
-                          files: [file], 
-                          title: `สรุปบิลรวมน้ำหนัก ${bill.fruit || ''} (${dateLabel})`
-                        }); 
-                      }
-                      else downloadImage(dataUrl);
-                    } else downloadImage(dataUrl);
-                    showToast('สร้างรูปได้สำเร็จ!');
-                  } catch (e) { console.error(e); showToast('เกิดข้อผิดพลาด'); } finally { setIsGeneratingImg(false); }
-                };
+                      // --- Date Range ---
+                      ctx.fillStyle = '#AAA'; ctx.font = 'bold 12px sans-serif';
+                      ctx.fillText(`ช่วงวันที่: ${dateLabel}`, W / 2, y);
+                      y += 20;
 
-                return viewMode === 'list' ? (
-                  <div key={bill.id} id={`master-card-${bill.id}`} className="bg-white rounded-2xl border border-neutral-100 shadow-[0_2px_8px_rgb(0,0,0,0.02)] overflow-hidden transition-all hover:border-neutral-200 scroll-mt-24">
-                    <div className="p-3 flex justify-between items-center cursor-pointer" onClick={() => setExpandedMasterBill(isExpanded ? null : bill.id)}>
-                      <div className="flex-1 min-w-0">
-                        <div className="font-bold text-neutral-900 text-sm flex items-center gap-2 mb-0.5">
-                          {bill.fruit && <span className="text-[8px] bg-[#C084FC] text-white px-1.5 py-0.5 rounded font-black uppercase tracking-tighter shrink-0">{bill.fruit}</span>}
-                          <span>{dateLabel}</span>
-                        </div>
-                        <div className="text-[9px] text-neutral-400 font-medium flex items-center gap-1"><Calendar className="w-2.5 h-2.5" />{bill.roundCount} รอบ • {catEntries.length} ประเภท</div>
-                      </div>
-                      <div className="text-right flex items-center gap-3">
-                        <div className="text-lg font-black tracking-tight text-neutral-900">{Number(bill.totalWeight).toLocaleString()} <span className="text-[9px] font-bold text-neutral-500 font-normal">กก.</span></div>
-                        <ChevronDown className={`w-4 h-4 text-neutral-300 transition-transform ${isExpanded ? 'rotate-180' : ''}`} />
-                      </div>
-                    </div>
-                    {isExpanded && (
-                      <div className="bg-neutral-50/50 border-t border-neutral-100 p-4">
-                        <div className="flex flex-wrap gap-2 mb-4">
-                          {catEntries.map(([cat, w]) => (
-                            <div key={cat} className="bg-white px-2.5 py-1.5 rounded-xl border border-neutral-100 flex items-center gap-2 shadow-sm">
-                              <div className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: getCategoryHex(cat) }}></div>
-                              <span className="text-[10px] font-bold text-neutral-700">{cat}:</span>
-                              <span className="text-[10px] font-black text-neutral-900">{Number(w).toLocaleString()}</span>
-                            </div>
-                          ))}
-                        </div>
-                        <div className="text-[9px] font-bold text-[#C084FC] mb-2 uppercase tracking-widest">รอบในบิลนี้:</div>
-                        <div className="flex flex-wrap gap-1.5 mb-4">
-                          {bill.roundIds.map(rid => {
-                            const r = historyRecords.find(hr => hr.id === rid);
-                            return r ? (
-                              <button key={rid} onClick={(e) => { e.stopPropagation(); handleJumpToRound(rid, bill.id); }} className="bg-white border border-[#C084FC]/20 px-2 py-1 rounded-lg text-[9px] font-bold hover:bg-purple-50 active:scale-95 transition-all">
-                                ร.{r.round}
-                              </button>
-                            ) : null;
-                          })}
-                        </div>
-                        <div className="flex gap-2">
-                          <button onClick={(e) => { e.stopPropagation(); setDeleteMbConfirmId(bill.id); }} className="w-10 flex items-center justify-center bg-red-50 text-red-500 rounded-lg hover:bg-red-100 transition-colors border border-red-100"><Trash2 className="w-3.5 h-3.5" /></button>
-                          <button onClick={handleReshareText} className="flex-1 py-2 bg-neutral-900 text-white rounded-lg text-[10px] font-bold">แชร์ข้อความ</button>
-                          <button onClick={handleReshareImage} disabled={isGeneratingImg} className="flex-2 py-2 bg-white border border-[#C084FC] text-[#7C3AED] rounded-lg text-[10px] font-bold flex items-center justify-center gap-1">
-                            {isGeneratingImg ? <RotateCcw className="w-3 h-3 animate-spin"/> : <ImageIcon className="w-3 h-3"/>} รูปภาพ
-                          </button>
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                ) : (
-                  <div key={bill.id} id={`master-card-${bill.id}`} className="bg-white rounded-2xl border border-neutral-100 shadow-[0_2px_10px_rgb(0,0,0,0.03)] overflow-hidden transition-all hover:border-neutral-200 scroll-mt-24">
-                    {/* Bill Card Header */}
-                    <div className="p-4 flex items-center gap-4 cursor-pointer" onClick={() => setExpandedMasterBill(isExpanded ? null : bill.id)}>
-                      <div className="flex-1 min-w-0">
-                        {/* Stacked Layout for Fruit and Date */}
-                        <div className="flex flex-col gap-1.5">
-                          {bill.fruit && (
-                            <div className="flex">
-                              <span className="bg-[#C084FC] text-white px-2.5 py-0.5 rounded-lg text-[10px] font-black shadow-md shadow-purple-100 border border-white/20 animate-in zoom-in-50 duration-300 uppercase tracking-widest whitespace-nowrap">
-                                {bill.fruit}
-                              </span>
-                            </div>
-                          )}
-                          <div className="font-black text-neutral-900 text-[15px] leading-tight">
-                            {dateLabel}
+                      // --- Summary Line ---
+                      ctx.fillStyle = '#BBB'; ctx.font = '11px sans-serif';
+                      ctx.fillText(`จำนวน ${bill.roundCount} รอบ  •  น้ำหนักสุทธิ ${Number(bill.totalWeight).toLocaleString()} กก.`, W / 2, y);
+                      y += 28;
+
+                      // --- Dashed Line ---
+                      ctx.strokeStyle = '#D4D4D4'; ctx.lineWidth = 1.5; ctx.setLineDash([5, 4]);
+                      ctx.beginPath(); ctx.moveTo(PADDING, y); ctx.lineTo(W - PADDING, y); ctx.stroke();
+                      ctx.setLineDash([]);
+                      y += 32;
+
+                      // --- Summary Cards ---
+                      ctx.fillStyle = '#C084FC'; ctx.font = 'bold 11px sans-serif'; ctx.textAlign = 'left';
+                      ctx.fillText('สรุปยอดตามประเภท', PADDING, y); y += 18;
+                      catEntries.forEach(([cat, weight]) => {
+                        const catHex = getCategoryHex(cat);
+                        ctx.fillStyle = '#FFF'; ctx.beginPath(); ctx.roundRect(PADDING, y, CONTENT_W, 56, 14); ctx.fill();
+                        ctx.strokeStyle = '#F0F0F0'; ctx.lineWidth = 1; ctx.strokeRect(PADDING + 0.5, y + 0.5, CONTENT_W - 1, 56 - 1);
+                        ctx.fillStyle = catHex; ctx.beginPath(); ctx.arc(PADDING + 20, y + 28, 6, 0, Math.PI * 2); ctx.fill();
+                        ctx.fillStyle = '#1A1A1A'; ctx.font = 'bold 17px sans-serif'; ctx.textAlign = 'left'; ctx.fillText(cat, PADDING + 34, y + 33);
+                        ctx.font = 'bold 20px sans-serif'; ctx.textAlign = 'right'; ctx.fillText(Number(weight).toLocaleString(), W - PADDING - 40, y + 33);
+                        ctx.fillStyle = '#888'; ctx.font = '12px sans-serif'; ctx.fillText('กก.', W - PADDING - 10, y + 33); y += 64;
+                      });
+                      y += 12;
+
+                      // --- Grand Total ---
+                      ctx.fillStyle = '#1A1A1A'; ctx.beginPath(); ctx.roundRect(PADDING, y, CONTENT_W, 72, 16); ctx.fill();
+                      ctx.fillStyle = '#999'; ctx.font = 'bold 12px sans-serif'; ctx.textAlign = 'left'; ctx.fillText('ยอดรวมสุทธิ', PADDING + 20, y + 28);
+                      ctx.fillStyle = '#FDE047'; ctx.font = 'bold 32px sans-serif'; ctx.textAlign = 'right'; ctx.fillText(Number(bill.totalWeight).toLocaleString(), W - PADDING - 46, y + 50);
+                      ctx.fillStyle = '#999'; ctx.font = 'bold 13px sans-serif'; ctx.fillText('กก.', W - PADDING - 15, y + 50); y += 100;
+
+                      // --- Audit Log ---
+                      ctx.strokeStyle = '#E5E5E5'; ctx.lineWidth = 1; ctx.setLineDash([4, 4]);
+                      ctx.beginPath(); ctx.moveTo(PADDING, y); ctx.lineTo(W - PADDING, y); ctx.stroke();
+                      ctx.setLineDash([]); y += 24;
+                      ctx.fillStyle = '#AAA'; ctx.font = 'bold 10px sans-serif'; ctx.textAlign = 'left'; ctx.fillText('AUDIT LOG - รายละเอียดรายรอบ', PADDING, y); y += 20;
+
+                      sortedRounds.forEach(r => {
+                        ctx.fillStyle = '#555'; ctx.font = 'bold 12px sans-serif'; ctx.textAlign = 'left';
+                        ctx.fillText(`รอบ ${r.round}  •  ${formatDisplayDate(r.date)}`, PADDING, y);
+                        ctx.fillStyle = '#1A1A1A'; ctx.font = 'bold 12px sans-serif'; ctx.textAlign = 'right';
+                        ctx.fillText(`${Number(r.totalWeight).toLocaleString()} กก.`, W - PADDING, y);
+                        y += 28;
+                      });
+                      y += 24;
+
+                      // --- Footer ---
+                      ctx.fillStyle = '#CCC'; ctx.font = '10px sans-serif'; ctx.textAlign = 'center'; ctx.fillText('บันทึกโดย AgriWeigh Pro', W / 2, y);
+
+                      const dataUrl = canvas.toDataURL('image/png');
+                      if (navigator.share && navigator.canShare) {
+                        const res = await fetch(dataUrl); const blob = await res.blob();
+                        const file = new File([blob], `master-bill-${bill.id}.png`, { type: 'image/png' });
+                        if (navigator.canShare({ files: [file] })) {
+                          await navigator.share({
+                            files: [file],
+                            title: `สรุปบิลรวมน้ำหนัก ${bill.fruit || ''} (${dateLabel})`
+                          });
+                        }
+                        else downloadImage(dataUrl);
+                      } else downloadImage(dataUrl);
+                      showToast('สร้างรูปได้สำเร็จ!');
+                    } catch (e) { console.error(e); showToast('เกิดข้อผิดพลาด'); } finally { setIsGeneratingImg(false); }
+                  };
+
+                  return viewMode === 'list' ? (
+                    <div key={bill.id} id={`master-card-${bill.id}`} className="bg-white rounded-2xl border border-neutral-100 shadow-[0_2px_8px_rgb(0,0,0,0.02)] overflow-hidden transition-all hover:border-neutral-200 scroll-mt-24">
+                      <div className="p-3 flex justify-between items-center cursor-pointer" onClick={() => setExpandedMasterBill(isExpanded ? null : bill.id)}>
+                        <div className="flex-1 min-w-0">
+                          <div className="font-bold text-neutral-900 text-sm flex items-center gap-2 mb-0.5">
+                            {bill.fruit && <span className="text-[8px] bg-[#C084FC] text-white px-1.5 py-0.5 rounded font-black uppercase tracking-tighter shrink-0">{bill.fruit}</span>}
+                            <span>{dateLabel}</span>
                           </div>
+                          <div className="text-[9px] text-neutral-400 font-medium flex items-center gap-1"><Calendar className="w-2.5 h-2.5" />{bill.roundCount} รอบ • {catEntries.length} ประเภท</div>
                         </div>
-                        <div className="flex items-center gap-2 mt-2">
-                          <span className="text-[10px] font-medium text-neutral-500">{bill.roundCount} รอบ</span>
-                          <span className="w-1 h-1 rounded-full bg-neutral-200"></span>
-                          <span className="text-[11px] font-bold text-[#C084FC]">{catEntries.length} ประเภท</span>
+                        <div className="text-right flex items-center gap-3">
+                          <div className="text-lg font-black tracking-tight text-neutral-900">{Number(bill.totalWeight).toLocaleString()} <span className="text-[9px] font-bold text-neutral-500 font-normal">กก.</span></div>
+                          <ChevronDown className={`w-4 h-4 text-neutral-300 transition-transform ${isExpanded ? 'rotate-180' : ''}`} />
                         </div>
                       </div>
-                      <div className="text-right shrink-0">
-                        <div className="text-2xl font-black text-neutral-900 leading-none">{Number(bill.totalWeight).toLocaleString()}</div>
-                        <div className="text-[10px] font-bold text-neutral-400 mt-1">กก.</div>
-                      </div>
-                      <ChevronDown className={`w-5 h-5 text-neutral-300 transition-transform shrink-0 ml-1 ${isExpanded ? 'rotate-180' : ''}`} />
-                    </div>
-
-                    {/* Expanded Detail */}
-                    {isExpanded && (
-                      <div className="border-t border-neutral-100 bg-neutral-50/50 pb-4">
-                        <div className="p-4 space-y-2">
-                          <div className="text-[10px] font-bold text-neutral-400 uppercase tracking-widest mb-2 flex items-center gap-2">
-                            <List className="w-3 h-3" /> ยอดตามประเภท (รวม)
-                          </div>
-                          {catEntries.map(([cat, w]) => (
-                            <div key={cat} className="flex justify-between items-center bg-white p-2.5 rounded-xl border border-neutral-100/60 shadow-sm">
-                              <div className="flex items-center gap-2">
-                                <div className="w-2 h-2 rounded-full" style={{ backgroundColor: getCategoryHex(cat) }}></div>
-                                <span className="text-sm font-bold text-neutral-700">{cat}</span>
+                      {isExpanded && (
+                        <div className="bg-neutral-50/50 border-t border-neutral-100 p-4">
+                          <div className="flex flex-wrap gap-2 mb-4">
+                            {catEntries.map(([cat, w]) => (
+                              <div key={cat} className="bg-white px-2.5 py-1.5 rounded-xl border border-neutral-100 flex items-center gap-2 shadow-sm">
+                                <div className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: getCategoryHex(cat) }}></div>
+                                <span className="text-[10px] font-bold text-neutral-700">{cat}:</span>
+                                <span className="text-[10px] font-black text-neutral-900">{Number(w).toLocaleString()}</span>
                               </div>
-                              <span className="text-sm font-black text-neutral-900">{Number(w).toLocaleString()} <span className="text-neutral-400 font-medium text-xs">กก.</span></span>
-                            </div>
-                          ))}
-                        </div>
-
-                        {/* Drill-down Round List */}
-                        <div className="px-4 pb-4">
-                          <div className="text-[10px] font-bold text-[#C084FC] uppercase tracking-widest mb-3 mt-2 flex items-center gap-2">
-                            <RotateCcw className="w-3 h-3" /> รอบที่รวมอยู่ในบิลนี้ (คลิกเพื่อดูรายละเอียด)
+                            ))}
                           </div>
-                          <div className="flex flex-wrap gap-2">
+                          <div className="text-[9px] font-bold text-[#C084FC] mb-2 uppercase tracking-widest">รอบในบิลนี้:</div>
+                          <div className="flex flex-wrap gap-1.5 mb-4">
                             {bill.roundIds.map(rid => {
                               const r = historyRecords.find(hr => hr.id === rid);
-                              if (!r) return null;
-                              return (
-                                <button
-                                  key={rid}
-                                  onClick={() => handleJumpToRound(rid, bill.id)}
-                                  className="bg-white border border-[#C084FC]/30 hover:border-[#C084FC] hover:bg-purple-50 px-3 py-2 rounded-xl flex flex-col items-center gap-0.5 transition-all active:scale-95 group"
-                                >
-                                  <span className="text-[10px] font-bold text-neutral-400 group-hover:text-[#C084FC]">รอบที่</span>
-                                  <span className="text-sm font-black text-neutral-900 group-hover:text-[#C084FC]">{r.round}</span>
-                                  <span className="text-[8px] font-medium text-neutral-400">{r.date.split('/')[0]}/{r.date.split('/')[1]}</span>
+                              return r ? (
+                                <button key={rid} onClick={(e) => { e.stopPropagation(); handleJumpToRound(rid, bill.id); }} className="bg-white border border-[#C084FC]/20 px-2 py-1 rounded-lg text-[9px] font-bold hover:bg-purple-50 active:scale-95 transition-all">
+                                  ร.{r.round}
                                 </button>
-                              );
+                              ) : null;
                             })}
                           </div>
+                          <div className="flex gap-2">
+                            <button onClick={(e) => { e.stopPropagation(); setDeleteMbConfirmId(bill.id); }} className="w-10 flex items-center justify-center bg-red-50 text-red-500 rounded-lg hover:bg-red-100 transition-colors border border-red-100"><Trash2 className="w-3.5 h-3.5" /></button>
+                            <button onClick={handleReshareText} className="flex-1 py-2 bg-neutral-900 text-white rounded-lg text-[10px] font-bold">แชร์ข้อความ</button>
+                            <button onClick={handleReshareImage} disabled={isGeneratingImg} className="flex-2 py-2 bg-white border border-[#C084FC] text-[#7C3AED] rounded-lg text-[10px] font-bold flex items-center justify-center gap-1">
+                              {isGeneratingImg ? <RotateCcw className="w-3 h-3 animate-spin" /> : <ImageIcon className="w-3 h-3" />} รูปภาพ
+                            </button>
+                          </div>
                         </div>
-
-                        <div className="px-4 flex gap-2">
-                          <button 
-                            onClick={(e) => { e.stopPropagation(); setDeleteMbConfirmId(bill.id); }}
-                            className="w-10 flex items-center justify-center bg-red-50 text-red-500 rounded-xl hover:bg-red-100 transition-colors border border-red-100"
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </button>
-                          <button
-                            onClick={handleReshareText}
-                            className="flex-1 flex items-center justify-center gap-2 py-2.5 bg-neutral-900 text-white rounded-xl text-xs font-bold hover:bg-neutral-700 active:scale-95 transition-all"
-                          >
-                            <MessageSquare className="w-3.5 h-3.5 text-[#4ADE80]" /> แชร์เป็นข้อความ
-                          </button>
-                          <button
-                            onClick={handleReshareImage}
-                            disabled={isGeneratingImg}
-                            className="flex-1 flex items-center justify-center gap-2 py-2.5 bg-white border-2 border-[#C084FC] text-[#7C3AED] rounded-xl text-xs font-bold hover:bg-[#C084FC]/5 active:scale-95 transition-all disabled:opacity-60"
-                          >
-                            {isGeneratingImg ? <><RotateCcw className="w-3.5 h-3.5 animate-spin" /> สร้าง...</> : <><ImageIcon className="w-3.5 h-3.5" /> แชร์เป็นรูป</>}
-                          </button>
+                      )}
+                    </div>
+                  ) : (
+                    <div key={bill.id} id={`master-card-${bill.id}`} className="bg-white rounded-2xl border border-neutral-100 shadow-[0_2px_10px_rgb(0,0,0,0.03)] overflow-hidden transition-all hover:border-neutral-200 scroll-mt-24">
+                      {/* Bill Card Header */}
+                      <div className="p-4 flex items-center gap-4 cursor-pointer" onClick={() => setExpandedMasterBill(isExpanded ? null : bill.id)}>
+                        <div className="flex-1 min-w-0">
+                          {/* Stacked Layout for Fruit and Date */}
+                          <div className="flex flex-col gap-1.5">
+                            {bill.fruit && (
+                              <div className="flex">
+                                <span className="bg-[#C084FC] text-white px-2.5 py-0.5 rounded-lg text-[10px] font-black shadow-md shadow-purple-100 border border-white/20 animate-in zoom-in-50 duration-300 uppercase tracking-widest whitespace-nowrap">
+                                  {bill.fruit}
+                                </span>
+                              </div>
+                            )}
+                            <div className="font-black text-neutral-900 text-[15px] leading-tight">
+                              {dateLabel}
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-2 mt-2">
+                            <span className="text-[10px] font-medium text-neutral-500">{bill.roundCount} รอบ</span>
+                            <span className="w-1 h-1 rounded-full bg-neutral-200"></span>
+                            <span className="text-[11px] font-bold text-[#C084FC]">{catEntries.length} ประเภท</span>
+                          </div>
                         </div>
+                        <div className="text-right shrink-0">
+                          <div className="text-2xl font-black text-neutral-900 leading-none">{Number(bill.totalWeight).toLocaleString()}</div>
+                          <div className="text-[10px] font-bold text-neutral-400 mt-1">กก.</div>
+                        </div>
+                        <ChevronDown className={`w-5 h-5 text-neutral-300 transition-transform shrink-0 ml-1 ${isExpanded ? 'rotate-180' : ''}`} />
                       </div>
-                    )}
-                  </div>
-                );
-              })}
-            </div>
-          );
-        })()}
-      </div>
-) : (
+
+                      {/* Expanded Detail */}
+                      {isExpanded && (
+                        <div className="border-t border-neutral-100 bg-neutral-50/50 pb-4">
+                          <div className="p-4 space-y-2">
+                            <div className="text-[10px] font-bold text-neutral-400 uppercase tracking-widest mb-2 flex items-center gap-2">
+                              <List className="w-3 h-3" /> ยอดตามประเภท (รวม)
+                            </div>
+                            {catEntries.map(([cat, w]) => (
+                              <div key={cat} className="flex justify-between items-center bg-white p-2.5 rounded-xl border border-neutral-100/60 shadow-sm">
+                                <div className="flex items-center gap-2">
+                                  <div className="w-2 h-2 rounded-full" style={{ backgroundColor: getCategoryHex(cat) }}></div>
+                                  <span className="text-sm font-bold text-neutral-700">{cat}</span>
+                                </div>
+                                <span className="text-sm font-black text-neutral-900">{Number(w).toLocaleString()} <span className="text-neutral-400 font-medium text-xs">กก.</span></span>
+                              </div>
+                            ))}
+                          </div>
+
+                          {/* Drill-down Round List */}
+                          <div className="px-4 pb-4">
+                            <div className="text-[10px] font-bold text-[#C084FC] uppercase tracking-widest mb-3 mt-2 flex items-center gap-2">
+                              <RotateCcw className="w-3 h-3" /> รอบที่รวมอยู่ในบิลนี้ (คลิกเพื่อดูรายละเอียด)
+                            </div>
+                            <div className="flex flex-wrap gap-2">
+                              {bill.roundIds.map(rid => {
+                                const r = historyRecords.find(hr => hr.id === rid);
+                                if (!r) return null;
+                                return (
+                                  <button
+                                    key={rid}
+                                    onClick={() => handleJumpToRound(rid, bill.id)}
+                                    className="bg-white border border-[#C084FC]/30 hover:border-[#C084FC] hover:bg-purple-50 px-3 py-2 rounded-xl flex flex-col items-center gap-0.5 transition-all active:scale-95 group"
+                                  >
+                                    <span className="text-[10px] font-bold text-neutral-400 group-hover:text-[#C084FC]">รอบที่</span>
+                                    <span className="text-sm font-black text-neutral-900 group-hover:text-[#C084FC]">{r.round}</span>
+                                    <span className="text-[8px] font-medium text-neutral-400">{r.date.split('/')[0]}/{r.date.split('/')[1]}</span>
+                                  </button>
+                                );
+                              })}
+                            </div>
+                          </div>
+
+                          <div className="px-4 flex gap-2">
+                            <button
+                              onClick={(e) => { e.stopPropagation(); setDeleteMbConfirmId(bill.id); }}
+                              className="w-10 flex items-center justify-center bg-red-50 text-red-500 rounded-xl hover:bg-red-100 transition-colors border border-red-100"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </button>
+                            <button
+                              onClick={handleReshareText}
+                              className="flex-1 flex items-center justify-center gap-2 py-2.5 bg-neutral-900 text-white rounded-xl text-xs font-bold hover:bg-neutral-700 active:scale-95 transition-all"
+                            >
+                              <MessageSquare className="w-3.5 h-3.5 text-[#4ADE80]" /> แชร์เป็นข้อความ
+                            </button>
+                            <button
+                              onClick={handleReshareImage}
+                              disabled={isGeneratingImg}
+                              className="flex-1 flex items-center justify-center gap-2 py-2.5 bg-white border-2 border-[#C084FC] text-[#7C3AED] rounded-xl text-xs font-bold hover:bg-[#C084FC]/5 active:scale-95 transition-all disabled:opacity-60"
+                            >
+                              {isGeneratingImg ? <><RotateCcw className="w-3.5 h-3.5 animate-spin" /> สร้าง...</> : <><ImageIcon className="w-3.5 h-3.5" /> แชร์เป็นรูป</>}
+                            </button>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            );
+          })()}
+        </div>
+      ) : (
         <div className="flex-1 overflow-y-auto p-3 md:p-6 pb-28 hide-scrollbar">
           {/* Back to Master Bill Context Button - Static style */}
           {navContext && (
@@ -1944,9 +1944,9 @@ export default function App() {
           const blob = await res.blob();
           const file = new File([blob], `master-weight-summary-${Date.now()}.png`, { type: 'image/png' });
           if (navigator.canShare({ files: [file] })) {
-            await navigator.share({ 
-              files: [file], 
-              title: `สรุปบิลรวมน้ำหนัก ${masterFruit} (${dateRange})` 
+            await navigator.share({
+              files: [file],
+              title: `สรุปบิลรวมน้ำหนัก ${masterFruit} (${dateRange})`
             });
           } else { downloadImage(dataUrl); }
         } else { downloadImage(dataUrl); }
@@ -1961,7 +1961,7 @@ export default function App() {
 
     // --- Finalize Master Bill ---
 
-      const handleFinalizeMasterBill = async () => {
+    const handleFinalizeMasterBill = async () => {
       setIsGeneratingMasterBill(true);
 
       // ✅ 1. Build master bill snapshot
@@ -2655,7 +2655,7 @@ export default function App() {
                 const idToDelete = deleteConfirmId;
                 setHistoryRecords(prev => prev.filter(r => r.id !== idToDelete));
                 setDeleteConfirmId(null);
-                
+
                 // Background Sync to GAS
                 if (GAS_URL) {
                   try {
@@ -2694,14 +2694,14 @@ export default function App() {
 
                 // 1. Remove MB from history
                 setMasterBillsHistory(prev => prev.filter(b => b.id !== mbId));
-                
+
                 // 2. Revert rounds to Pending
-                setHistoryRecords(prev => prev.map(r => 
+                setHistoryRecords(prev => prev.map(r =>
                   affectedRoundIds.includes(r.id) ? { ...r, billingStatus: 'Pending' } : r
                 ));
-                
+
                 setDeleteMbConfirmId(null);
-                
+
                 // 3. Background Sync to GAS
                 if (GAS_URL) {
                   try {
