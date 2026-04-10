@@ -140,6 +140,13 @@ export default function App() {
   const [expandedCats, setExpandedCats] = useState([]);
   const [editingId, setEditingId] = useState(null); 
   const [deleteConfirmId, setDeleteConfirmId] = useState(null); 
+  const [historyRecords, setHistoryRecords] = useState(() => {
+    const local = localStorage.getItem('cg_historyRecords');
+    return local ? JSON.parse(local) : [];
+  });
+  const [searchTerm, setSearchTerm] = useState('');
+  const [viewMode, setViewMode] = useState('list');
+  const [expandedHistory, setExpandedHistory] = useState([]);
 
   // GAS Loading State
   const [gasLoading, setGasLoading] = useState(false);
@@ -437,6 +444,7 @@ export default function App() {
   };
 
   const toggleCatExpand = (cat) => setExpandedCats(prev => prev.includes(cat) ? prev.filter(c => c !== cat) : [...prev, cat]);
+  const toggleHistoryExpand = (id) => setExpandedHistory(prev => prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]);
 
   const handleHistorySearchDateChange = (e) => {
     if (!e.target.value) return;
