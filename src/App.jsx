@@ -1410,10 +1410,12 @@ export default function App() {
           style={{ 
             position: 'fixed', 
             top: '0', 
-            left: '-9999px',
+            left: '0', // Keep it in viewport so browser MUST render it
             width: '450px',
             minHeight: '600px',
-            zIndex: -100,
+            zIndex: -50,
+            opacity: 0, // Invisible to user but rendered by browser
+            pointerEvents: 'none',
             backgroundColor: '#ffffff'
           }}
         >
