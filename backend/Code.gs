@@ -1,6 +1,6 @@
 /**
  * Count-Garden GAS Backend
- * v2 - Added Settings persistence (Fruits & Categories)
+ * v3 - Added Farm management and Hybrid Sorting support
  */
 
 function getSS() {
@@ -75,7 +75,7 @@ function getHistory() {
     });
     return {
       id: recordId, date: r[1], round: r[2], fruit: r[3], totalWeight: r[4], 
-      farmName: r[6] || '', // Assuming Col G for farmName
+      farmName: r[6] || '', 
       timestamp: r[5] ? Utilities.formatDate(new Date(r[5]), "GMT+7", "HH:mm") : '',
       details: Object.values(detailsMap)
     };
@@ -89,7 +89,6 @@ function saveRecord(payload) {
   const recordSheet = SS.getSheetByName('Records');
   const itemSheet = SS.getSheetByName('RecordItems');
   const recordId = Utilities.getUuid();
-  // Col A: ID, B: Date, C: Round, D: Fruit, E: TotalWeight, F: CreatedAt, G: FarmName
   recordSheet.appendRow([recordId, payload.date, payload.round, payload.fruit, payload.totalWeight, new Date(), payload.farmName || '']);
   payload.items.forEach(item => {
     itemSheet.appendRow([Utilities.getUuid(), recordId, item.category, item.weight, new Date()]);
@@ -97,7 +96,65 @@ function saveRecord(payload) {
   return jsonResponse({ success: true, recordId });
 }
 
-// ... existing addFruit, deleteFruit, addCategory, deleteCategory functions ...
+// --- WRITE: Settings - Fruits ---
+function addFruit(payload) {
+  const SS = getSS();
+  const fruitSheet = SS.getSheetByName('Fruits');
+  const fruitName = payload.fruitName;
+  if (!fruitName) return jsonResponse({ error: 'fruitName required' });
+
+  const existing = fruitSheet.getDataRange().getValues().slice(1);
+  if (existing.find(r => r[1] === fruitName)) return jsonResponse({ success: true, message: 'Already exists' });
+
+  const newId = existing.length + 1;
+  fruitSheet.appendRow([newId.toString(), fruitName]);
+  return jsonResponse({ success: true });
+}
+
+function deleteFruit(payload) {
+  const SS = getSS();
+  const fruitSheet = SS.getSheetByName('Fruits');
+  const catSheet = SS.getSheetByName('Categories');
+  const fruitName = payload.fruitName;
+
+  const fruitData = fruitSheet.getDataRange().getValues();
+  for (let i = fruitData.length - 1; i >= 1; i--) {
+    if (fruitData[i][1] === fruitName) { fruitSheet.deleteRow(i + 1); break; }
+  }
+
+  const catData = catSheet.getDataRange().getValues();
+  for (let i = catData.length - 1; i >= 1; i--) {
+    if (catData[i][1] === fruitName) catSheet.deleteRow(i + 1);
+  }
+  return jsonResponse({ success: true });
+}
+
+// --- WRITE: Settings - Categories ---
+function addCategory(payload) {
+  const SS = getSS();
+  const catSheet = SS.getSheetByName('Categories');
+  const { fruitName, categoryName } = payload;
+  if (!fruitName || !categoryName) return jsonResponse({ error: 'fruitName and categoryName required' });
+
+  const existing = catSheet.getDataRange().getValues().slice(1);
+  if (existing.find(r => r[1] === fruitName && r[2] === categoryName)) return jsonResponse({ success: true, message: 'Already exists' });
+
+  const newId = existing.length + 1;
+  catSheet.appendRow([newId.toString(), fruitName, categoryName]);
+  return jsonResponse({ success: true });
+}
+
+function deleteCategory(payload) {
+  const SS = getSS();
+  const catSheet = SS.getSheetByName('Categories');
+  const { fruitName, categoryName } = payload;
+
+  const catData = catSheet.getDataRange().getValues();
+  for (let i = catData.length - 1; i >= 1; i--) {
+    if (catData[i][1] === fruitName && catData[i][2] === categoryName) { catSheet.deleteRow(i + 1); break; }
+  }
+  return jsonResponse({ success: true });
+}
 
 // --- WRITE: Settings - Farms ---
 function addFarm(payload) {
@@ -141,8 +198,6 @@ function setup() {
   if (fruitSheet.getLastRow() === 0) {
     fruitSheet.appendRow(['ID', 'Name']);
     fruitSheet.appendRow(['1', 'มะละกอ']);
-    fruitSheet.appendRow(['2', 'มะม่วง']);
-    fruitSheet.appendRow(['3', 'กล้วย']);
   }
 
   const catSheet = SS.getSheetByName('Categories');
@@ -150,11 +205,6 @@ function setup() {
     catSheet.appendRow(['ID', 'FruitName', 'CategoryName']);
     catSheet.appendRow(['1', 'มะละกอ', 'ยาว']);
     catSheet.appendRow(['2', 'มะละกอ', 'แหลม']);
-    catSheet.appendRow(['3', 'มะละกอ', 'กลม']);
-    catSheet.appendRow(['4', 'มะละกอ', 'ลาย']);
-    catSheet.appendRow(['5', 'มะละกอ', 'ตั้งฉ่าย']);
-    catSheet.appendRow(['6', 'มะม่วง', 'น้ำดอกไม้']);
-    catSheet.appendRow(['7', 'มะม่วง', 'เขียวเสวย']);
   }
 
   const farmSheet = SS.getSheetByName('Farms');
@@ -173,6 +223,3 @@ function setup() {
     itemSheet.appendRow(['ItemID', 'RecordID', 'Category', 'Weight', 'CreatedAt']);
   }
 }
-
-// ฟังก์ชันดั้งเดิมที่เหลือ (addFruit, deleteFruit, addCategory, deleteCategory, jsonResponse) 
-// ควรยังคงอยู่เพื่อให้ระบบทำงานได้ครบถ้วน
