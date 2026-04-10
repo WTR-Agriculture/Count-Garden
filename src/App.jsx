@@ -87,10 +87,13 @@ export default function App() {
   };
 
   // --- Dynamic Master Data (Linked Fruits and Categories) ---
-  const [masterData, setMasterData] = useState({
-    'มะละกอ': ['ยาว', 'แหลม', 'กลม', 'ลาย', 'ตั้งฉ่าย'],
-    'มะม่วง': ['น้ำดอกไม้', 'เขียวเสวย', 'ฟ้าลั่น', 'แก้วขมิ้น'],
-    'กล้วย': ['หอมทอง', 'น้ำว้า', 'ไข่']
+  const [masterData, setMasterData] = useState(() => {
+    const local = localStorage.getItem('cg_masterData');
+    return local ? JSON.parse(local) : {
+      'มะละกอ': ['ยาว', 'แหลม', 'กลม', 'ลาย', 'ตั้งฉ่าย'],
+      'มะม่วง': ['น้ำดอกไม้', 'เขียวเสวย', 'ฟ้าลั่น', 'แก้วขมิ้น'],
+      'กล้วย': ['หอมทอง', 'น้ำว้า', 'ไข่']
+    };
   });
   
   const fruits = Object.keys(masterData);
@@ -137,10 +140,19 @@ export default function App() {
   const [gasLoading, setGasLoading] = useState(false);
 
   // History State
-  const [historyRecords, setHistoryRecords] = useState([]);
+  const [historyRecords, setHistoryRecords] = useState(() => {
+    const local = localStorage.getItem('cg_historyRecords');
+    return local ? JSON.parse(local) : [];
+  });
   const [expandedHistory, setExpandedHistory] = useState([]);
   const [viewMode, setViewMode] = useState('card');
   const [searchTerm, setSearchTerm] = useState('');
+
+  // Sync Queue State
+  const [syncQueue, setSyncQueue] = useState(() => {
+    const local = localStorage.getItem('cg_syncQueue');
+    return local ? JSON.parse(local) : [];
+  });
 
   // Dashboard State
   const [dashboardRange, setDashboardRange] = useState('daily'); 
@@ -158,6 +170,48 @@ export default function App() {
       setSettingsActiveFruit(fruits[0]);
     }
   }, [fruits, settingsActiveFruit]);
+
+  // --- Persistence Effects ---
+  useEffect(() => {
+    localStorage.setItem('cg_masterData', JSON.stringify(masterData));
+  }, [masterData]);
+
+  useEffect(() => {
+    localStorage.setItem('cg_historyRecords', JSON.stringify(historyRecords));
+  }, [historyRecords]);
+
+  useEffect(() => {
+    localStorage.setItem('cg_syncQueue', JSON.stringify(syncQueue));
+  }, [syncQueue]);
+
+  // Sync Queue Processor
+  const processSyncQueue = async () => {
+    if (syncQueue.length === 0 || !navigator.onLine || !GAS_URL) return;
+    
+    const queue = [...syncQueue];
+    setSyncQueue([]); // Optimistically clear
+
+    for (const item of queue) {
+      try {
+        await fetch(GAS_URL, {
+          method: 'POST',
+          body: JSON.stringify(item)
+        });
+      } catch (e) {
+        console.error('Failed to sync item, putting back in queue', e);
+        setSyncQueue(prev => [...prev, item]);
+      }
+    }
+    loadGASData();
+  };
+
+  useEffect(() => {
+    if (syncQueue.length > 0 && navigator.onLine) {
+      processSyncQueue();
+    }
+    window.addEventListener('online', processSyncQueue);
+    return () => window.removeEventListener('online', processSyncQueue);
+  }, [syncQueue]);
 
   // GAS Data Fetching
   useEffect(() => { loadGASData(); }, []);
@@ -264,20 +318,26 @@ export default function App() {
 
     // Save to GAS
     if (GAS_URL && !editingId) {
+      const payload = {
+        action: 'saveRecord',
+        payload: {
+          date: historyEntry.date, round: historyEntry.round, fruit: historyEntry.fruit,
+          totalWeight: historyEntry.totalWeight,
+          items: groupedRecords.flatMap(g => g.items.map(item => ({ category: g.category, weight: item.weight })))
+        }
+      };
+
       try {
-        await fetch(GAS_URL, {
+        const response = await fetch(GAS_URL, {
           method: 'POST',
-          body: JSON.stringify({
-            action: 'saveRecord',
-            payload: {
-              date: historyEntry.date, round: historyEntry.round, fruit: historyEntry.fruit,
-              totalWeight: historyEntry.totalWeight,
-              items: groupedRecords.flatMap(g => g.items.map(item => ({ category: g.category, weight: item.weight })))
-            }
-          })
+          body: JSON.stringify(payload)
         });
+        if (!response.ok) throw new Error('Fetch failed');
         loadGASData();
-      } catch(e) { console.error('GAS save failed', e); }
+      } catch(e) { 
+        console.error('GAS save failed, adding to sync queue', e); 
+        setSyncQueue(prev => [...prev, payload]);
+      }
     }
   };
 
@@ -1097,6 +1157,18 @@ export default function App() {
         onScroll={handleScroll}
         className="flex-1 overflow-y-auto overflow-x-hidden lg:overflow-hidden flex flex-col relative w-full h-full"
       >
+        {/* --- Sync/Offline Indicator --- */}
+        {!navigator.onLine && (
+          <div className="bg-red-500 text-white text-[10px] py-1 text-center font-bold tracking-widest z-[150] sticky top-0 flex items-center justify-center gap-2">
+            <AlertCircle className="w-3 h-3" /> OFFLINE MODE - Saving Locally
+          </div>
+        )}
+        {syncQueue.length > 0 && navigator.onLine && (
+          <div className="bg-[#4ADE80] text-neutral-900 text-[10px] py-1 text-center font-bold tracking-widest z-[150] sticky top-0 flex items-center justify-center gap-2">
+            <Sparkles className="w-3 h-3 animate-spin-slow" /> DATA SYNCING... ({syncQueue.length})
+          </div>
+        )}
+
         {activeTab === 'record' ? (
           isRecording ? renderActiveScreen() : renderSetupScreen()
         ) : activeTab === 'history' ? (
