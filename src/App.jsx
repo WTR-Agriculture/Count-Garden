@@ -1979,19 +1979,23 @@ export default function App() {
               <p className="text-[10px] font-medium text-neutral-500 leading-tight mt-0.5">เพื่อการบันทึกน้ำหนักที่รวดเร็วและสะดวกยิ่งขึ้น</p>
             </div>
 
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-3 relative z-10">
               <button 
                 onClick={handleInstallClick}
-                className="bg-[#4ADE80] hover:bg-[#22C55E] text-white px-5 py-2 rounded-full font-bold text-xs shadow-md shadow-[#4ADE80]/20 transition-all active:scale-95 whitespace-nowrap"
+                className="bg-[#4ADE80] hover:bg-[#22C55E] text-white px-5 py-2.5 rounded-full font-bold text-sm shadow-md shadow-[#4ADE80]/20 transition-all active:scale-95 whitespace-nowrap"
               >
                 เพิ่ม
               </button>
               <button 
-                onClick={() => { setShowInstallBanner(false); sessionStorage.setItem('cg_install_dismissed', 'true'); }}
-                className="p-1.5 text-neutral-300 hover:text-neutral-500 hover:bg-neutral-50 rounded-full transition-colors"
-                title="ปิด"
+                onClick={(e) => { 
+                  e.stopPropagation(); 
+                  setShowInstallBanner(false); 
+                  sessionStorage.setItem('cg_install_dismissed', 'true'); 
+                }}
+                className="p-3 -mr-2 text-neutral-400 hover:text-neutral-600 hover:bg-neutral-100 rounded-full transition-all active:scale-90"
+                aria-label="ปิด"
               >
-                <X className="w-4 h-4" />
+                <X className="w-6 h-6" />
               </button>
             </div>
           </div>
