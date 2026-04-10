@@ -390,9 +390,18 @@ export default function App() {
 
   const handleEditHistory = (recordToEdit) => {
     let flatRecords = [];
-    recordToEdit.details.forEach(detail => { detail.items.forEach((itemWeight, idx) => { flatRecords.push({ id: `edit-${Date.now()}-${idx}-${Math.random()}`, category: detail.category, weight: itemWeight, timestamp: recordToEdit.timestamp }); }); });
-    setSetupData({ date: recordToEdit.date, round: recordToEdit.round, fruit: recordToEdit.fruit });
-    setRecords(flatRecords.reverse());
+    recordToEdit.details.forEach(detail => { 
+      detail.items.forEach((itemWeight, idx) => { 
+        flatRecords.push({ 
+          id: `edit-${Date.now()}-${idx}-${Math.random()}`, 
+          category: detail.category, 
+          weight: itemWeight, 
+          timestamp: recordToEdit.timestamp 
+        }); 
+      }); 
+    });
+    setSetupData({ date: recordToEdit.date, round: recordToEdit.round, fruit: recordToEdit.fruit, farmName: recordToEdit.farmName || '' });
+    setRecords(flatRecords.reverse()); // Reverse back to Latest -> First for Recording UI
     setEditingId(recordToEdit.id); setActiveTab('record'); setIsRecording(true); setExpandedHistory([]);
   };
 
@@ -408,7 +417,12 @@ export default function App() {
     const historyEntry = {
       id: editingId || Date.now().toString(), date: setupData.date, round: setupData.round, fruit: setupData.fruit, farmName: setupData.farmName, totalWeight: grandTotal,
       timestamp: new Date().toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' }),
-      details: groupedRecords.map(g => ({ category: g.category, total: g.total, count: g.items.length, items: g.items.map(item => item.weight).reverse() }))
+      details: groupedRecords.map(g => ({ 
+        category: g.category, 
+        total: g.total, 
+        count: g.items.length, 
+        items: g.items.map(item => item.weight).reverse() // Store as First -> Last
+      }))
     };
 
     if (editingId) { setHistoryRecords(prev => prev.map(r => r.id === editingId ? historyEntry : r)); setEditingId(null); }
@@ -471,7 +485,11 @@ export default function App() {
       fruit: setupData.fruit,
       farmName: setupData.farmName,
       totalWeight: grandTotal,
-      details: groupedRecords.map(g => ({ category: g.category, total: g.total, items: g.items.map(item => item.weight).reverse() }))
+      details: groupedRecords.map(g => ({ 
+        category: g.category, 
+        total: g.total, 
+        items: g.items.map(item => item.weight).reverse() // Sequence as First -> Last
+      }))
     };
 
     let text = `🧾 สลิปชั่งน้ำหนัก: ${data.fruit}\n`;
@@ -502,7 +520,11 @@ export default function App() {
       fruit: setupData.fruit,
       farmName: setupData.farmName,
       totalWeight: grandTotal,
-      details: groupedRecords.map(g => ({ category: g.category, total: g.total, items: g.items.map(item => item.weight).reverse() }))
+      details: groupedRecords.map(g => ({ 
+        category: g.category, 
+        total: g.total, 
+        items: g.items.map(item => item.weight).reverse() // Sequence as First -> Last
+      }))
     };
 
     const currentFarmName = data.farmName || setupData.farmName;
@@ -941,7 +963,7 @@ export default function App() {
                   <div className="px-3 pb-4 pt-1 bg-neutral-50 border-t border-neutral-100">
                     <p className="text-[10px] text-neutral-400 font-medium mb-1.5">รายละเอียดน้ำหนักแต่ละรายการ:</p>
                     <div className="flex flex-wrap gap-1.5">
-                      {group.items.map((item, index) => (
+                      {[...group.items].reverse().map((item, index) => (
                         <span key={item.id} className="bg-white border border-neutral-200 px-2.5 py-1 rounded-full text-xs font-bold text-neutral-700 shadow-sm flex items-center gap-1">
                           <span className="text-[9px] text-neutral-300 font-normal">{index + 1}.</span> {item.weight}
                         </span>
