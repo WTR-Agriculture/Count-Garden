@@ -158,6 +158,13 @@ export default function App() {
   });
   const [searchTerm, setSearchTerm] = useState('');
   const [viewMode, setViewMode] = useState('list');
+  
+  // Master Billing Selection States
+  const [isSelectionMode, setIsSelectionMode] = useState(false);
+  const [selectedRounds, setSelectedRounds] = useState([]);
+  const [isGeneratingMasterBill, setIsGeneratingMasterBill] = useState(false);
+  const [showMasterBillModal, setShowMasterBillModal] = useState(false);
+  const [filterDate, setFilterDate] = useState(''); // Added missing filterDate state
   const [expandedHistory, setExpandedHistory] = useState([]);
 
   // GAS Loading State
@@ -749,6 +756,10 @@ export default function App() {
 
   const clearDateFilter = () => setFilterDate('');
 
+  const toggleSelection = (id) => {
+    setSelectedRounds(prev => prev.includes(id) ? prev.filter(rid => rid !== id) : [...prev, id]);
+  };
+
   // --- Render Screens ---
   const renderSetupScreen = () => (
     <div className="flex-1 flex flex-col p-4 bg-[#FDFBF7] justify-center items-center min-h-full w-full relative overflow-y-auto lg:overflow-hidden pb-24 lg:pb-4">
@@ -1070,14 +1081,26 @@ export default function App() {
         <div className="absolute top-0 right-0 w-48 h-48 bg-[#C084FC] rounded-full blur-[80px] opacity-10"></div>
         <div className="flex justify-between items-center relative z-10">
           <h2 className="text-2xl lg:text-3xl font-extrabold tracking-tight text-neutral-900 flex items-center gap-2">History <span className="text-neutral-300 font-normal">|</span> <span className="text-[#C084FC] font-bold text-lg lg:text-xl">ประวัติ</span></h2>
-          <button 
-            onClick={loadGASData} 
-            disabled={gasLoading}
-            className={`p-2 rounded-full transition-all ${gasLoading ? 'animate-spin text-[#C084FC] bg-purple-50' : 'text-neutral-400 hover:text-[#C084FC] hover:bg-purple-50 active:scale-90'}`}
-            title="รีเฟรชข้อมูล"
-          >
-            <RotateCcw className="w-5 h-5" />
-          </button>
+          <div className="flex items-center gap-2">
+            <button 
+              onClick={() => {
+                setIsSelectionMode(!isSelectionMode);
+                setSelectedRounds([]);
+              }}
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[11px] lg:text-xs font-bold transition-all shadow-sm ${isSelectionMode ? 'bg-[#C084FC] text-white' : 'bg-white border border-neutral-200 text-neutral-700 hover:bg-neutral-50'}`}
+            >
+              <ListChecks className="w-3.5 h-3.5" />
+              {isSelectionMode ? 'Cancel' : 'สรุปรวมบิล'}
+            </button>
+            <button 
+              onClick={loadGASData} 
+              disabled={gasLoading}
+              className={`p-2 rounded-full transition-all ${gasLoading ? 'animate-spin text-[#C084FC] bg-purple-50' : 'text-neutral-400 hover:text-[#C084FC] hover:bg-purple-50 active:scale-90'}`}
+              title="รีเฟรชข้อมูล"
+            >
+              <RotateCcw className="w-5 h-5" />
+            </button>
+          </div>
         </div>
 
         <div className="mt-4 flex flex-col gap-3 relative z-10 w-full">
@@ -1129,11 +1152,24 @@ export default function App() {
                 if (viewMode === 'list') {
                   return (
                     <div key={record.id} className="bg-white rounded-2xl border border-neutral-100 shadow-[0_2px_10px_rgb(0,0,0,0.02)] overflow-hidden transition-all hover:border-neutral-200">
-                      <div className="p-3 flex justify-between items-center cursor-pointer" onClick={() => toggleHistoryExpand(record.id)}>
+                      <div className="p-3 flex justify-between items-center cursor-pointer" onClick={() => isSelectionMode ? toggleSelection(record.id) : toggleHistoryExpand(record.id)}>
                         <div className="flex items-center gap-3">
-                          <div className="bg-[#4ADE80] text-neutral-900 w-10 h-10 rounded-full flex items-center justify-center font-bold text-xs shadow-sm shrink-0 whitespace-nowrap">ร.{record.round}</div>
+                          {isSelectionMode && (
+                            <div className={`w-5 h-5 rounded-md border-2 flex items-center justify-center transition-all ${selectedRounds.includes(record.id) ? 'bg-[#C084FC] border-[#C084FC]' : 'border-neutral-200 bg-white shadow-inner'}`}>
+                              {selectedRounds.includes(record.id) && <CheckCircle className="w-3.5 h-3.5 text-white" />}
+                            </div>
+                          )}
+                          <div className={`w-10 h-10 rounded-full flex items-center justify-center font-bold text-xs shadow-sm shrink-0 whitespace-nowrap transition-colors ${record.billingStatus === 'Billed' ? 'bg-green-100 text-green-700' : 'bg-[#4ADE80] text-neutral-900'}`}>ร.{record.round}</div>
                           <div>
-                            <div className="font-bold text-neutral-900 text-sm flex items-center gap-1.5">{record.fruit} <span className="bg-neutral-100 text-neutral-500 text-[8px] px-1.5 py-0.5 rounded-full font-bold">{record.details.length} ประเภท</span></div>
+                            <div className="font-bold text-neutral-900 text-sm flex items-center gap-1.5">
+                              {record.fruit} 
+                              {record.billingStatus === 'Billed' ? (
+                                <span className="bg-green-100 text-green-600 text-[7px] px-1 py-0.5 rounded-full font-bold border border-green-200 uppercase tracking-tighter">Billed</span>
+                              ) : (
+                                <span className="bg-amber-100 text-amber-600 text-[7px] px-1 py-0.5 rounded-full font-bold border border-amber-200 uppercase tracking-tighter">Pending</span>
+                              )}
+                              <span className="bg-neutral-100 text-neutral-500 text-[8px] px-1.5 py-0.5 rounded-full font-bold">{record.details.length} ประเภท</span>
+                            </div>
                             <div className="text-[9px] text-neutral-400 font-medium flex items-center gap-1 mt-0.5"><Calendar className="w-2.5 h-2.5" />{formatDisplayDate(record.date)} • {record.timestamp}</div>
                           </div>
                         </div>
@@ -1177,13 +1213,20 @@ export default function App() {
                 }
                 return (
                   <div key={record.id} className="bg-white rounded-3xl border border-neutral-100 shadow-[0_2px_15px_rgb(0,0,0,0.02)] overflow-hidden transition-all hover:border-neutral-200">
-                    <div onClick={() => toggleHistoryExpand(record.id)} className="p-4 cursor-pointer">
+                    <div onClick={() => isSelectionMode ? toggleSelection(record.id) : toggleHistoryExpand(record.id)} className="p-4 cursor-pointer">
                       <div className="flex justify-between items-start mb-3">
-                        <div className="flex items-center gap-1.5 text-[10px] font-semibold text-neutral-500">
-                          <span className="flex items-center gap-1 bg-neutral-100 px-2 py-0.5 rounded-md"><Calendar className="w-2.5 h-2.5" /> {formatDisplayDate(record.date)}</span>
-                          <span className="flex items-center gap-1 bg-neutral-100 px-2 py-0.5 rounded-md"><Clock className="w-2.5 h-2.5" /> {record.timestamp}</span>
+                        <div className="flex items-center gap-3">
+                          {isSelectionMode && (
+                            <div className={`w-6 h-6 rounded-lg border-2 flex items-center justify-center transition-all ${selectedRounds.includes(record.id) ? 'bg-[#C084FC] border-[#C084FC]' : 'border-neutral-200 bg-white'}`}>
+                              {selectedRounds.includes(record.id) && <CheckCircle className="w-4 h-4 text-white" />}
+                            </div>
+                          )}
+                          <div className="flex items-center gap-1.5 text-[10px] font-semibold text-neutral-500">
+                            <span className="flex items-center gap-1 bg-neutral-100 px-2 py-0.5 rounded-md"><Calendar className="w-2.5 h-2.5" /> {formatDisplayDate(record.date)}</span>
+                            <span className="flex items-center gap-1 bg-neutral-100 px-2 py-0.5 rounded-md"><Clock className="w-2.5 h-2.5" /> {record.timestamp}</span>
+                          </div>
                         </div>
-                        <div className="bg-[#4ADE80] text-neutral-900 px-2.5 py-0.5 rounded-full text-[10px] font-bold shadow-sm whitespace-nowrap">รอบ {record.round}</div>
+                        <div className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold shadow-sm whitespace-nowrap transition-colors ${record.billingStatus === 'Billed' ? 'bg-green-100 text-green-700' : 'bg-[#4ADE80] text-neutral-900'}`}>{record.billingStatus === 'Billed' ? 'บันทึกบิลแล้ว' : `รอบที่ ${record.round}`}</div>
                       </div>
                       <div className="flex items-end justify-between">
                         <div>
@@ -1195,10 +1238,10 @@ export default function App() {
                         </div>
                         <div className="text-right">
                           <p className="text-[9px] font-bold text-neutral-400 uppercase tracking-widest mb-0.5">ยอดรวมสุทธิ</p>
-                          <div className="text-2xl font-black tracking-tight text-neutral-900">{record.totalWeight.toLocaleString()} <span className="text-[11px] font-bold text-neutral-500">กก.</span></div>
+                          <div className="text-2xl font-black tracking-tight text-neutral-900 text-[#C084FC]">{record.totalWeight.toLocaleString()} <span className="text-[11px] font-bold text-neutral-500">กก.</span></div>
                         </div>
                       </div>
-                      <div className="mt-3.5 flex items-center justify-center gap-1 text-[10px] font-bold text-[#C084FC]">
+                      <div className="mt-3.5 flex items-center justify-center gap-1 text-[10px] font-bold text-[#C084FC]/60">
                         {isExpanded ? 'ปิดรายละเอียด' : 'ดูรายละเอียดประเภท'} <ChevronDown className={`w-3.5 h-3.5 transition-transform ${isExpanded ? 'rotate-180' : ''}`} />
                       </div>
                     </div>
@@ -1241,21 +1284,36 @@ export default function App() {
               <table className="w-full text-left border-collapse">
                 <thead>
                   <tr className="bg-neutral-50 border-b border-neutral-100 text-neutral-500 text-xs uppercase tracking-widest">
-                    <th className="p-4 pl-6 font-bold">วันที่</th><th className="p-4 font-bold">เวลา</th><th className="p-4 font-bold text-center">รอบ</th><th className="p-4 font-bold">ผลไม้</th><th className="p-4 font-bold">รายละเอียด</th><th className="p-4 font-bold text-right">ยอดรวมสุทธิ</th><th className="p-4 pr-6 font-bold text-center">จัดการ</th>
+                    {isSelectionMode && <th className="p-4 pl-6 w-10"></th>}
+                    <th className="p-4 pl-6 font-bold">วันที่</th><th className="p-4 font-bold">เวลา</th><th className="p-4 font-bold text-center">รอบ</th><th className="p-4 font-bold">ผลไม้</th><th className="p-4 font-bold">สถานะบิล</th><th className="p-4 font-bold text-right">ยอดรวมสุทธิ</th><th className="p-4 pr-6 font-bold text-center">จัดการ</th>
                   </tr>
                 </thead>
                 <tbody>
                   {filteredHistory.map((record, index) => {
                     const isExpanded = expandedHistory.includes(record.id);
                     const isLast = index === filteredHistory.length - 1;
+                    const isSelected = selectedRounds.includes(record.id);
                     return (
                       <React.Fragment key={record.id}>
-                        <tr onClick={() => toggleHistoryExpand(record.id)} className={`hover:bg-neutral-50/50 cursor-pointer transition-colors group ${!isExpanded && !isLast ? 'border-b border-neutral-50' : ''} ${isExpanded ? 'bg-neutral-50/50 border-b border-neutral-100' : ''}`}>
+                        <tr onClick={() => isSelectionMode ? toggleSelection(record.id) : toggleHistoryExpand(record.id)} className={`hover:bg-neutral-50/50 cursor-pointer transition-colors group ${!isExpanded && !isLast ? 'border-b border-neutral-50' : ''} ${isExpanded ? 'bg-neutral-50/50 border-b border-neutral-100' : ''} ${isSelected ? 'bg-[#C084FC]/5' : ''}`}>
+                          {isSelectionMode && (
+                            <td className="p-4 pl-6">
+                              <div className={`w-5 h-5 rounded-md border-2 flex items-center justify-center transition-all ${isSelected ? 'bg-[#C084FC] border-[#C084FC]' : 'border-neutral-200 bg-white'}`}>
+                                {isSelected && <CheckCircle className="w-3.5 h-3.5 text-white" />}
+                              </div>
+                            </td>
+                          )}
                           <td className="p-4 pl-6 text-sm font-semibold text-neutral-700"><span className="flex items-center gap-2"><Calendar className="w-4 h-4 text-neutral-400" /> {formatDisplayDate(record.date)}</span></td>
                           <td className="p-4 text-sm font-medium text-neutral-500"><span className="flex items-center gap-2"><Clock className="w-4 h-4 text-neutral-400" /> {record.timestamp}</span></td>
-                          <td className="p-4 text-center"><span className="bg-[#4ADE80] text-neutral-900 px-3 py-1 rounded-full text-xs font-bold shadow-sm whitespace-nowrap">รอบที่ {record.round}</span></td>
+                          <td className="p-4 text-center"><span className={`px-3 py-1 rounded-full text-xs font-bold shadow-sm whitespace-nowrap ${record.billingStatus === 'Billed' ? 'bg-green-50 text-green-600' : 'bg-[#4ADE80] text-neutral-900'}`}>{record.round}</span></td>
                           <td className="p-4"><span className="text-base font-bold text-neutral-900">{record.fruit}</span></td>
-                          <td className="p-4"><span className="bg-neutral-100 text-neutral-600 border border-neutral-200 text-xs px-3 py-1 rounded-full font-bold">{record.details.length} ประเภท</span></td>
+                          <td className="p-4">
+                            {record.billingStatus === 'Billed' ? (
+                              <span className="flex items-center gap-1.5 text-xs font-bold text-green-600 uppercase tracking-tight"><CheckCircle className="w-3.5 h-3.5" /> Billed</span>
+                            ) : (
+                              <span className="flex items-center gap-1.5 text-xs font-bold text-amber-500 uppercase tracking-tight"><Clock className="w-3.5 h-3.5" /> Pending</span>
+                            )}
+                          </td>
                           <td className="p-4 text-right"><span className="text-xl font-black tracking-tight text-neutral-900">{record.totalWeight.toLocaleString()}</span><span className="text-xs font-bold text-neutral-500 ml-1">กก.</span></td>
                           <td className="p-4 pr-6 text-center"><div className="flex items-center justify-center"><button className={`p-2 rounded-full transition-all ${isExpanded ? 'bg-[#C084FC] text-white shadow-md' : 'text-neutral-400 hover:text-neutral-700 hover:bg-neutral-100 shadow-sm bg-white border border-neutral-200'}`}><ChevronDown className={`w-4 h-4 transition-transform ${isExpanded ? 'rotate-180' : ''}`} /></button></div></td>
                         </tr>
@@ -1300,8 +1358,138 @@ export default function App() {
           </>
         )}
       </div>
+
+      {/* Floating Selection Bar */}
+      {isSelectionMode && (
+        <div className="fixed bottom-24 left-4 right-4 z-[90] animate-in slide-in-from-bottom-5 duration-300">
+          <div className="bg-neutral-900 text-white rounded-3xl p-4 shadow-2xl flex items-center justify-between border border-neutral-800">
+            <div className="flex flex-col">
+              <span className="text-[10px] font-bold text-neutral-400 uppercase tracking-widest">เลือกไปแล้ว</span>
+              <span className="text-lg font-black">{selectedRounds.length} <span className="text-xs font-bold text-neutral-500">รายการ</span></span>
+            </div>
+            <div className="flex gap-2">
+              <button 
+                onClick={() => { setIsSelectionMode(false); setSelectedRounds([]); }}
+                className="px-4 py-2 rounded-full text-xs font-bold text-neutral-400 hover:text-white transition-colors"
+              >
+                ยกเลิก
+              </button>
+              <button 
+                disabled={selectedRounds.length === 0}
+                onClick={() => setShowMasterBillModal(true)}
+                className="bg-[#C084FC] hover:bg-[#A855F7] disabled:bg-neutral-700 disabled:text-neutral-500 text-white px-6 py-2 rounded-full text-xs font-black shadow-lg shadow-purple-900/20 active:scale-95 transition-all flex items-center gap-2"
+              >
+                <ImageIcon className="w-4 h-4" /> สร้างบิลสรุป
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
+
+  const renderMasterBillModal = () => {
+    const selectedData = historyRecords.filter(r => selectedRounds.includes(r.id));
+    if (selectedData.length === 0) return null;
+
+    const categorySummary = {};
+    let totalWeight = 0;
+    selectedData.forEach(r => {
+      totalWeight += r.totalWeight;
+      r.details.forEach(d => {
+        categorySummary[d.category] = (categorySummary[d.category] || 0) + d.total;
+      });
+    });
+
+    const dates = selectedData.map(r => r.date).sort();
+    const dateRange = dates.length > 1 
+      ? `${formatDisplayDate(dates[0])} - ${formatDisplayDate(dates[dates.length - 1])}` 
+      : formatDisplayDate(dates[0]);
+
+    const handleFinalizeMasterBill = async () => {
+      setIsGeneratingMasterBill(true);
+      if (GAS_URL) {
+        try {
+          await fetch(GAS_URL, { 
+            method: 'POST', 
+            body: JSON.stringify({ action: 'updateBillingStatus', payload: { ids: selectedRounds, status: 'Billed' } }) 
+          });
+          await loadGASData();
+          setIsSelectionMode(false);
+          setSelectedRounds([]);
+          setShowMasterBillModal(false);
+          alert('ออกบิลรวมและอัปเดตสถานะเรียบร้อยแล้วค่ะ!');
+        } catch (e) { console.error('Master bill finalize failed', e); }
+      }
+      setIsGeneratingMasterBill(false);
+    };
+
+    return (
+      <div className="fixed inset-0 z-[110] bg-neutral-900/80 backdrop-blur-md flex items-end md:items-center justify-center md:p-4 overflow-y-auto">
+        <div className="bg-white w-full max-w-lg rounded-t-[2.5rem] md:rounded-[2.5rem] shadow-2xl flex flex-col my-auto animate-in slide-in-from-bottom-10 duration-500 overflow-hidden">
+          <div className="bg-neutral-900 text-white p-6 relative overflow-hidden shrink-0">
+             <div className="absolute -right-6 -top-6 w-32 h-32 bg-[#C084FC] rounded-full blur-[60px] opacity-20"></div>
+             <h2 className="text-2xl font-black tracking-tight mb-1 flex items-center gap-2">
+               <div className="w-8 h-8 rounded-full bg-[#C084FC] text-white flex items-center justify-center"><ImageIcon className="w-5 h-5" /></div>
+               Master Invoice
+             </h2>
+             <p className="text-neutral-400 text-xs font-bold uppercase tracking-widest flex items-center gap-1.5"><Calendar className="w-3.5 h-3.5" /> ประจำวันที่: {dateRange}</p>
+          </div>
+          <div className="bg-white p-6 space-y-8 overflow-y-auto max-h-[60vh] hide-scrollbar">
+            <div className="text-center pb-6 border-b border-dashed border-neutral-100 italic text-neutral-400 text-xs">AgriWeigh Pro - ใบสรุปผลผลิตรวม</div>
+            <div>
+              <div className="flex items-center gap-2 mb-4">
+                <div className="w-1.5 h-4 bg-[#C084FC] rounded-full"></div>
+                <h4 className="font-extrabold text-neutral-800 text-sm uppercase tracking-wider">สรุปยอดรวมตามประเภท</h4>
+              </div>
+              <div className="space-y-3">
+                {Object.entries(categorySummary).sort((a,b) => b[1] - a[1]).map(([cat, weight]) => (
+                  <div key={cat} className="flex justify-between items-center p-4 bg-neutral-50 rounded-2xl border border-neutral-100 shadow-sm">
+                    <div className="flex items-center gap-3">
+                      <div className="w-2 h-2 rounded-full" style={{ backgroundColor: getCategoryHex(cat) }}></div>
+                      <span className="font-bold text-neutral-700">{cat}</span>
+                    </div>
+                    <div className="text-xl font-black text-neutral-900">{weight.toLocaleString()} <span className="text-[10px] text-neutral-400">กก.</span></div>
+                  </div>
+                ))}
+                <div className="pt-4 border-t border-neutral-100 flex justify-between items-center">
+                   <span className="text-sm font-black text-neutral-500 uppercase tracking-widest">ยอดรวมสุทธิทั้งสิ้น</span>
+                   <span className="text-3xl font-black text-neutral-900 tracking-tight">{totalWeight.toLocaleString()} <span className="text-sm font-bold text-neutral-400">กก.</span></span>
+                </div>
+              </div>
+            </div>
+            <div className="bg-neutral-50/50 p-5 rounded-3xl border border-neutral-100">
+               <div className="flex items-center gap-2 mb-4">
+                  <List className="w-4 h-4 text-neutral-400" />
+                  <h4 className="font-extrabold text-neutral-400 text-[10px] uppercase tracking-widest">แจกแจงรายรอบ (Audit Log)</h4>
+               </div>
+               <div className="space-y-3">
+                  {selectedData.sort((a,b) => new Date(a.date) - new Date(b.date)).map(r => (
+                    <div key={r.id} className="flex justify-between items-center group">
+                       <div className="text-[11px] font-bold text-neutral-600 flex items-center gap-2">
+                          <span className="w-4 h-4 bg-white border border-neutral-200 rounded-full flex items-center justify-center text-[8px]">{r.round}</span>
+                          {formatDisplayDate(r.date)}
+                       </div>
+                       <div className="text-[11px] font-black text-neutral-900">{r.totalWeight.toLocaleString()} <span className="text-neutral-400 font-bold">กก.</span></div>
+                    </div>
+                  ))}
+               </div>
+            </div>
+          </div>
+          <div className="p-6 bg-neutral-50 border-t border-neutral-100 flex flex-col gap-3 shrink-0">
+             <button onClick={handleFinalizeMasterBill} disabled={isGeneratingMasterBill} className="w-full bg-neutral-900 text-white p-4 rounded-2xl font-black text-base shadow-xl hover:shadow-2xl active:scale-95 transition-all flex items-center justify-center gap-3">
+                {isGeneratingMasterBill ? (
+                  <><RotateCcw className="w-5 h-5 animate-spin" /> กำลังบันทึก...</>
+                ) : (
+                  <><CheckCircle className="w-5 h-5 text-[#4ADE80]" /> ยืนยันออกบิล & บันทึกสถานะ</>
+                )}
+             </button>
+             <button onClick={() => setShowMasterBillModal(false)} className="w-full bg-white border border-neutral-200 text-neutral-500 p-4 rounded-2xl font-bold text-sm hover:bg-neutral-50 transition-colors">ย้อนกลับ</button>
+          </div>
+        </div>
+      </div>
+    );
+  };
 
   const renderDashboardScreen = () => {
     const statsHistory = dashboardFruitFilter === 'All'
@@ -1865,6 +2053,9 @@ export default function App() {
 
       {/* --- Summary Modal Overlay --- */}
       {showSummaryModal && renderSummaryModal()}
+
+      {/* --- Master Bill Modal Overlay --- */}
+      {showMasterBillModal && renderMasterBillModal()}
 
       {/* --- Mobile & Tablet Bottom Navigation --- */}
       <div className={`lg:hidden fixed bottom-3 left-3 right-3 z-50 pointer-events-none pb-safe transition-all duration-300 ${showNav ? 'translate-y-0 opacity-100' : 'translate-y-24 opacity-0'}`}>

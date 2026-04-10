@@ -74,8 +74,13 @@ function getHistory() {
       detailsMap[cat].items.push(weight);
     });
     return {
-      id: recordId, date: r[1], round: r[2], fruit: r[3], totalWeight: r[4], 
+      id: recordId, 
+      date: r[1], 
+      round: r[2], 
+      fruit: r[3], 
+      totalWeight: r[4], 
       farmName: r[6] || '', 
+      billingStatus: r[7] || 'Pending', // Column H
       timestamp: r[5] ? Utilities.formatDate(new Date(r[5]), "GMT+7", "HH:mm") : '',
       details: Object.values(detailsMap)
     };
@@ -88,12 +93,57 @@ function saveRecord(payload) {
   const SS = getSS();
   const recordSheet = SS.getSheetByName('Records');
   const itemSheet = SS.getSheetByName('RecordItems');
-  const recordId = Utilities.getUuid();
-  recordSheet.appendRow([recordId, payload.date, payload.round, payload.fruit, payload.totalWeight, new Date(), payload.farmName || '']);
+  const recordId = payload.id || Utilities.getUuid();
+  const now = new Date();
+  
+  const records = recordSheet.getDataRange().getValues();
+  let existingRow = -1;
+  for (let i = 1; i < records.length; i++) {
+    if (records[i][0] === recordId) { existingRow = i + 1; break; }
+  }
+
+  const rowData = [
+    recordId, 
+    payload.date, 
+    payload.round, 
+    payload.fruit, 
+    payload.totalWeight, 
+    now, 
+    payload.farmName || '',
+    payload.billingStatus || 'Pending'
+  ];
+
+  if (existingRow > 0) {
+    recordSheet.getRange(existingRow, 1, 1, rowData.length).setValues([rowData]);
+    // Clear old items
+    const itemData = itemSheet.getDataRange().getValues();
+    for (let i = itemData.length - 1; i >= 1; i--) {
+      if (itemData[i][1] === recordId) itemSheet.deleteRow(i + 1);
+    }
+  } else {
+    recordSheet.appendRow(rowData);
+  }
+
   payload.items.forEach(item => {
-    itemSheet.appendRow([Utilities.getUuid(), recordId, item.category, item.weight, new Date()]);
+    itemSheet.appendRow([Utilities.getUuid(), recordId, item.category, item.weight, now]);
   });
+  
   return jsonResponse({ success: true, recordId });
+}
+
+function updateBillingStatus(payload) {
+  const SS = getSS();
+  const recordSheet = SS.getSheetByName('Records');
+  const { ids, status } = payload;
+  if (!ids || !status) return jsonResponse({ error: 'Missing ids or status' });
+
+  const data = recordSheet.getDataRange().getValues();
+  for (let i = 1; i < data.length; i++) {
+    if (ids.indexOf(data[i][0]) !== -1) {
+      recordSheet.getRange(i + 1, 8).setValue(status); // Column H is status
+    }
+  }
+  return jsonResponse({ success: true });
 }
 
 // --- WRITE: Settings - Fruits ---
@@ -215,7 +265,7 @@ function setup() {
 
   const recordSheet = SS.getSheetByName('Records');
   if (recordSheet.getLastRow() === 0) {
-    recordSheet.appendRow(['RecordID', 'Date', 'Round', 'Fruit', 'TotalWeight', 'CreatedAt', 'FarmName']);
+    recordSheet.appendRow(['RecordID', 'Date', 'Round', 'Fruit', 'TotalWeight', 'CreatedAt', 'FarmName', 'BillingStatus']);
   }
 
   const itemSheet = SS.getSheetByName('RecordItems');
