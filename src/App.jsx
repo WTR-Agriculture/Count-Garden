@@ -1361,8 +1361,8 @@ export default function App() {
 
       {/* Floating Selection Bar */}
       {isSelectionMode && (
-        <div className="fixed bottom-24 left-4 right-4 z-[90] animate-in slide-in-from-bottom-5 duration-300">
-          <div className="bg-neutral-900 text-white rounded-3xl p-4 shadow-2xl flex items-center justify-between border border-neutral-800">
+        <div className="fixed bottom-24 left-0 right-0 z-[90] px-4 animate-in slide-in-from-bottom-5 duration-300 pointer-events-none">
+          <div className="max-w-md mx-auto bg-neutral-900 text-white rounded-3xl p-4 shadow-2xl flex items-center justify-between border border-neutral-800 pointer-events-auto">
             <div className="flex flex-col">
               <span className="text-[10px] font-bold text-neutral-400 uppercase tracking-widest">เลือกไปแล้ว</span>
               <span className="text-lg font-black">{selectedRounds.length} <span className="text-xs font-bold text-neutral-500">รายการ</span></span>
