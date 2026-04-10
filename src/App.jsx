@@ -154,6 +154,8 @@ export default function App() {
     return local ? JSON.parse(local) : [];
   });
 
+  const roundScrollRef = useRef(null);
+
   // Dashboard State
   const [dashboardRange, setDashboardRange] = useState('daily'); 
   const [dashboardDate, setDashboardDate] = useState(getTodayThaiFormat());
@@ -215,6 +217,16 @@ export default function App() {
 
   // GAS Data Fetching
   useEffect(() => { loadGASData(); }, []);
+
+  // Auto-scroll Round Picker into view
+  useEffect(() => {
+    if (roundScrollRef.current && activeTab === 'record' && !isRecording) {
+      const selectedBtn = roundScrollRef.current.querySelector('[data-selected="true"]');
+      if (selectedBtn) {
+        selectedBtn.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+      }
+    }
+  }, [setupData.round, activeTab, isRecording]);
 
   const loadGASData = async () => {
     if (!GAS_URL) return;
@@ -375,33 +387,52 @@ export default function App() {
             </div>
           </div>
           
-          <div className="flex gap-3">
-            <div className="w-1/3 relative">
-              <label className="block text-xs font-semibold text-neutral-500 mb-1.5 ml-2">รอบ (Round)</label>
-              <select 
-                value={setupData.round}
-                onChange={(e) => setSetupData(prev => ({...prev, round: parseInt(e.target.value)}))}
-                className="w-full bg-[#FDE047] text-neutral-900 p-3.5 pr-8 rounded-full font-bold text-sm text-center shadow-sm appearance-none outline-none cursor-pointer"
-              >
-                {[...Array(50)].map((_, i) => (
-                  <option key={i+1} value={i+1}>{i+1}</option>
-                ))}
-              </select>
-              <ChevronDown className="w-3.5 h-3.5 text-neutral-700 absolute right-3 top-[38px] pointer-events-none" />
+          <div className="space-y-4">
+            <div>
+              <label className="block text-xs font-semibold text-neutral-500 mb-2 ml-2 uppercase tracking-widest">รอบ (Round)</label>
+              <div className="relative group">
+                {/* Horizontal Fade Edges */}
+                <div className="absolute left-0 top-0 bottom-0 w-8 bg-gradient-to-r from-white to-transparent z-10 pointer-events-none"></div>
+                <div className="absolute right-0 top-0 bottom-0 w-8 bg-gradient-to-l from-white to-transparent z-10 pointer-events-none"></div>
+                
+                <div 
+                  ref={roundScrollRef}
+                  className="flex gap-2.5 overflow-x-auto hide-scrollbar py-2 px-8 snap-x snap-mandatory"
+                >
+                  {[...Array(50)].map((_, i) => {
+                    const r = i + 1;
+                    const isSelected = setupData.round === r;
+                    return (
+                      <button 
+                        key={r}
+                        data-selected={isSelected}
+                        onClick={() => setSetupData(prev => ({...prev, round: r}))}
+                        className={`shrink-0 w-12 h-12 rounded-2xl font-black text-sm flex items-center justify-center transition-all snap-center
+                          ${isSelected 
+                            ? 'bg-[#FDE047] text-neutral-900 shadow-[0_4px_12px_rgba(253,224,71,0.4)] scale-110' 
+                            : 'bg-neutral-50 text-neutral-400 border border-neutral-100 hover:bg-neutral-100 hover:text-neutral-600'}`}
+                      >
+                        {r}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
             </div>
-            <div className="w-2/3 relative">
-              <label className="block text-xs font-semibold text-neutral-500 mb-1.5 ml-2">ผลไม้ (Fruit)</label>
+
+            <div className="relative">
+              <label className="block text-xs font-semibold text-neutral-500 mb-1.5 ml-2 uppercase tracking-widest">ผลไม้ (Fruit)</label>
               <select 
                 value={setupData.fruit}
                 onChange={(e) => {
                    setSetupData(prev => ({...prev, fruit: e.target.value}));
                    setActiveCategory(''); // ล้างประเภทเมื่อเปลี่ยนผลไม้
                 }}
-                className="w-full bg-white border-2 border-neutral-200 text-neutral-800 p-3.5 pl-4 pr-10 rounded-full font-bold text-sm appearance-none hover:border-neutral-300 transition-colors focus:outline-none focus:border-neutral-900 shadow-sm cursor-pointer"
+                className="w-full bg-white border-2 border-neutral-200 text-neutral-800 p-4 pl-6 pr-10 rounded-2xl font-bold text-base appearance-none hover:border-neutral-300 transition-colors focus:outline-none focus:border-neutral-900 shadow-sm cursor-pointer"
               >
                 {fruits.map(f => <option key={f} value={f}>{f}</option>)}
               </select>
-              <ChevronDown className="w-4 h-4 text-neutral-400 absolute right-4 top-[38px] pointer-events-none" />
+              <ChevronDown className="w-5 h-5 text-neutral-400 absolute right-4 top-[42px] pointer-events-none" />
             </div>
           </div>
         </div>
