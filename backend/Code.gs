@@ -126,7 +126,10 @@ function deleteFarm(payload) {
   return jsonResponse({ success: true });
 }
 
-// ... existing jsonResponse function ...
+// --- UTIL ---
+function jsonResponse(data) {
+  return ContentService.createTextOutput(JSON.stringify(data)).setMimeType(ContentService.MimeType.JSON);
+}
 
 function setup() {
   const SS = getSS();
