@@ -409,7 +409,7 @@ export default function App() {
 
     let text = `🧾 สลิปชั่งน้ำหนัก: ${data.fruit}\n`;
     text += `สวน: ${data.farmName || setupData.farmName}\n`;
-    text += `📅 วันที่: ${formatDisplayDate(data.date)} (รอบที่ ${data.round})\n`;
+    text += `📅 วันที่: ${formatDisplayDate(data.date)} (รอบที่ ${data.round})\n\n`;
     text += `-------------------------\n`;
 
     data.details.forEach(d => {
@@ -419,7 +419,7 @@ export default function App() {
 
     text += `-------------------------\n`;
     text += `💰 ยอดรวมสุทธิ: ${data.totalWeight.toLocaleString()} กก.\n`;
-    text += `บันทึกโดย: AgriWeigh 🍎`;
+
 
     if (navigator.share) {
       navigator.share({ text: text }).catch(e => console.error('Share failed', e));
@@ -483,7 +483,7 @@ export default function App() {
       // Asterisk inside circle
       ctx.fillStyle = '#FFFFFF'; ctx.font = 'bold 24px sans-serif'; ctx.textAlign = 'center';
       ctx.fillText('✻', W / 2, y + logoSize / 2 + 8);
-      y += logoSize + 16;
+      y += logoSize + 32; // เพิ่มระยะห่างจาก 16 เป็น 32
 
       // --- Farm Name ---
       ctx.fillStyle = '#1A1A1A';
@@ -987,7 +987,7 @@ export default function App() {
                             })}
                           </div>
                           <div className="mt-3 flex justify-end gap-2 items-center flex-wrap">
-                             <button onClick={() => setShareModalRecord(record)} className="px-3 py-1.5 bg-blue-50 border border-blue-200 rounded-full text-[10px] font-bold text-blue-600 hover:bg-blue-100 shadow-sm flex items-center gap-1"><Share2 className="w-3 h-3" /> แชร์บิล</button>
+                            <button onClick={() => setShareModalRecord(record)} className="px-3 py-1.5 bg-blue-50 border border-blue-200 rounded-full text-[10px] font-bold text-blue-600 hover:bg-blue-100 shadow-sm flex items-center gap-1"><Share2 className="w-3 h-3" /> แชร์บิล</button>
                             <button onClick={() => setDeleteConfirmId(record.id)} className="px-3 py-1.5 bg-white border border-red-200 rounded-full text-[10px] font-bold text-red-500 hover:bg-red-50 shadow-sm flex items-center gap-1"><Trash2 className="w-3 h-3" /> ลบ</button>
                             <button onClick={() => handleEditHistory(record)} className="px-3 py-1.5 bg-white border border-neutral-200 rounded-full text-[10px] font-bold text-neutral-600 hover:bg-neutral-50 shadow-sm flex items-center gap-1"><Edit2 className="w-3 h-3" /> แก้ไขข้อมูล</button>
                           </div>
@@ -1047,7 +1047,7 @@ export default function App() {
                           })}
                         </div>
                         <div className="mt-3 flex justify-end gap-2 items-center flex-wrap">
-                           <button onClick={() => setShareModalRecord(record)} className="px-3 py-1.5 bg-blue-50 border border-blue-200 rounded-full text-[10px] font-bold text-blue-600 hover:bg-blue-100 shadow-sm flex items-center gap-1"><Share2 className="w-3 h-3" /> แชร์บิล</button>
+                          <button onClick={() => setShareModalRecord(record)} className="px-3 py-1.5 bg-blue-50 border border-blue-200 rounded-full text-[10px] font-bold text-blue-600 hover:bg-blue-100 shadow-sm flex items-center gap-1"><Share2 className="w-3 h-3" /> แชร์บิล</button>
                           <button onClick={() => setDeleteConfirmId(record.id)} className="px-3 py-1.5 bg-white border border-red-200 rounded-full text-[10px] font-bold text-red-500 hover:bg-red-50 shadow-sm flex items-center gap-1"><Trash2 className="w-3 h-3" /> ลบ</button>
                           <button onClick={() => handleEditHistory(record)} className="px-3 py-1.5 bg-white border border-neutral-200 rounded-full text-[10px] font-bold text-neutral-600 hover:bg-neutral-50 shadow-sm flex items-center gap-1"><Edit2 className="w-3 h-3" /> แก้ไขข้อมูล</button>
                         </div>
@@ -1105,7 +1105,7 @@ export default function App() {
                                 })}
                               </div>
                               <div className="mt-5 flex justify-end gap-3 items-center flex-wrap">
-                                 <button onClick={() => setShareModalRecord(record)} className="px-5 py-2.5 bg-blue-50 border border-blue-200 rounded-full text-sm font-bold text-blue-600 hover:bg-blue-100 shadow-sm flex items-center gap-2 transition-all active:scale-95"><Share2 className="w-4 h-4" /> แชร์บิลรอบนี้</button>
+                                <button onClick={() => setShareModalRecord(record)} className="px-5 py-2.5 bg-blue-50 border border-blue-200 rounded-full text-sm font-bold text-blue-600 hover:bg-blue-100 shadow-sm flex items-center gap-2 transition-all active:scale-95"><Share2 className="w-4 h-4" /> แชร์บิลรอบนี้</button>
                                 <button onClick={() => handleEditHistory(record)} className="px-5 py-2.5 bg-white border border-neutral-200 rounded-full text-sm font-bold text-neutral-600 hover:bg-neutral-50 shadow-sm flex items-center gap-2 transition-all active:scale-95"><Edit2 className="w-4 h-4" /> แก้ไขข้อมูลรอบนี้</button>
                                 <button onClick={() => setDeleteConfirmId(record.id)} className="px-5 py-2.5 bg-white border border-red-200 rounded-full text-sm font-bold text-red-500 hover:bg-red-50 shadow-sm flex items-center gap-2 transition-all active:scale-95"><Trash2 className="w-4 h-4" /> ลบข้อมูล</button>
                               </div>
@@ -1370,28 +1370,31 @@ export default function App() {
         <div className="flex-1 overflow-y-auto p-4 md:p-6 pb-28 space-y-6">
           {/* Farm Management */}
           <div className="bg-white p-5 lg:p-6 rounded-3xl border border-neutral-100 shadow-[0_2px_15px_rgb(0,0,0,0.02)] max-w-2xl">
-             <h3 className="font-extrabold text-neutral-800 mb-4 flex items-center gap-2">
-                <div className="w-8 h-8 rounded-full bg-blue-100 text-blue-500 flex items-center justify-center"><Settings className="w-4 h-4"/></div>
-                ข้อมูลสวน / ร้าน (Farm)
-             </h3>
-             <div className="flex gap-2 mb-4">
-                <input
-                  type="text" id="newFarmInput" placeholder="เพิ่มชื่อสวนใหม่..."
-                  onKeyDown={e => { if (e.key === 'Enter' && e.target.value.trim()) { const name = e.target.value.trim(); if (!farmList.includes(name)) { setFarmList(prev => [...prev, name]); } e.target.value = ''; }}}
-                  className="flex-1 bg-neutral-50 border border-neutral-200 rounded-xl px-4 py-2.5 text-sm outline-none focus:border-blue-400 focus:bg-white transition-colors"
-                />
-                <button onClick={() => { const input = document.getElementById('newFarmInput'); const name = input?.value?.trim(); if (name && !farmList.includes(name)) { setFarmList(prev => [...prev, name]); input.value = ''; }}} className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2.5 rounded-xl font-bold text-sm shadow-sm transition-all active:scale-95 flex items-center gap-1">
-                  <Plus className="w-4 h-4" /> เพิ่ม
-                </button>
-             </div>
-             <div className="space-y-2">
-                {farmList.map(farm => (
-                  <div key={farm} className="flex justify-between items-center p-3 px-4 bg-neutral-50 rounded-xl border border-neutral-100 hover:border-neutral-200 transition-colors group">
-                     <span className="font-bold text-neutral-800 text-sm">{farm}</span>
-                     <button onClick={() => { if (farmList.length <= 1) return; setFarmList(prev => prev.filter(f => f !== farm)); if (setupData.farmName === farm) setSetupData(prev => ({...prev, farmName: farmList.filter(f => f !== farm)[0]})); }} className={`text-neutral-300 hover:text-red-500 hover:bg-red-50 p-1.5 rounded-full transition-colors opacity-0 group-hover:opacity-100 focus:opacity-100 ${farmList.length <= 1 ? 'invisible' : ''}`}><Trash2 className="w-4 h-4" /></button>
-                  </div>
-                ))}
-             </div>
+            <h3 className="font-extrabold text-neutral-800 mb-4 flex items-center gap-2">
+              <div className="w-8 h-8 rounded-full bg-blue-100 text-blue-500 flex items-center justify-center"><Settings className="w-4 h-4" /></div>
+              ข้อมูลสวน / ร้าน (Farm)
+            </h3>
+            <div className="flex gap-2 mb-4">
+              <input
+                type="text" id="newFarmInput" placeholder="เพิ่มชื่อสวนใหม่..."
+                onKeyDown={e => { if (e.key === 'Enter' && e.target.value.trim()) { const name = e.target.value.trim(); if (!farmList.includes(name)) { setFarmList(prev => [...prev, name]); } e.target.value = ''; } }}
+                className="flex-1 bg-neutral-50 border border-neutral-200 rounded-xl px-4 py-2.5 text-sm outline-none focus:border-blue-400 focus:bg-white transition-colors"
+              />
+              <button onClick={() => { const input = document.getElementById('newFarmInput'); const name = input?.value?.trim(); if (name && !farmList.includes(name)) { setFarmList(prev => [...prev, name]); input.value = ''; } }} className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2.5 rounded-xl font-bold text-sm shadow-sm transition-all active:scale-95 flex items-center gap-1">
+                <Plus className="w-4 h-4" /> เพิ่ม
+              </button>
+            </div>
+            <div className="space-y-2">
+              {farmList.map(farm => (
+                <div key={farm} className="flex justify-between items-center p-3 px-4 bg-neutral-50 rounded-xl border border-neutral-100 hover:border-neutral-200 transition-colors group">
+                  <span className="font-bold text-neutral-800 text-sm">{farm}</span>
+                  <button onClick={() => { if (farmList.length <= 1) return; setFarmList(prev => prev.filter(f => f !== farm)); if (setupData.farmName === farm) setSetupData(prev => ({ ...prev, farmName: farmList.filter(f => f !== farm)[0] })); }}
+                    className={`p-1.5 rounded-full transition-colors ${farmList.length <= 1 ? 'text-neutral-200 cursor-not-allowed' : 'text-neutral-300 hover:text-red-500 hover:bg-red-50'}`}>
+                    <Trash2 className="w-4 h-4" />
+                  </button>
+                </div>
+              ))}
+            </div>
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
@@ -1422,7 +1425,7 @@ export default function App() {
                     className={`flex justify-between items-center p-3 px-4 rounded-xl border transition-colors cursor-pointer group ${settingsActiveFruit === f ? 'bg-[#C084FC]/10 border-[#C084FC]' : 'bg-neutral-50 border-neutral-100 hover:border-neutral-200'}`}
                   >
                     <span className="font-bold text-neutral-800 text-sm">{f}</span>
-                    <button onClick={(e) => { e.stopPropagation(); handleRemoveFruit(f); }} className="text-neutral-300 hover:text-red-500 hover:bg-red-50 p-1.5 rounded-full transition-colors focus:opacity-100"><Trash2 className="w-4 h-4" /></button>
+                    <button onClick={(e) => { e.stopPropagation(); handleRemoveFruit(f); }} className="text-neutral-300 hover:text-red-500 hover:bg-red-50 p-1.5 rounded-full transition-colors"><Trash2 className="w-4 h-4" /></button>
                   </div>
                 ))}
                 {fruits.length === 0 && <p className="text-center text-xs text-neutral-400 py-4">ไม่มีข้อมูลผลไม้ในระบบ</p>}
@@ -1457,7 +1460,7 @@ export default function App() {
                         <div className="w-3 h-3 rounded-full" style={{ backgroundColor: hexColor }}></div>
                         <span className="font-bold text-neutral-800 text-sm">{c}</span>
                       </div>
-                      <button onClick={() => handleRemoveCat(c)} className="text-neutral-300 hover:text-red-500 hover:bg-red-50 p-1.5 rounded-full transition-colors opacity-0 group-hover:opacity-100 focus:opacity-100"><Trash2 className="w-4 h-4" /></button>
+                      <button onClick={() => handleRemoveCat(c)} className="text-neutral-300 hover:text-red-500 hover:bg-red-50 p-1.5 rounded-full transition-colors"><Trash2 className="w-4 h-4" /></button>
                     </div>
                   )
                 })}
@@ -1554,33 +1557,33 @@ export default function App() {
       {/* --- Toast Notification --- */}
       {toastMsg && (
         <div className="fixed top-4 left-1/2 -translate-x-1/2 z-[300] bg-neutral-900 text-white px-6 py-3 rounded-full shadow-2xl flex items-center gap-2 font-bold text-sm animate-in slide-in-from-top-4 fade-in duration-300">
-           <CheckCircle className="w-4 h-4 text-[#4ADE80]" /> {toastMsg}
+          <CheckCircle className="w-4 h-4 text-[#4ADE80]" /> {toastMsg}
         </div>
       )}
 
       {/* --- Share Modal Bottom Sheet --- */}
       {shareModalRecord && (
         <div className="fixed inset-0 z-[200] bg-neutral-900/60 backdrop-blur-sm flex items-end md:items-center justify-center md:p-4">
-           <div className="bg-white w-full max-w-sm rounded-t-[2rem] md:rounded-[2rem] shadow-2xl flex flex-col animate-in slide-in-from-bottom-10 fade-in duration-300 p-6 md:p-8">
-              <div className="flex justify-between items-center mb-6">
-                 <h3 className="text-xl font-extrabold text-neutral-900 flex items-center gap-2">
-                    <Share2 className="w-5 h-5 text-blue-500" /> แชร์ใบเสร็จ
-                 </h3>
-                 <button onClick={() => setShareModalRecord(null)} className="p-2 bg-neutral-100 rounded-full text-neutral-500 hover:bg-neutral-200"><X className="w-4 h-4" /></button>
-              </div>
-              <div className="space-y-3">
-                 <button onClick={() => { handleShareText(shareModalRecord); setShareModalRecord(null); }} className="w-full flex items-center gap-4 bg-neutral-50 border border-neutral-200 p-4 rounded-2xl hover:bg-neutral-100 transition-colors active:scale-95 group">
-                    <div className="w-10 h-10 bg-white rounded-full flex items-center justify-center shadow-sm group-hover:shadow-md transition-all text-green-500"><MessageSquare className="w-5 h-5" /></div>
-                    <div className="text-left"><p className="font-bold text-neutral-900">แชร์ข้อความ (Share Text)</p><p className="text-[10px] text-neutral-500 font-medium">ส่งข้อความสรุปน้ำหนักผ่าน Line, Messenger</p></div>
-                 </button>
-                 <button onClick={() => { handleShareImage(shareModalRecord); setShareModalRecord(null); }} disabled={isGeneratingImg} className="w-full flex items-center gap-4 bg-blue-50 border border-blue-200 p-4 rounded-2xl hover:bg-blue-100 transition-colors active:scale-95 group disabled:opacity-70 disabled:active:scale-100">
-                    <div className="w-10 h-10 bg-white rounded-full flex items-center justify-center shadow-sm group-hover:shadow-md transition-all text-blue-600">
-                       {isGeneratingImg ? <Asterisk className="w-5 h-5 animate-spin-slow" /> : <ImageIcon className="w-5 h-5" />}
-                    </div>
-                    <div className="text-left"><p className="font-bold text-blue-900">{isGeneratingImg ? 'กำลังสร้างรูปภาพ...' : 'แชร์เป็นรูปภาพ (Share Image)'}</p><p className="text-[10px] text-blue-600/70 font-medium">สร้างใบเสร็จสวยงาม ส่งให้พ่อค้า</p></div>
-                 </button>
-              </div>
-           </div>
+          <div className="bg-white w-full max-w-sm rounded-t-[2rem] md:rounded-[2rem] shadow-2xl flex flex-col animate-in slide-in-from-bottom-10 fade-in duration-300 p-6 md:p-8">
+            <div className="flex justify-between items-center mb-6">
+              <h3 className="text-xl font-extrabold text-neutral-900 flex items-center gap-2">
+                <Share2 className="w-5 h-5 text-blue-500" /> แชร์ใบเสร็จ
+              </h3>
+              <button onClick={() => setShareModalRecord(null)} className="p-2 bg-neutral-100 rounded-full text-neutral-500 hover:bg-neutral-200"><X className="w-4 h-4" /></button>
+            </div>
+            <div className="space-y-3">
+              <button onClick={() => { handleShareText(shareModalRecord); setShareModalRecord(null); }} className="w-full flex items-center gap-4 bg-neutral-50 border border-neutral-200 p-4 rounded-2xl hover:bg-neutral-100 transition-colors active:scale-95 group">
+                <div className="w-10 h-10 bg-white rounded-full flex items-center justify-center shadow-sm group-hover:shadow-md transition-all text-green-500"><MessageSquare className="w-5 h-5" /></div>
+                <div className="text-left"><p className="font-bold text-neutral-900">แชร์ข้อความ (Share Text)</p><p className="text-[10px] text-neutral-500 font-medium">ส่งข้อความสรุปน้ำหนักผ่าน Line, Messenger</p></div>
+              </button>
+              <button onClick={() => { handleShareImage(shareModalRecord); setShareModalRecord(null); }} disabled={isGeneratingImg} className="w-full flex items-center gap-4 bg-blue-50 border border-blue-200 p-4 rounded-2xl hover:bg-blue-100 transition-colors active:scale-95 group disabled:opacity-70 disabled:active:scale-100">
+                <div className="w-10 h-10 bg-white rounded-full flex items-center justify-center shadow-sm group-hover:shadow-md transition-all text-blue-600">
+                  {isGeneratingImg ? <Asterisk className="w-5 h-5 animate-spin-slow" /> : <ImageIcon className="w-5 h-5" />}
+                </div>
+                <div className="text-left"><p className="font-bold text-blue-900">{isGeneratingImg ? 'กำลังสร้างรูปภาพ...' : 'แชร์เป็นรูปภาพ (Share Image)'}</p><p className="text-[10px] text-blue-600/70 font-medium">สร้างใบเสร็จสวยงาม ส่งให้พ่อค้า</p></div>
+              </button>
+            </div>
+          </div>
         </div>
       )}
 
