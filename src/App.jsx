@@ -753,7 +753,16 @@ export default function App() {
         <div className="flex justify-between items-start mb-6 lg:mb-8">
           <div className="flex-1"></div>
           <h2 className="text-3xl lg:text-4xl font-black text-neutral-900 text-center tracking-tight flex-1">
-            Start now <br /><span className="text-[#4ADE80] font-sans font-bold text-2xl">Recording</span>
+            {editingId ? (
+              <span className="flex flex-col items-center">
+                <span className="text-amber-500 text-xs font-black uppercase tracking-[0.2em] mb-2 px-3 py-1 bg-amber-50 rounded-full border border-amber-100 flex items-center gap-1.5 animate-pulse">
+                  <AlertCircle className="w-3 h-3" /> Modifying Existing
+                </span>
+                Edit Setup <br /><span className="text-amber-500 font-sans font-bold text-2xl">แก้ไขข้อมูลเดิม</span>
+              </span>
+            ) : (
+              <>Start now <br /><span className="text-[#4ADE80] font-sans font-bold text-2xl">Recording</span></>
+            )}
           </h2>
           <div className="flex-1 flex justify-end">
             <button 
@@ -839,9 +848,14 @@ export default function App() {
           </div>
         </div>
 
-        <button onClick={handleStartRound} className="w-full bg-neutral-900 hover:bg-neutral-800 text-white font-bold text-lg py-4 rounded-full shadow-lg hover:shadow-xl active:scale-[0.98] transition-all flex items-center justify-center gap-2 uppercase tracking-wide">
-          Get started <ChevronDown className="w-4 h-4 -rotate-90" />
+        <button onClick={handleStartRound} className={`w-full ${editingId ? 'bg-amber-500 hover:bg-amber-600' : 'bg-neutral-900 hover:bg-neutral-800'} text-white font-bold text-lg py-4 rounded-full shadow-lg hover:shadow-xl active:scale-[0.98] transition-all flex items-center justify-center gap-2 uppercase tracking-wide`}>
+          {editingId ? 'Continue Editing' : 'Get started'} <ChevronDown className="w-4 h-4 -rotate-90" />
         </button>
+        {editingId && (
+          <button onClick={handleCancelEdit} className="w-full mt-4 text-neutral-400 hover:text-red-500 font-bold text-xs uppercase tracking-widest transition-colors">
+            Cancel & Exit Edit Mode
+          </button>
+        )}
       </div>
     </div>
   );
@@ -851,18 +865,16 @@ export default function App() {
 
       <div className={`p-3 lg:px-6 lg:py-4 flex flex-wrap justify-between items-center z-20 shrink-0 gap-3 w-full transition-colors border-b ${editingId ? 'bg-amber-50 border-amber-100' : 'bg-[#FDFBF7] border-transparent'}`}>
         <div className="flex flex-wrap items-center gap-2 text-neutral-600 font-medium flex-1">
-          {editingId ? (
-            <>
-              <div className="bg-amber-200 text-amber-800 px-3 py-1.5 rounded-full text-[11px] lg:text-xs font-bold shadow-sm flex items-center gap-1.5 animate-pulse shrink-0"><Edit2 className="w-3.5 h-3.5" /> โหมดแก้ไขรอบ {setupData.round}</div>
-              <div className="bg-[#C084FC] text-white px-3 py-1.5 rounded-full text-[11px] lg:text-xs font-bold shadow-sm shrink-0">{setupData.fruit}</div>
-              <button onClick={handleCancelEdit} className="bg-white border border-red-200 text-red-500 hover:bg-red-50 hover:border-red-300 px-3 py-1.5 rounded-full text-[11px] lg:text-xs font-bold shadow-sm flex items-center gap-1 shrink-0 transition-colors">ยกเลิกการแก้ไข</button>
-            </>
-          ) : (
-            <>
-              <button onClick={handleEditSetup} className="bg-white border border-neutral-200 px-3 py-1.5 rounded-full text-[11px] lg:text-xs font-bold shadow-sm flex items-center gap-1.5 hover:bg-neutral-50 shrink-0 transition-colors"><Edit2 className="w-3 h-3 text-neutral-400" /> {formatDisplayDate(setupData.date)}</button>
-              <div className="bg-[#4ADE80] text-neutral-900 px-3 py-1.5 rounded-full text-[11px] lg:text-xs font-bold shadow-sm shrink-0">รอบ {setupData.round}</div>
-              <div className="bg-[#C084FC] text-white px-3 py-1.5 rounded-full text-[11px] lg:text-xs font-bold shadow-sm shrink-0">{setupData.fruit}</div>
-            </>
+          <button onClick={handleEditSetup} className={`bg-white border ${editingId ? 'border-amber-200 text-amber-600 bg-amber-50/50' : 'border-neutral-200'} px-3 py-1.5 rounded-full text-[11px] lg:text-xs font-bold shadow-sm flex items-center gap-1.5 hover:bg-neutral-50 shrink-0 transition-colors`}>
+            <Edit2 className={`w-3 h-3 ${editingId ? 'text-amber-500' : 'text-neutral-400'}`} /> 
+            {editingId ? `แก้หัวข้อรอบ ${setupData.round}` : formatDisplayDate(setupData.date)}
+          </button>
+          <div className={`${editingId ? 'bg-amber-400' : 'bg-[#4ADE80]'} text-neutral-900 px-3 py-1.5 rounded-full text-[11px] lg:text-xs font-bold shadow-sm shrink-0`}>
+            {editingId ? 'โหมดแก้ไข' : `รอบ ${setupData.round}`}
+          </div>
+          <div className="bg-[#C084FC] text-white px-3 py-1.5 rounded-full text-[11px] lg:text-xs font-bold shadow-sm shrink-0">{setupData.fruit}</div>
+          {editingId && (
+            <button onClick={handleCancelEdit} className="bg-white border border-red-200 text-red-500 hover:bg-red-50 px-3 py-1.5 rounded-full text-[11px] lg:text-xs font-bold shadow-sm shrink-0 transition-colors">ยกเลิก</button>
           )}
         </div>
         <button onClick={handleOpenSummary} disabled={records.length === 0} className="flex items-center justify-center px-4 py-2 bg-neutral-900 text-[#FDE047] disabled:bg-neutral-200 disabled:text-neutral-400 font-bold rounded-full transition-all shadow-md text-[11px] lg:text-xs gap-1.5 active:scale-95 shrink-0 ml-auto uppercase tracking-wide">
