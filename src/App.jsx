@@ -29,7 +29,8 @@ import {
   Image as ImageIcon,
   MessageSquare,
   Download,
-  Copy
+  Copy,
+  Monitor
 } from 'lucide-react';
 
 
