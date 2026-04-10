@@ -2643,9 +2643,24 @@ export default function App() {
             <p className="text-sm text-neutral-500 mb-6 font-medium">คุณต้องการลบข้อมูลรอบนี้ใช่หรือไม่? ข้อมูลจะหายไปอย่างถาวร</p>
             <div className="flex gap-3">
               <button onClick={() => setDeleteConfirmId(null)} className="flex-1 py-3 rounded-full font-bold text-neutral-600 bg-neutral-100 hover:bg-neutral-200">ยกเลิก</button>
-              <button onClick={() => {
-                setHistoryRecords(prev => prev.filter(r => r.id !== deleteConfirmId));
+              <button onClick={async () => {
+                const idToDelete = deleteConfirmId;
+                setHistoryRecords(prev => prev.filter(r => r.id !== idToDelete));
                 setDeleteConfirmId(null);
+                
+                // Background Sync to GAS
+                if (GAS_URL) {
+                  try {
+                    await fetch(GAS_URL, {
+                      method: 'POST',
+                      body: JSON.stringify({ action: 'deleteRound', payload: { id: idToDelete } })
+                    });
+                    showToast('ลบข้อมูลเรียบร้อยแล้วค่ะ');
+                  } catch (e) {
+                    console.error('Delete sync failed', e);
+                    showToast('ลบในเครื่องแล้ว แต่การซิงค์ล้มเหลวค่ะ');
+                  }
+                }
               }} className="flex-1 py-3 rounded-full font-bold text-white bg-red-500 hover:bg-red-600 shadow-lg">ลบข้อมูล</button>
             </div>
           </div>
