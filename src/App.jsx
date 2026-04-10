@@ -381,10 +381,19 @@ export default function App() {
   })).filter(g => g.items.length > 0);
 
   const filteredHistory = historyRecords.filter(record => {
+    // 1. Check Date Filter (Calendar)
+    const matchesDate = !filterDate || record.date.startsWith(filterDate);
+
+    // 2. Check Search Term (Text)
     const displayDate = formatDisplayDate(record.date);
-    return displayDate.includes(searchTerm) ||
-           record.round.toString().includes(searchTerm) ||
-           record.fruit.includes(searchTerm);
+    const matchesSearch = !searchTerm || (
+      displayDate.includes(searchTerm) ||
+      record.round.toString().includes(searchTerm) ||
+      record.fruit.includes(searchTerm) ||
+      (record.farmName || '').includes(searchTerm)
+    );
+
+    return matchesDate && matchesSearch;
   });
 
   // --- Handlers ---
@@ -735,13 +744,10 @@ export default function App() {
 
   const handleHistorySearchDateChange = (e) => {
     if (!e.target.value) return;
-    const dateObj = new Date(e.target.value);
-    if (!isNaN(dateObj)) {
-      const day = String(dateObj.getDate()).padStart(2, '0');
-      const month = String(dateObj.getMonth() + 1).padStart(2, '0');
-      setSearchTerm(`${day}/${month}`);
-    }
+    setFilterDate(e.target.value); // Set raw YYYY-MM-DD for precise matching
   };
+
+  const clearDateFilter = () => setFilterDate('');
 
   // --- Render Screens ---
   const renderSetupScreen = () => (
@@ -1074,23 +1080,36 @@ export default function App() {
           </button>
         </div>
 
-        <div className="mt-4 flex gap-2 relative z-10 items-center">
-          <div className="flex-1 bg-neutral-50 border border-neutral-200 rounded-full flex items-center px-3 py-1.5 shadow-sm">
-            <Search className="w-3.5 h-3.5 text-neutral-400 mr-1.5" />
-            <input type="text" placeholder="ค้นหา... (วันที่, ผลไม้)" value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} className="bg-transparent border-none outline-none text-xs w-full text-neutral-700 font-medium" />
-            {searchTerm && (<button onClick={() => setSearchTerm('')} className="text-neutral-400 hover:text-neutral-600 px-1">&times;</button>)}
-          </div>
+        <div className="mt-4 flex flex-col gap-3 relative z-10 w-full">
+          {/* Active Filter Chips */}
+          {filterDate && (
+            <div className="flex flex-wrap items-center gap-2 mb-1 px-1">
+              <span className="bg-[#C084FC]/10 text-[#C084FC] border border-[#C084FC]/20 px-3 py-1.5 rounded-full text-xs font-bold flex items-center gap-2 animate-in slide-in-from-left-2 duration-300">
+                <Calendar className="w-3.5 h-3.5" />
+                กรองวันที่: {formatDisplayDate(filterDate)}
+                <button onClick={clearDateFilter} className="hover:text-red-500 transition-colors p-0.5 rounded-full hover:bg-white"><X className="w-3.5 h-3.5" /></button>
+              </span>
+            </div>
+          )}
 
-          <div className="relative shrink-0">
-            <button className="bg-white border border-neutral-200 rounded-full w-8 h-8 flex items-center justify-center text-neutral-500 shadow-sm hover:bg-neutral-50 active:scale-95 shrink-0 overflow-hidden relative">
-              <Calendar className="w-3.5 h-3.5" />
-              <input type="date" onClick={(e) => { try { if (e.target.showPicker) e.target.showPicker(); } catch (err) { } }} onChange={handleHistorySearchDateChange} className="absolute inset-0 w-full h-full opacity-0 cursor-pointer" />
-            </button>
-          </div>
+          <div className="flex gap-2 items-center w-full">
+            <div className="flex-1 bg-neutral-50 border border-neutral-200 rounded-full flex items-center px-3 py-1.5 shadow-sm focus-within:ring-2 focus-within:ring-[#C084FC]/20 focus-within:border-[#C084FC] transition-all">
+              <Search className="w-3.5 h-3.5 text-neutral-400 mr-1.5" />
+              <input type="text" placeholder="ค้นหา... (ผลไม้, รอบ, สวน)" value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} className="bg-transparent border-none outline-none text-xs w-full text-neutral-700 font-medium placeholder-neutral-300" />
+              {searchTerm && (<button onClick={() => setSearchTerm('')} className="text-neutral-400 hover:text-neutral-600 px-1 transition-colors"><X className="w-3.5 h-3.5" /></button>)}
+            </div>
 
-          <div className="flex lg:hidden bg-neutral-100 p-0.5 rounded-full border border-neutral-200 shadow-inner shrink-0">
-            <button onClick={() => setViewMode('list')} className={`w-7 h-7 flex items-center justify-center rounded-full transition-all ${viewMode === 'list' ? 'bg-white shadow-[0_2px_5px_rgba(0,0,0,0.1)] text-neutral-900 font-bold' : 'text-neutral-400 hover:text-neutral-600'}`}><List className="w-3.5 h-3.5" /></button>
-            <button onClick={() => setViewMode('card')} className={`w-7 h-7 flex items-center justify-center rounded-full transition-all ${viewMode === 'card' ? 'bg-white shadow-[0_2px_5px_rgba(0,0,0,0.1)] text-neutral-900 font-bold' : 'text-neutral-400 hover:text-neutral-600'}`}><LayoutGrid className="w-3.5 h-3.5" /></button>
+            <div className="relative shrink-0">
+              <button className={`border rounded-full w-8 h-8 flex items-center justify-center transition-all shadow-sm active:scale-95 shrink-0 overflow-hidden relative ${filterDate ? 'bg-[#C084FC] border-[#C084FC] text-white' : 'bg-white border-neutral-200 text-neutral-500 hover:bg-neutral-50'}`}>
+                <Calendar className="w-3.5 h-3.5" />
+                <input type="date" onClick={(e) => { try { if (e.target.showPicker) e.target.showPicker(); } catch (err) { } }} onChange={handleHistorySearchDateChange} className="absolute inset-0 w-full h-full opacity-0 cursor-pointer" />
+              </button>
+            </div>
+
+            <div className="flex lg:hidden bg-neutral-100 p-0.5 rounded-full border border-neutral-200 shadow-inner shrink-0">
+              <button onClick={() => setViewMode('list')} className={`w-7 h-7 flex items-center justify-center rounded-full transition-all ${viewMode === 'list' ? 'bg-white shadow-[0_2px_5px_rgba(0,0,0,0.1)] text-neutral-900 font-bold' : 'text-neutral-400 hover:text-neutral-600'}`}><List className="w-3.5 h-3.5" /></button>
+              <button onClick={() => setViewMode('card')} className={`w-7 h-7 flex items-center justify-center rounded-full transition-all ${viewMode === 'card' ? 'bg-white shadow-[0_2px_5px_rgba(0,0,0,0.1)] text-neutral-900 font-bold' : 'text-neutral-400 hover:text-neutral-600'}`}><LayoutGrid className="w-3.5 h-3.5" /></button>
+            </div>
           </div>
         </div>
       </div>
