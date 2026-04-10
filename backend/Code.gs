@@ -21,6 +21,7 @@ function doPost(e) {
   const data = JSON.parse(e.postData.contents);
   const action = data.action;
   if (action === 'saveRecord') return saveRecord(data.payload);
+  if (action === 'deleteRound') return deleteRound(data.payload);
   if (action === 'addFruit') return addFruit(data.payload);
   if (action === 'deleteFruit') return deleteFruit(data.payload);
   if (action === 'addCategory') return addCategory(data.payload);
@@ -29,6 +30,7 @@ function doPost(e) {
   if (action === 'deleteFarm') return deleteFarm(data.payload);
   if (action === 'saveMasterBill') return saveMasterBill(data.payload);
   if (action === 'updateBillingStatus') return updateBillingStatus(data.payload);
+  if (action === 'deleteMasterBill') return deleteMasterBill(data.payload);
   return jsonResponse({ error: 'Invalid action' });
 }
 
@@ -148,6 +150,46 @@ function updateBillingStatus(payload) {
   }
   return jsonResponse({ success: true });
 }
+
+// Delete a single round and its items from Records/RecordItems sheets
+function deleteRound(payload) {
+  const SS = getSS();
+  const recordSheet = SS.getSheetByName('Records');
+  const itemSheet = SS.getSheetByName('RecordItems');
+  const { id } = payload;
+  if (!id) return jsonResponse({ error: 'id required' });
+
+  // Delete from RecordItems first
+  const itemData = itemSheet.getDataRange().getValues();
+  for (let i = itemData.length - 1; i >= 1; i--) {
+    if (itemData[i][1] === id) itemSheet.deleteRow(i + 1);
+  }
+
+  // Delete from Records
+  const recordData = recordSheet.getDataRange().getValues();
+  for (let i = recordData.length - 1; i >= 1; i--) {
+    if (recordData[i][0] === id) { recordSheet.deleteRow(i + 1); break; }
+  }
+
+  return jsonResponse({ success: true });
+}
+
+// Delete a Master Bill row from MasterBills sheet
+function deleteMasterBill(payload) {
+  const SS = getSS();
+  const masterSheet = SS.getSheetByName('MasterBills');
+  if (!masterSheet) return jsonResponse({ success: true });
+  const { id } = payload;
+  if (!id) return jsonResponse({ error: 'id required' });
+
+  const data = masterSheet.getDataRange().getValues();
+  for (let i = data.length - 1; i >= 1; i--) {
+    if (data[i][0] === id) { masterSheet.deleteRow(i + 1); break; }
+  }
+
+  return jsonResponse({ success: true });
+}
+
 
 // --- WRITE: Master Bills ---
 function saveMasterBill(payload) {
