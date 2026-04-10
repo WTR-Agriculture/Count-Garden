@@ -24,8 +24,13 @@ import {
   PieChart,
   Plus,
   Save,
-  X
+  X,
+  Share2,
+  Image as ImageIcon,
+  MessageSquare,
+  Download
 } from 'lucide-react';
+import { toPng } from 'html-to-image';
 
 // --- Static Default Data ---
 const DEFAULT_CATEGORY_COLORS = {
@@ -139,15 +144,6 @@ export default function App() {
   // GAS Loading State
   const [gasLoading, setGasLoading] = useState(false);
 
-  // History State
-  const [historyRecords, setHistoryRecords] = useState(() => {
-    const local = localStorage.getItem('cg_historyRecords');
-    return local ? JSON.parse(local) : [];
-  });
-  const [expandedHistory, setExpandedHistory] = useState([]);
-  const [viewMode, setViewMode] = useState('card');
-  const [searchTerm, setSearchTerm] = useState('');
-
   // Sync Queue State
   const [syncQueue, setSyncQueue] = useState(() => {
     const local = localStorage.getItem('cg_syncQueue');
@@ -155,6 +151,9 @@ export default function App() {
   });
 
   const roundScrollRef = useRef(null);
+  const receiptRef = useRef(null);
+
+  const [activeShareRecord, setActiveShareRecord] = useState(null);
 
   // Dashboard State
   const [dashboardRange, setDashboardRange] = useState('daily'); 
@@ -353,7 +352,90 @@ export default function App() {
     }
   };
 
-  const toggleHistoryExpand = (id) => setExpandedHistory(prev => prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id]);
+  // --- Sharing Handlers ---
+  const handleShareText = (record) => {
+    const data = record || {
+      date: setupData.date,
+      round: setupData.round,
+      fruit: setupData.fruit,
+      totalWeight: grandTotal,
+      details: groupedRecords.map(g => ({ category: g.category, total: g.total, items: g.items.map(item => item.weight).reverse() }))
+    };
+
+    let text = `📊 รายงานน้ำหนัก [${data.fruit}]\n`;
+    text += `📅 วันที่: ${data.date} (รอบที่ ${data.round})\n`;
+    text += `-------------------------\n`;
+    
+    data.details.forEach(d => {
+      text += `✅ ${d.category}: ${d.total.toLocaleString()} กก.\n`;
+      text += `รายการ: (${d.items.join(', ')})\n\n`;
+    });
+
+    text += `💰 ยอดรวมทั้งหมด: ${data.totalWeight.toLocaleString()} กก.\n`;
+    text += `-------------------------\n`;
+    text += `บันทึกโดย: Count-Garden 🍎`;
+
+    if (navigator.share) {
+      navigator.share({ text: text }).catch(e => console.error('Share failed', e));
+    } else {
+      navigator.clipboard.writeText(text).then(() => alert('คัดลอกรายงานเป็นข้อความแล้ว!'));
+    }
+  };
+
+  const handleShareImage = async (record) => {
+    // We'll use a temporary state or a dedicated component for the image capture
+    // But for this simplified version, we'll capture the hidden receipt template
+    if (!receiptRef.current) return;
+    
+    setGasLoading(true);
+    try {
+      // Ensure the hidden element is updated (In a real app, you'd use a more robust way to sync)
+      // For now we'll assume the hidden template is reactive to a "activeShareRecord" state
+      setActiveShareRecord(record || {
+        date: setupData.date,
+        round: setupData.round,
+        fruit: setupData.fruit,
+        totalWeight: grandTotal,
+        details: groupedRecords.map(g => ({ category: g.category, total: g.total, items: g.items.map(item => item.weight).reverse() }))
+      });
+
+      // Wait a tick for rendering
+      await new Promise(r => setTimeout(r, 500));
+
+      const dataUrl = await toPng(receiptRef.current, { cacheBust: true, pixelRatio: 2 });
+      
+      if (navigator.share && navigator.canShare) {
+        const reset = await fetch(dataUrl);
+        const blob = await reset.blob();
+        const file = new File([blob], `CG_Report_${Date.now()}.png`, { type: 'image/png' });
+        
+        if (navigator.canShare({ files: [file] })) {
+          await navigator.share({
+            files: [file],
+            title: 'Weight Report',
+            text: 'Sharing Weight Report from Count-Garden'
+          });
+        } else {
+          downloadImage(dataUrl);
+        }
+      } else {
+        downloadImage(dataUrl);
+      }
+    } catch (e) {
+      console.error('Image capture failed', e);
+      alert('ไม่สามารถสร้างรูปภาพได้ในขณะนี้');
+    } finally {
+      setGasLoading(false);
+    }
+  };
+
+  const downloadImage = (dataUrl) => {
+    const link = document.createElement('a');
+    link.download = `CountGarden_Report_${Date.now()}.png`;
+    link.href = dataUrl;
+    link.click();
+  };
+
   const toggleCatExpand = (cat) => setExpandedCats(prev => prev.includes(cat) ? prev.filter(c => c !== cat) : [...prev, cat]);
 
   const handleHistorySearchDateChange = (e) => {
@@ -621,6 +703,17 @@ export default function App() {
               <span className="text-neutral-700 font-bold text-sm">ยอดรวมสุทธิทั้งรอบ</span>
               <div className="text-3xl font-black tracking-tight text-neutral-900">{grandTotal.toLocaleString()} <span className="text-sm font-bold text-neutral-500">กก.</span></div>
            </div>
+
+           {/* Share Actions */}
+           <div className="flex gap-2 mb-3">
+              <button onClick={() => handleShareText()} className="flex-1 py-3 px-2 rounded-xl border border-neutral-200 bg-white hover:bg-neutral-50 flex items-center justify-center gap-2 text-xs font-bold text-neutral-600 transition-all active:scale-95">
+                 <MessageSquare className="w-4 h-4 text-green-500" /> แชร์ข้อความ
+              </button>
+              <button onClick={() => handleShareImage()} className="flex-1 py-3 px-2 rounded-xl border border-neutral-200 bg-white hover:bg-neutral-50 flex items-center justify-center gap-2 text-xs font-bold text-neutral-600 transition-all active:scale-95">
+                 <ImageIcon className="w-4 h-4 text-[#C084FC]" /> แชร์เป็นรูปภาพ
+              </button>
+           </div>
+
            <div className="flex gap-2.5">
               <button onClick={() => setShowSummaryModal(false)} className="flex-1 py-3 rounded-full font-bold text-sm text-neutral-600 bg-neutral-100 hover:bg-neutral-200 active:scale-95 transition-all">กลับไปแก้ไข</button>
               <button onClick={handleConfirmRound} className="flex-[2] py-3 rounded-full font-bold text-sm text-white bg-neutral-900 hover:bg-black active:scale-95 transition-all shadow-lg flex justify-center items-center gap-1.5">
@@ -710,7 +803,11 @@ export default function App() {
                                           </div>
                                        )})}
                                     </div>
-                                    <div className="mt-3 flex justify-end gap-2">
+                                    <div className="mt-3 flex justify-end gap-2 items-center">
+                                       <div className="flex bg-white border border-neutral-100 p-1 rounded-full gap-1 shadow-sm mr-2">
+                                          <button onClick={() => handleShareText(record)} className="p-2 text-neutral-400 hover:text-green-500 transition-colors" title="แชร์ข้อความ"><MessageSquare className="w-3.5 h-3.5" /></button>
+                                          <button onClick={() => handleShareImage(record)} className="p-2 text-neutral-400 hover:text-[#C084FC] transition-colors" title="แชร์รูปภาพ"><ImageIcon className="w-3.5 h-3.5" /></button>
+                                       </div>
                                        <button onClick={() => setDeleteConfirmId(record.id)} className="px-3 py-1.5 bg-white border border-red-200 rounded-full text-[10px] font-bold text-red-500 hover:bg-red-50 shadow-sm flex items-center gap-1"><Trash2 className="w-3 h-3" /> ลบ</button>
                                        <button onClick={() => handleEditHistory(record)} className="px-3 py-1.5 bg-white border border-neutral-200 rounded-full text-[10px] font-bold text-neutral-600 hover:bg-neutral-50 shadow-sm flex items-center gap-1"><Edit2 className="w-3 h-3" /> แก้ไขข้อมูล</button>
                                     </div>
@@ -768,7 +865,11 @@ export default function App() {
                                     </div>
                                  )})}
                               </div>
-                              <div className="mt-3 flex justify-end gap-2">
+                              <div className="mt-3 flex justify-end gap-2 items-center">
+                                 <div className="flex bg-white border border-neutral-100 p-1 rounded-full gap-1 shadow-sm mr-2">
+                                    <button onClick={() => handleShareText(record)} className="p-2 text-neutral-400 hover:text-green-500 transition-colors" title="แชร์ข้อความ"><MessageSquare className="w-3.5 h-3.5" /></button>
+                                    <button onClick={() => handleShareImage(record)} className="p-2 text-neutral-400 hover:text-[#C084FC] transition-colors" title="แชร์รูปภาพ"><ImageIcon className="w-3.5 h-3.5" /></button>
+                                 </div>
                                  <button onClick={() => setDeleteConfirmId(record.id)} className="px-3 py-1.5 bg-white border border-red-200 rounded-full text-[10px] font-bold text-red-500 hover:bg-red-50 shadow-sm flex items-center gap-1"><Trash2 className="w-3 h-3" /> ลบ</button>
                                  <button onClick={() => handleEditHistory(record)} className="px-3 py-1.5 bg-white border border-neutral-200 rounded-full text-[10px] font-bold text-neutral-600 hover:bg-neutral-50 shadow-sm flex items-center gap-1"><Edit2 className="w-3 h-3" /> แก้ไขข้อมูล</button>
                               </div>
@@ -823,7 +924,11 @@ export default function App() {
                                                 </div>
                                              )})}
                                           </div>
-                                          <div className="mt-5 flex justify-end gap-3">
+                                          <div className="mt-5 flex justify-end gap-3 items-center">
+                                             <div className="flex bg-white border border-neutral-100 p-1.5 rounded-full gap-2 shadow-sm mr-2">
+                                                <button onClick={() => handleShareText(record)} className="p-2 text-neutral-400 hover:text-green-500 transition-colors flex items-center gap-2" title="แชร์ข้อความ"><MessageSquare className="w-4 h-4" /> <span className="text-[10px] font-bold">แชร์ข้อความ</span></button>
+                                                <button onClick={() => handleShareImage(record)} className="p-2 text-neutral-400 hover:text-[#C084FC] transition-colors flex items-center gap-2" title="แชร์รูปภาพ"><ImageIcon className="w-4 h-4" /> <span className="text-[10px] font-bold">แชร์รูปภาพ</span></button>
+                                             </div>
                                              <button onClick={() => handleEditHistory(record)} className="px-5 py-2.5 bg-white border border-neutral-200 rounded-full text-sm font-bold text-neutral-600 hover:bg-neutral-50 shadow-sm flex items-center gap-2 transition-all active:scale-95"><Edit2 className="w-4 h-4" /> แก้ไขข้อมูลรอบนี้</button>
                                              <button onClick={() => setDeleteConfirmId(record.id)} className="px-5 py-2.5 bg-white border border-red-200 rounded-full text-sm font-bold text-red-500 hover:bg-red-50 shadow-sm flex items-center gap-2 transition-all active:scale-95"><Trash2 className="w-4 h-4" /> ลบข้อมูล</button>
                                           </div>
@@ -1255,6 +1360,61 @@ export default function App() {
         </div>
       </div>
 
+      {/* --- Hidden Receipt Template for Share as Image --- */}
+      {activeShareRecord && (
+        <div ref={receiptRef} className="bg-white p-10 w-[450px] text-neutral-900 font-sans shadow-2xl rounded-sm border-t-[12px] border-[#FDE047] flex flex-col" style={{ position: 'absolute', left: '-2000px', top: '0', zIndex: -100 }}>
+           <div className="text-center mb-10">
+              <div className="text-3xl font-black flex items-center justify-center gap-3 mb-2">
+                 <span className="text-4xl">🍎</span> Count-Garden
+              </div>
+              <div className="text-[11px] font-bold text-neutral-400 tracking-[0.3em] uppercase">Digital Weight Certificate</div>
+           </div>
+           
+           <div className="flex justify-between items-end border-b-4 border-dashed border-neutral-100 pb-8 mb-8">
+              <div className="space-y-2">
+                 <div className="text-[10px] font-bold text-neutral-400 uppercase tracking-widest">วันที่ / Date</div>
+                 <div className="text-lg font-bold text-neutral-800">{activeShareRecord.date}</div>
+                 <div className="text-[10px] font-bold text-neutral-400 uppercase mt-4 tracking-widest">ผลไม้ / Fruit</div>
+                 <div className="text-2xl font-black text-neutral-900">{activeShareRecord.fruit}</div>
+              </div>
+              <div className="text-right">
+                 <div className="text-[10px] font-bold text-neutral-400 uppercase mb-2 tracking-widest">รอบที่ / Round</div>
+                 <div className="text-4xl font-black text-neutral-900 bg-[#FDE047] px-6 py-2 rounded-2xl shadow-sm inline-block">{activeShareRecord.round}</div>
+              </div>
+           </div>
+
+           <div className="space-y-6 mb-10 flex-1">
+              {activeShareRecord.details.map(d => (
+                 <div key={d.category} className="space-y-2.5">
+                    <div className="flex justify-between items-center bg-neutral-50/50 p-2 rounded-lg">
+                       <span className="text-sm font-black text-neutral-800 uppercase tracking-wider">{d.category}</span>
+                       <span className="text-lg font-black text-neutral-900">{d.total.toLocaleString()} <span className="text-xs text-neutral-400">กก.</span></span>
+                    </div>
+                    <div className="bg-neutral-50 p-5 rounded-2xl text-xs font-bold text-neutral-500 leading-relaxed border border-neutral-100 shadow-inner">
+                       {d.items.join(', ')}
+                    </div>
+                 </div>
+              ))}
+           </div>
+
+           <div className="bg-neutral-900 text-white p-8 rounded-[2rem] flex justify-between items-center shadow-xl mb-4">
+              <div>
+                 <div className="text-[10px] font-bold text-neutral-500 uppercase mb-1 tracking-[0.2em]">ยอดรวมสุทธิ / Total Weight</div>
+                 <div className="text-xs font-bold opacity-60 italic">Verified via Count-Garden App</div>
+              </div>
+              <div className="text-5xl font-black tracking-tighter leading-none">{activeShareRecord.totalWeight.toLocaleString()} <span className="text-sm font-bold text-neutral-500 ml-1">กก.</span></div>
+           </div>
+
+           <div className="mt-10 pt-8 border-t border-neutral-50 text-center">
+              <div className="text-[10px] font-bold text-neutral-300 uppercase tracking-[0.5em] mb-4">ขอบคุณที่วางใจให้เราดูแลผลผลิตของคุณ</div>
+              <div className="inline-flex items-center gap-2 px-4 py-2 bg-neutral-50 rounded-full border border-neutral-100">
+                 <span className="w-2 h-2 rounded-full bg-[#4ADE80] animate-pulse"></span>
+                 <span className="text-[9px] font-bold text-neutral-400 uppercase tracking-widest">Secure Secure Digital Report</span>
+              </div>
+           </div>
+        </div>
+      )}
+
       {/* Inline Styles */}
       <style dangerouslySetInnerHTML={{__html: `
         input[type="date"]::-webkit-calendar-picker-indicator {
@@ -1286,6 +1446,59 @@ export default function App() {
           animation: spin-slow 12s linear infinite;
         }
       `}} />
+      {activeShareRecord && (
+        <div ref={receiptRef} className="bg-white p-10 w-[450px] text-neutral-900 font-sans shadow-2xl rounded-sm border-t-[12px] border-[#FDE047] flex flex-col" style={{ position: 'absolute', left: '-2000px', top: '0', zIndex: -100 }}>
+           <div className="text-center mb-10">
+              <div className="text-3xl font-black flex items-center justify-center gap-3 mb-2">
+                 Count-Garden
+              </div>
+              <div className="text-[11px] font-bold text-neutral-400 tracking-[0.3em] uppercase">Digital Weight Certificate</div>
+           </div>
+           
+           <div className="flex justify-between items-end border-b-4 border-dashed border-neutral-100 pb-8 mb-8">
+              <div className="space-y-2">
+                 <div className="text-[10px] font-bold text-neutral-400 uppercase tracking-widest">Date</div>
+                 <div className="text-lg font-bold text-neutral-800">{activeShareRecord.date}</div>
+                 <div className="text-[10px] font-bold text-neutral-400 uppercase mt-4 tracking-widest">Fruit</div>
+                 <div className="text-2xl font-black text-neutral-900">{activeShareRecord.fruit}</div>
+              </div>
+              <div className="text-right">
+                 <div className="text-[10px] font-bold text-neutral-400 uppercase mb-2 tracking-widest">Round</div>
+                 <div className="text-4xl font-black text-neutral-900 bg-[#FDE047] px-6 py-2 rounded-2xl shadow-sm inline-block">{activeShareRecord.round}</div>
+              </div>
+           </div>
+
+           <div className="space-y-6 mb-10 flex-1">
+              {activeShareRecord.details.map(d => (
+                 <div key={d.category} className="space-y-2.5">
+                    <div className="flex justify-between items-center bg-neutral-50/50 p-2 rounded-lg">
+                       <span className="text-sm font-black text-neutral-800 uppercase tracking-wider">{d.category}</span>
+                       <span className="text-lg font-black text-neutral-900">{d.total.toLocaleString()} <span className="text-xs text-neutral-400">kg.</span></span>
+                    </div>
+                    <div className="bg-neutral-50 p-5 rounded-2xl text-xs font-bold text-neutral-500 leading-relaxed border border-neutral-100 shadow-inner">
+                       {d.items.join(', ')}
+                    </div>
+                 </div>
+              ))}
+           </div>
+
+           <div className="bg-neutral-900 text-white p-8 rounded-[2rem] flex justify-between items-center shadow-xl mb-4">
+              <div>
+                 <div className="text-[10px] font-bold text-neutral-500 uppercase mb-1 tracking-[0.2em]">Total Weight</div>
+                 <div className="text-xs font-bold opacity-60 italic">Verified via Count-Garden App</div>
+              </div>
+              <div className="text-5xl font-black tracking-tighter leading-none">{activeShareRecord.totalWeight.toLocaleString()} <span className="text-sm font-bold text-neutral-500 ml-1">kg.</span></div>
+           </div>
+
+           <div className="mt-10 pt-8 border-t border-neutral-50 text-center">
+              <div className="text-[10px] font-bold text-neutral-300 uppercase tracking-[0.5em] mb-4">Thank you for trusting Count-Garden</div>
+              <div className="inline-flex items-center gap-2 px-4 py-2 bg-neutral-50 rounded-full border border-neutral-100">
+                 <span className="w-2 h-2 rounded-full bg-[#4ADE80] animate-pulse"></span>
+                 <span className="text-[9px] font-bold text-neutral-400 uppercase tracking-widest">Secure Digital Report</span>
+              </div>
+           </div>
+        </div>
+      )}
     </div>
   );
 }
