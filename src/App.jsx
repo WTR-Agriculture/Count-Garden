@@ -181,6 +181,7 @@ export default function App() {
   const [selectedRounds, setSelectedRounds] = useState([]);
   const [isGeneratingMasterBill, setIsGeneratingMasterBill] = useState(false);
   const [showMasterBillModal, setShowMasterBillModal] = useState(false);
+  const [masterBillSuccess, setMasterBillSuccess] = useState(false); // Show success+share view
   const [filterDate, setFilterDate] = useState(''); // Added missing filterDate state
   const [expandedHistory, setExpandedHistory] = useState([]);
 
@@ -1390,7 +1391,12 @@ export default function App() {
 
   const renderMasterBillModal = () => {
     const selectedData = historyRecords.filter(r => selectedRounds.includes(r.id));
-    if (selectedData.length === 0) return null;
+    if (selectedData.length === 0 && !masterBillSuccess) return null;
+
+    // Snapshot the data before it might change
+    const snapshotData = masterBillSuccess
+      ? historyRecords.filter(r => r.billingStatus === 'Billed').slice(0, selectedRounds.length)
+      : selectedData;
 
     const categorySummary = {};
     let totalWeight = 0;
@@ -1402,48 +1408,221 @@ export default function App() {
     });
 
     const dates = selectedData.map(r => r.date).sort();
-    const dateRange = dates.length > 1 
-      ? `${formatDisplayDate(dates[0])} - ${formatDisplayDate(dates[dates.length - 1])}` 
+    const dateRange = dates.length > 1
+      ? `${formatDisplayDate(dates[0])} - ${formatDisplayDate(dates[dates.length - 1])}`
       : formatDisplayDate(dates[0]);
 
+    // --- Share Text for Master Bill ---
+    const handleShareMasterText = () => {
+      const sortedRounds = [...selectedData].sort((a,b) => new Date(a.date) - new Date(b.date));
+      let text = `📋 บิลรวมน้ำหนัก (Master Invoice)\n`;
+      text += `📅 ช่วงวันที่: ${dateRange}\n`;
+      text += `📦 จำนวน ${sortedRounds.length} รอบ\n\n`;
+      text += `─────────────────\n`;
+      text += `สรุปตามประเภท:\n`;
+      Object.entries(categorySummary).sort((a,b) => b[1]-a[1]).forEach(([cat, weight]) => {
+        text += `✅ ${cat}: ${weight.toLocaleString()} กก.\n`;
+      });
+      text += `─────────────────\n`;
+      text += `💰 ยอดรวมสุทธิ: ${totalWeight.toLocaleString()} กก.\n\n`;
+      text += `รายละเอียดรายรอบ:\n`;
+      sortedRounds.forEach(r => {
+        text += `  • รอบ ${r.round} (${formatDisplayDate(r.date)}): ${r.totalWeight.toLocaleString()} กก.\n`;
+      });
+      text += `\n🌾 บันทึกโดย AgriWeigh`;
+
+      if (navigator.share) {
+        navigator.share({ text }).catch(e => console.error('Share failed', e));
+      } else {
+        navigator.clipboard.writeText(text).then(() => showToast('คัดลอกข้อความสำเร็จ!')).catch(() => showToast('ไม่สามารถคัดลอกได้'));
+      }
+    };
+
+    // --- Share Image for Master Bill ---
+    const handleShareMasterImage = async () => {
+      setIsGeneratingImg(true);
+      try {
+        const SCALE = 2;
+        const W = 420;
+        const PADDING = 32;
+        const CONTENT_W = W - PADDING * 2;
+        const sortedRounds = [...selectedData].sort((a,b) => new Date(a.date) - new Date(b.date));
+        const catEntries = Object.entries(categorySummary).sort((a,b) => b[1]-a[1]);
+        const catSectionH = catEntries.length * 68 + 60;
+        const auditSectionH = sortedRounds.length * 36 + 60;
+        const H = 220 + catSectionH + auditSectionH + 100;
+
+        const canvas = document.createElement('canvas');
+        canvas.width = W * SCALE;
+        canvas.height = H * SCALE;
+        const ctx = canvas.getContext('2d');
+        ctx.scale(SCALE, SCALE);
+
+        // Background
+        ctx.fillStyle = '#FDFBF7';
+        ctx.fillRect(0, 0, W, H);
+        ctx.strokeStyle = '#E5E5E5'; ctx.lineWidth = 1;
+        ctx.strokeRect(0.5, 0.5, W-1, H-1);
+
+        let y = PADDING;
+
+        // Header black bar
+        ctx.fillStyle = '#1A1A1A';
+        ctx.beginPath(); ctx.roundRect(0, 0, W, 140, [0, 0, 32, 32]); ctx.fill();
+        ctx.fillStyle = '#C084FC'; ctx.globalAlpha = 0.2;
+        ctx.beginPath(); ctx.arc(W - 30, 30, 80, 0, Math.PI*2); ctx.fill();
+        ctx.globalAlpha = 1;
+
+        // Logo
+        ctx.fillStyle = '#C084FC';
+        ctx.beginPath(); ctx.arc(W/2, 38, 20, 0, Math.PI*2); ctx.fill();
+        ctx.fillStyle = '#FFFFFF'; ctx.font = 'bold 18px sans-serif'; ctx.textAlign = 'center';
+        ctx.fillText('✻', W/2, 44);
+
+        // Title
+        ctx.fillStyle = '#FFFFFF'; ctx.font = 'bold 22px sans-serif'; ctx.textAlign = 'center';
+        ctx.fillText('Master Invoice', W/2, 82);
+        ctx.fillStyle = '#999999'; ctx.font = '11px sans-serif';
+        ctx.fillText(dateRange, W/2, 102);
+        ctx.fillStyle = '#666666'; ctx.font = '10px sans-serif';
+        ctx.fillText(`รวม ${sortedRounds.length} รอบ  •  ยอดสุทธิ ${totalWeight.toLocaleString()} กก.`, W/2, 120);
+
+        y = 160;
+
+        // Category Summary Label
+        ctx.fillStyle = '#C084FC'; ctx.font = 'bold 10px sans-serif'; ctx.textAlign = 'left';
+        ctx.fillText('สรุปยอดตามประเภท', PADDING, y);
+        y += 18;
+
+        // Category Cards
+        catEntries.forEach(([cat, weight]) => {
+          const catHex = getCategoryHex(cat);
+          ctx.fillStyle = '#FFFFFF';
+          ctx.beginPath(); ctx.roundRect(PADDING, y, CONTENT_W, 52, 12); ctx.fill();
+          ctx.strokeStyle = '#F0F0F0'; ctx.lineWidth = 1;
+          ctx.beginPath(); ctx.roundRect(PADDING, y, CONTENT_W, 52, 12); ctx.stroke();
+          ctx.fillStyle = catHex;
+          ctx.beginPath(); ctx.arc(PADDING+18, y+26, 5, 0, Math.PI*2); ctx.fill();
+          ctx.fillStyle = '#1A1A1A'; ctx.font = 'bold 15px sans-serif'; ctx.textAlign = 'left';
+          ctx.fillText(cat, PADDING+30, y+30);
+          ctx.font = 'bold 18px sans-serif'; ctx.textAlign = 'right';
+          ctx.fillText(weight.toLocaleString(), W-PADDING-36, y+30);
+          ctx.fillStyle = '#888'; ctx.font = '11px sans-serif';
+          ctx.fillText('กก.', W-PADDING-10, y+30);
+          y += 60;
+        });
+
+        // Total Bar
+        ctx.fillStyle = '#1A1A1A';
+        ctx.beginPath(); ctx.roundRect(PADDING, y, CONTENT_W, 64, 14); ctx.fill();
+        ctx.fillStyle = '#999'; ctx.font = 'bold 11px sans-serif'; ctx.textAlign = 'left';
+        ctx.fillText('ยอดรวมสุทธิ', PADDING+16, y+24);
+        ctx.fillStyle = '#FDE047'; ctx.font = 'bold 28px sans-serif'; ctx.textAlign = 'right';
+        ctx.fillText(totalWeight.toLocaleString(), W-PADDING-42, y+46);
+        ctx.fillStyle = '#999'; ctx.font = 'bold 12px sans-serif';
+        ctx.fillText('กก.', W-PADDING-12, y+46);
+        y += 80;
+
+        // Audit Log
+        ctx.strokeStyle = '#E5E5E5'; ctx.lineWidth = 1; ctx.setLineDash([4,4]);
+        ctx.beginPath(); ctx.moveTo(PADDING, y); ctx.lineTo(W-PADDING, y); ctx.stroke();
+        ctx.setLineDash([]);
+        y += 16;
+        ctx.fillStyle = '#AAAAAA'; ctx.font = 'bold 9px sans-serif'; ctx.textAlign = 'left';
+        ctx.fillText('AUDIT LOG - รายละเอียดรายรอบ', PADDING, y);
+        y += 16;
+        sortedRounds.forEach(r => {
+          ctx.fillStyle = '#555'; ctx.font = 'bold 11px sans-serif'; ctx.textAlign = 'left';
+          ctx.fillText(`รอบ ${r.round}  •  ${formatDisplayDate(r.date)}`, PADDING, y);
+          ctx.fillStyle = '#1A1A1A'; ctx.font = 'bold 11px sans-serif'; ctx.textAlign = 'right';
+          ctx.fillText(`${r.totalWeight.toLocaleString()} กก.`, W-PADDING, y);
+          y += 28;
+        });
+        y += 8;
+
+        // Footer
+        ctx.fillStyle = '#CCCCCC'; ctx.font = '9px sans-serif'; ctx.textAlign = 'center';
+        ctx.fillText('บันทึกโดย AgriWeigh Pro', W/2, y);
+
+        const dataUrl = canvas.toDataURL('image/png');
+        if (navigator.share && navigator.canShare) {
+          const res = await fetch(dataUrl);
+          const blob = await res.blob();
+          const file = new File([blob], `master-invoice-${Date.now()}.png`, { type: 'image/png' });
+          if (navigator.canShare({ files: [file] })) {
+            await navigator.share({ files: [file], title: 'Master Invoice - AgriWeigh' });
+          } else { downloadImage(dataUrl); }
+        } else { downloadImage(dataUrl); }
+        showToast('สร้างใบสรุปรวมสำเร็จ!');
+      } catch(e) {
+        console.error('Master image failed', e);
+        showToast('เกิดข้อผิดพลาดในการสร้างรูปภาพ');
+      } finally {
+        setIsGeneratingImg(false);
+      }
+    };
+
+    // --- Finalize Master Bill ---
     const handleFinalizeMasterBill = async () => {
       setIsGeneratingMasterBill(true);
+      // ✅ Optimistic UI: Update local state immediately
+      const billedIds = [...selectedRounds];
+      setHistoryRecords(prev => prev.map(r =>
+        billedIds.includes(r.id) ? { ...r, billingStatus: 'Billed' } : r
+      ));
+
+      // Show success view immediately
+      setMasterBillSuccess(true);
+      setIsGeneratingMasterBill(false);
+
+      // Try to sync with Google Sheet in the background
       if (GAS_URL) {
         try {
-          await fetch(GAS_URL, { 
-            method: 'POST', 
-            body: JSON.stringify({ action: 'updateBillingStatus', payload: { ids: selectedRounds, status: 'Billed' } }) 
+          await fetch(GAS_URL, {
+            method: 'POST',
+            body: JSON.stringify({ action: 'updateBillingStatus', payload: { ids: billedIds, status: 'Billed' } })
           });
-          await loadGASData();
-          setIsSelectionMode(false);
-          setSelectedRounds([]);
-          setShowMasterBillModal(false);
-          alert('ออกบิลรวมและอัปเดตสถานะเรียบร้อยแล้วค่ะ!');
-        } catch (e) { console.error('Master bill finalize failed', e); }
+        } catch (e) {
+          console.error('Master bill GAS sync failed (UI already updated)', e);
+        }
       }
-      setIsGeneratingMasterBill(false);
+    };
+
+    const handleCloseMasterBill = () => {
+      setShowMasterBillModal(false);
+      setMasterBillSuccess(false);
+      setIsSelectionMode(false);
+      setSelectedRounds([]);
     };
 
     return (
       <div className="fixed inset-0 z-[110] bg-neutral-900/80 backdrop-blur-md flex items-end md:items-center justify-center md:p-4 overflow-y-auto">
         <div className="bg-white w-full max-w-lg rounded-t-[2.5rem] md:rounded-[2.5rem] shadow-2xl flex flex-col my-auto animate-in slide-in-from-bottom-10 duration-500 overflow-hidden">
-          <div className="bg-neutral-900 text-white p-6 relative overflow-hidden shrink-0">
-             <div className="absolute -right-6 -top-6 w-32 h-32 bg-[#C084FC] rounded-full blur-[60px] opacity-20"></div>
-             <h2 className="text-2xl font-black tracking-tight mb-1 flex items-center gap-2">
-               <div className="w-8 h-8 rounded-full bg-[#C084FC] text-white flex items-center justify-center"><ImageIcon className="w-5 h-5" /></div>
-               Master Invoice
-             </h2>
-             <p className="text-neutral-400 text-xs font-bold uppercase tracking-widest flex items-center gap-1.5"><Calendar className="w-3.5 h-3.5" /> ประจำวันที่: {dateRange}</p>
+
+          {/* Header */}
+          <div className={`text-white p-6 relative overflow-hidden shrink-0 transition-colors duration-500 ${masterBillSuccess ? 'bg-[#14532D]' : 'bg-neutral-900'}`}>
+            <div className={`absolute -right-6 -top-6 w-32 h-32 rounded-full blur-[60px] opacity-30 ${masterBillSuccess ? 'bg-[#4ADE80]' : 'bg-[#C084FC]'}`}></div>
+            <h2 className="text-2xl font-black tracking-tight mb-1 flex items-center gap-2">
+              <div className={`w-8 h-8 rounded-full text-white flex items-center justify-center transition-colors ${masterBillSuccess ? 'bg-[#4ADE80]' : 'bg-[#C084FC]'}`}>
+                {masterBillSuccess ? <CheckCircle className="w-5 h-5" /> : <ImageIcon className="w-5 h-5" />}
+              </div>
+              {masterBillSuccess ? 'บิลสำเร็จแล้ว!' : 'Master Invoice'}
+            </h2>
+            <p className="text-neutral-400 text-xs font-bold uppercase tracking-widest flex items-center gap-1.5">
+              <Calendar className="w-3.5 h-3.5" /> ประจำวันที่: {dateRange}
+            </p>
           </div>
+
+          {/* Body */}
           <div className="bg-white p-6 space-y-8 overflow-y-auto max-h-[60vh] hide-scrollbar">
             <div className="text-center pb-6 border-b border-dashed border-neutral-100 italic text-neutral-400 text-xs">AgriWeigh Pro - ใบสรุปผลผลิตรวม</div>
             <div>
               <div className="flex items-center gap-2 mb-4">
-                <div className="w-1.5 h-4 bg-[#C084FC] rounded-full"></div>
+                <div className={`w-1.5 h-4 rounded-full ${masterBillSuccess ? 'bg-[#4ADE80]' : 'bg-[#C084FC]'}`}></div>
                 <h4 className="font-extrabold text-neutral-800 text-sm uppercase tracking-wider">สรุปยอดรวมตามประเภท</h4>
               </div>
               <div className="space-y-3">
-                {Object.entries(categorySummary).sort((a,b) => b[1] - a[1]).map(([cat, weight]) => (
+                {Object.entries(categorySummary).sort((a,b) => b[1]-a[1]).map(([cat, weight]) => (
                   <div key={cat} className="flex justify-between items-center p-4 bg-neutral-50 rounded-2xl border border-neutral-100 shadow-sm">
                     <div className="flex items-center gap-3">
                       <div className="w-2 h-2 rounded-full" style={{ backgroundColor: getCategoryHex(cat) }}></div>
@@ -1453,38 +1632,70 @@ export default function App() {
                   </div>
                 ))}
                 <div className="pt-4 border-t border-neutral-100 flex justify-between items-center">
-                   <span className="text-sm font-black text-neutral-500 uppercase tracking-widest">ยอดรวมสุทธิทั้งสิ้น</span>
-                   <span className="text-3xl font-black text-neutral-900 tracking-tight">{totalWeight.toLocaleString()} <span className="text-sm font-bold text-neutral-400">กก.</span></span>
+                  <span className="text-sm font-black text-neutral-500 uppercase tracking-widest">ยอดรวมสุทธิทั้งสิ้น</span>
+                  <span className="text-3xl font-black text-neutral-900 tracking-tight">{totalWeight.toLocaleString()} <span className="text-sm font-bold text-neutral-400">กก.</span></span>
                 </div>
               </div>
             </div>
             <div className="bg-neutral-50/50 p-5 rounded-3xl border border-neutral-100">
-               <div className="flex items-center gap-2 mb-4">
-                  <List className="w-4 h-4 text-neutral-400" />
-                  <h4 className="font-extrabold text-neutral-400 text-[10px] uppercase tracking-widest">แจกแจงรายรอบ (Audit Log)</h4>
-               </div>
-               <div className="space-y-3">
-                  {selectedData.sort((a,b) => new Date(a.date) - new Date(b.date)).map(r => (
-                    <div key={r.id} className="flex justify-between items-center group">
-                       <div className="text-[11px] font-bold text-neutral-600 flex items-center gap-2">
-                          <span className="w-4 h-4 bg-white border border-neutral-200 rounded-full flex items-center justify-center text-[8px]">{r.round}</span>
-                          {formatDisplayDate(r.date)}
-                       </div>
-                       <div className="text-[11px] font-black text-neutral-900">{r.totalWeight.toLocaleString()} <span className="text-neutral-400 font-bold">กก.</span></div>
+              <div className="flex items-center gap-2 mb-4">
+                <List className="w-4 h-4 text-neutral-400" />
+                <h4 className="font-extrabold text-neutral-400 text-[10px] uppercase tracking-widest">แจกแจงรายรอบ (Audit Log)</h4>
+              </div>
+              <div className="space-y-3">
+                {[...selectedData].sort((a,b) => new Date(a.date) - new Date(b.date)).map(r => (
+                  <div key={r.id} className="flex justify-between items-center">
+                    <div className="text-[11px] font-bold text-neutral-600 flex items-center gap-2">
+                      <span className="w-4 h-4 bg-white border border-neutral-200 rounded-full flex items-center justify-center text-[8px]">{r.round}</span>
+                      {formatDisplayDate(r.date)}
                     </div>
-                  ))}
-               </div>
+                    <div className="text-[11px] font-black text-neutral-900">{r.totalWeight.toLocaleString()} <span className="text-neutral-400 font-bold">กก.</span></div>
+                  </div>
+                ))}
+              </div>
             </div>
           </div>
+
+          {/* Footer - changes based on success state */}
           <div className="p-6 bg-neutral-50 border-t border-neutral-100 flex flex-col gap-3 shrink-0">
-             <button onClick={handleFinalizeMasterBill} disabled={isGeneratingMasterBill} className="w-full bg-neutral-900 text-white p-4 rounded-2xl font-black text-base shadow-xl hover:shadow-2xl active:scale-95 transition-all flex items-center justify-center gap-3">
-                {isGeneratingMasterBill ? (
-                  <><RotateCcw className="w-5 h-5 animate-spin" /> กำลังบันทึก...</>
-                ) : (
-                  <><CheckCircle className="w-5 h-5 text-[#4ADE80]" /> ยืนยันออกบิล & บันทึกสถานะ</>
-                )}
-             </button>
-             <button onClick={() => setShowMasterBillModal(false)} className="w-full bg-white border border-neutral-200 text-neutral-500 p-4 rounded-2xl font-bold text-sm hover:bg-neutral-50 transition-colors">ย้อนกลับ</button>
+            {masterBillSuccess ? (
+              <>
+                <p className="text-center text-sm font-bold text-[#14532D] flex items-center justify-center gap-2">
+                  <CheckCircle className="w-4 h-4 text-[#4ADE80]" /> อัปเดตสถานะเป็น BILLED เรียบร้อยแล้วค่ะ!
+                </p>
+                <button
+                  onClick={handleShareMasterText}
+                  className="w-full flex items-center justify-center gap-3 bg-neutral-900 text-white p-4 rounded-2xl font-black text-sm shadow-xl hover:shadow-2xl active:scale-95 transition-all"
+                >
+                  <MessageSquare className="w-5 h-5 text-[#4ADE80]" /> แชร์สรุปเป็นข้อความ
+                </button>
+                <button
+                  onClick={handleShareMasterImage}
+                  disabled={isGeneratingImg}
+                  className="w-full flex items-center justify-center gap-3 bg-white border-2 border-[#C084FC] text-[#7C3AED] p-4 rounded-2xl font-black text-sm hover:bg-[#C084FC]/5 active:scale-95 transition-all disabled:opacity-60"
+                >
+                  {isGeneratingImg
+                    ? <><RotateCcw className="w-5 h-5 animate-spin" /> กำลังสร้างรูป...</>
+                    : <><ImageIcon className="w-5 h-5" /> แชร์เป็นรูปภาพบิลรวม</>
+                  }
+                </button>
+                <button onClick={handleCloseMasterBill} className="w-full bg-white border border-neutral-200 text-neutral-500 p-3.5 rounded-2xl font-bold text-sm hover:bg-neutral-50 transition-colors">ปิด</button>
+              </>
+            ) : (
+              <>
+                <button
+                  onClick={handleFinalizeMasterBill}
+                  disabled={isGeneratingMasterBill}
+                  className="w-full bg-neutral-900 text-white p-4 rounded-2xl font-black text-base shadow-xl hover:shadow-2xl active:scale-95 transition-all flex items-center justify-center gap-3"
+                >
+                  {isGeneratingMasterBill
+                    ? <><RotateCcw className="w-5 h-5 animate-spin" /> กำลังบันทึก...</>
+                    : <><CheckCircle className="w-5 h-5 text-[#4ADE80]" /> ยืนยันออกบิล & บันทึกสถานะ</>
+                  }
+                </button>
+                <button onClick={() => { setShowMasterBillModal(false); setMasterBillSuccess(false); }} className="w-full bg-white border border-neutral-200 text-neutral-500 p-4 rounded-2xl font-bold text-sm hover:bg-neutral-50 transition-colors">ย้อนกลับ</button>
+              </>
+            )}
           </div>
         </div>
       </div>
