@@ -30,7 +30,8 @@ import {
   MessageSquare,
   Download,
   Copy,
-  Monitor
+  Monitor,
+  RotateCcw
 } from 'lucide-react';
 
 
@@ -304,6 +305,21 @@ export default function App() {
 
   // GAS Data Fetching
   useEffect(() => { loadGASData(); }, []);
+
+  // Sync when window gains focus (Focus Sync)
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
+        loadGASData();
+      }
+    };
+    window.addEventListener('visibilitychange', handleVisibilityChange);
+    window.addEventListener('focus', loadGASData);
+    return () => {
+      window.removeEventListener('visibilitychange', handleVisibilityChange);
+      window.removeEventListener('focus', loadGASData);
+    };
+  }, []);
 
   // Auto-scroll Round Picker into view
   useEffect(() => {
@@ -734,9 +750,22 @@ export default function App() {
       <div className="absolute top-1/4 right-0 w-48 h-48 bg-[#4ADE80] rounded-full blur-[80px] opacity-20"></div>
 
       <div className="bg-white p-6 lg:p-10 rounded-3xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-neutral-100 w-full max-w-sm lg:max-w-md transition-all relative z-10">
-        <h2 className="text-3xl lg:text-4xl font-black text-neutral-900 mb-6 lg:mb-8 text-center tracking-tight">
-          Start now <br /><span className="text-[#4ADE80] font-sans font-bold text-2xl">Recording</span>
-        </h2>
+        <div className="flex justify-between items-start mb-6 lg:mb-8">
+          <div className="flex-1"></div>
+          <h2 className="text-3xl lg:text-4xl font-black text-neutral-900 text-center tracking-tight flex-1">
+            Start now <br /><span className="text-[#4ADE80] font-sans font-bold text-2xl">Recording</span>
+          </h2>
+          <div className="flex-1 flex justify-end">
+            <button 
+              onClick={loadGASData} 
+              disabled={gasLoading}
+              className={`p-2 rounded-full transition-all ${gasLoading ? 'animate-spin text-[#4ADE80] bg-green-50' : 'text-neutral-400 hover:text-[#4ADE80] hover:bg-green-50 active:scale-90'}`}
+              title="รีเฟรชข้อมูล"
+            >
+              <RotateCcw className="w-5 h-5" />
+            </button>
+          </div>
+        </div>
 
         <div className="space-y-4 mb-8">
           {/* Farm Selection */}
@@ -1020,7 +1049,17 @@ export default function App() {
     <div className="flex-1 flex flex-col bg-[#FDFBF7] min-h-full w-full overflow-hidden">
       <div className="p-4 md:p-6 shrink-0 relative overflow-hidden bg-white border-b border-neutral-100">
         <div className="absolute top-0 right-0 w-48 h-48 bg-[#C084FC] rounded-full blur-[80px] opacity-10"></div>
-        <h2 className="text-2xl lg:text-3xl font-extrabold tracking-tight text-neutral-900 relative z-10 flex items-center gap-2">History <span className="text-neutral-300 font-normal">|</span> <span className="text-[#C084FC] font-bold text-lg lg:text-xl">ประวัติ</span></h2>
+        <div className="flex justify-between items-center relative z-10">
+          <h2 className="text-2xl lg:text-3xl font-extrabold tracking-tight text-neutral-900 flex items-center gap-2">History <span className="text-neutral-300 font-normal">|</span> <span className="text-[#C084FC] font-bold text-lg lg:text-xl">ประวัติ</span></h2>
+          <button 
+            onClick={loadGASData} 
+            disabled={gasLoading}
+            className={`p-2 rounded-full transition-all ${gasLoading ? 'animate-spin text-[#C084FC] bg-purple-50' : 'text-neutral-400 hover:text-[#C084FC] hover:bg-purple-50 active:scale-90'}`}
+            title="รีเฟรชข้อมูล"
+          >
+            <RotateCcw className="w-5 h-5" />
+          </button>
+        </div>
 
         <div className="mt-4 flex gap-2 relative z-10 items-center">
           <div className="flex-1 bg-neutral-50 border border-neutral-200 rounded-full flex items-center px-3 py-1.5 shadow-sm">
@@ -1295,9 +1334,19 @@ export default function App() {
       <div className="flex-1 flex flex-col bg-[#FDFBF7] min-h-full w-full overflow-hidden animate-in fade-in duration-300">
         <div className="p-4 md:p-6 shrink-0 relative overflow-hidden bg-white border-b border-neutral-100">
           <div className="absolute top-0 right-0 w-48 h-48 bg-[#FDE047] rounded-full blur-[80px] opacity-20"></div>
-          <h2 className="text-2xl lg:text-3xl font-extrabold tracking-tight text-neutral-900 relative z-10 flex items-center gap-2">
-            Statistics <span className="text-neutral-300 font-normal">|</span> <span className="text-[#FDE047] font-bold text-lg lg:text-xl drop-shadow-sm">สถิติ</span>
-          </h2>
+          <div className="flex justify-between items-center relative z-10 w-full">
+            <h2 className="text-2xl lg:text-3xl font-extrabold tracking-tight text-neutral-900 flex items-center gap-2">
+              Statistics <span className="text-neutral-300 font-normal">|</span> <span className="text-[#FDE047] font-bold text-lg lg:text-xl drop-shadow-sm">สถิติ</span>
+            </h2>
+            <button 
+              onClick={loadGASData} 
+              disabled={gasLoading}
+              className={`p-2 rounded-full transition-all ${gasLoading ? 'animate-spin text-amber-500 bg-amber-50' : 'text-neutral-400 hover:text-amber-500 hover:bg-amber-50 active:scale-90'}`}
+              title="รีเฟรชข้อมูล"
+            >
+              <RotateCcw className="w-5 h-5 transition-transform" />
+            </button>
+          </div>
 
           <div className="mt-4 flex flex-col md:flex-row gap-3 relative z-10">
             <div className="flex bg-neutral-100 p-1 rounded-full border border-neutral-200 shadow-inner overflow-x-auto hide-scrollbar">
@@ -1469,9 +1518,19 @@ export default function App() {
       <div className="flex-1 flex flex-col bg-[#FDFBF7] min-h-full w-full overflow-hidden animate-in fade-in duration-300">
         <div className="p-4 md:p-6 shrink-0 relative overflow-hidden bg-white border-b border-neutral-100">
           <div className="absolute top-0 right-0 w-48 h-48 bg-neutral-200 rounded-full blur-[80px] opacity-20"></div>
-          <h2 className="text-2xl lg:text-3xl font-extrabold tracking-tight text-neutral-900 relative z-10 flex items-center gap-2">
-            Settings <span className="text-neutral-300 font-normal">|</span> <span className="text-neutral-400 font-bold text-lg lg:text-xl drop-shadow-sm">ตั้งค่าระบบ</span>
-          </h2>
+          <div className="flex justify-between items-center relative z-10 w-full">
+            <h2 className="text-2xl lg:text-3xl font-extrabold tracking-tight text-neutral-900 flex items-center gap-2">
+              Settings <span className="text-neutral-300 font-normal">|</span> <span className="text-neutral-400 font-bold text-lg lg:text-xl drop-shadow-sm">ตั้งค่าระบบ</span>
+            </h2>
+            <button 
+              onClick={loadGASData} 
+              disabled={gasLoading}
+              className={`p-2 rounded-full transition-all ${gasLoading ? 'animate-spin text-blue-500 bg-blue-50' : 'text-neutral-400 hover:text-blue-500 hover:bg-blue-50 active:scale-90'}`}
+              title="รีเฟรชข้อมูล"
+            >
+              <RotateCcw className="w-5 h-5 transition-transform" />
+            </button>
+          </div>
           <p className="text-xs text-neutral-500 mt-2">จัดการรายชื่อผลไม้และประเภทเพื่อใช้ในระบบบันทึกและสถิติ</p>
         </div>
 
