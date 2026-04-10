@@ -66,6 +66,44 @@ const INACTIVE_COLOR = 'bg-white text-neutral-500 border-neutral-200';
 
 const GAS_URL = import.meta.env.VITE_GAS_URL;
 
+// --- Utility Functions (Declared globally to avoid initialization errors) ---
+const getTodayThaiFormat = () => {
+  const d = new Date();
+  const day = String(d.getDate()).padStart(2, '0');
+  const month = String(d.getMonth() + 1).padStart(2, '0');
+  const year = d.getFullYear();
+  return `${day}/${month}/${year}`;
+};
+
+const formatDisplayDate = (dateStr) => {
+  if (!dateStr) return '';
+  if (typeof dateStr === 'string' && /^\d{2}\/\d{2}\/\d{4}$/.test(dateStr)) return dateStr;
+  try {
+    const d = new Date(dateStr);
+    if (!isNaN(d.getTime())) {
+      const day = String(d.getDate()).padStart(2, '0');
+      const month = String(d.getMonth() + 1).padStart(2, '0');
+      const year = d.getFullYear();
+      return `${day}/${month}/${year}`;
+    }
+  } catch (e) { }
+  return String(dateStr).split('T')[0];
+};
+
+const getCategoryColorClass = (cat) => {
+  if (DEFAULT_CATEGORY_COLORS[cat]) return DEFAULT_CATEGORY_COLORS[cat];
+  let hash = 0;
+  for (let i = 0; i < cat.length; i++) hash += cat.charCodeAt(i);
+  return FALLBACK_COLORS[hash % FALLBACK_COLORS.length];
+};
+
+const getCategoryHex = (cat) => {
+  if (DEFAULT_CATEGORY_HEX[cat]) return DEFAULT_CATEGORY_HEX[cat];
+  let hash = 0;
+  for (let i = 0; i < cat.length; i++) hash += cat.charCodeAt(i);
+  return FALLBACK_HEX[hash % FALLBACK_HEX.length];
+};
+
 export default function App() {
   const [showNav, setShowNav] = useState(true);
   const lastScrollY = useRef(0);
@@ -88,13 +126,6 @@ export default function App() {
     lastScrollY.current = currentScrollY;
   };
 
-  const getTodayThaiFormat = () => {
-    const d = new Date();
-    const day = String(d.getDate()).padStart(2, '0');
-    const month = String(d.getMonth() + 1).padStart(2, '0');
-    const year = d.getFullYear();
-    return `${day}/${month}/${year}`;
-  };
 
   // --- Dynamic Master Data (Linked Fruits and Categories) ---
   const [masterData, setMasterData] = useState(() => {
@@ -108,20 +139,6 @@ export default function App() {
 
   const fruits = Object.keys(masterData);
 
-  // Helpers for dynamic colors (Using String Hash so color stays consistent)
-  const getCategoryColorClass = (cat) => {
-    if (DEFAULT_CATEGORY_COLORS[cat]) return DEFAULT_CATEGORY_COLORS[cat];
-    let hash = 0;
-    for (let i = 0; i < cat.length; i++) hash += cat.charCodeAt(i);
-    return FALLBACK_COLORS[hash % FALLBACK_COLORS.length];
-  };
-
-  const getCategoryHex = (cat) => {
-    if (DEFAULT_CATEGORY_HEX[cat]) return DEFAULT_CATEGORY_HEX[cat];
-    let hash = 0;
-    for (let i = 0; i < cat.length; i++) hash += cat.charCodeAt(i);
-    return FALLBACK_HEX[hash % FALLBACK_HEX.length];
-  };
 
   // --- State Management ---
   const [activeTab, setActiveTab] = useState('record');
@@ -507,23 +524,6 @@ export default function App() {
     }
   };
 
-  const formatDisplayDate = (dateStr) => {
-    if (!dateStr) return '';
-    // ถ้าเป็นรูปแบบ dd/mm/yyyy อยู่แล้วให้คืนค่ากลับไปเลย กันการ parse ผิด
-    if (typeof dateStr === 'string' && /^\d{2}\/\d{2}\/\d{4}$/.test(dateStr)) return dateStr;
-    
-    try {
-      const d = new Date(dateStr);
-      if (!isNaN(d.getTime())) {
-        const day = String(d.getDate()).padStart(2, '0');
-        const month = String(d.getMonth() + 1).padStart(2, '0');
-        const year = d.getFullYear();
-        return `${day}/${month}/${year}`;
-      }
-    } catch (e) { }
-    // สำหรับพวก ISO String หรือรูปแบบอื่นๆ
-    return String(dateStr).split('T')[0];
-  };
 
   // --- Sharing Handlers ---
   const handleShareText = (record) => {
