@@ -396,7 +396,7 @@ export default function App() {
         }
       }
       if (Array.isArray(hData)) setHistoryRecords(hData);
-      if (Array.isArray(mbData) && mbData.length > 0) setMasterBillsHistory(mbData);
+      if (Array.isArray(mbData)) setMasterBillsHistory(mbData);
     } catch (e) { console.error('GAS fetch failed', e); }
     finally { setGasLoading(false); }
   };
