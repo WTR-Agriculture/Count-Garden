@@ -380,11 +380,12 @@ export default function App() {
     total: getCategoryTotal(cat)
   })).filter(g => g.items.length > 0);
 
-  const filteredHistory = historyRecords.filter(record =>
-    record.date.includes(searchTerm) ||
-    record.round.toString().includes(searchTerm) ||
-    record.fruit.includes(searchTerm)
-  );
+  const filteredHistory = historyRecords.filter(record => {
+    const displayDate = formatDisplayDate(record.date);
+    return displayDate.includes(searchTerm) ||
+           record.round.toString().includes(searchTerm) ||
+           record.fruit.includes(searchTerm);
+  });
 
   // --- Handlers ---
   const handleStartRound = () => { setIsRecording(true); setActiveCategory(''); setErrorMsg(''); };
