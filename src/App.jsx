@@ -1241,12 +1241,17 @@ export default function App() {
                 const catEntries = Object.entries(bill.categorySummary || {}).sort((a, b) => b[1] - a[1]);
 
                 const handleReshareText = () => {
-                  let text = `📋 บิลรวมน้ำหนัก (Master Invoice)\n`;
+                  let text = `📋 สรุปบิลรวมน้ำหนัก ${bill.fruit || ''}\n`;
                   text += `📅 ช่วงวันที่: ${dateLabel}\n`;
                   text += `📦 จำนวน ${bill.roundCount} รอบ\n\n─────────────────\nสรุปตามประเภท:\n`;
                   catEntries.forEach(([cat, w]) => { text += `✅ ${cat}: ${Number(w).toLocaleString()} กก.\n`; });
-                  text += `─────────────────\n💰 ยอดรวมสุทธิ: ${Number(bill.totalWeight).toLocaleString()} กก.\n\n🌾`;
-                  if (navigator.share) navigator.share({ text }).catch(console.error);
+                  text += `─────────────────\n💰 ยอดรวมสุทธิ: ${Number(bill.totalWeight).toLocaleString()} กก.\n\n🌾 บันทึกโดย AgriWeigh Pro`;
+                  if (navigator.share) {
+                    navigator.share({ 
+                      title: `สรุปบิลรวมน้ำหนัก ${bill.fruit || ''} (${dateLabel})`,
+                      text 
+                    }).catch(console.error);
+                  }
                   else navigator.clipboard.writeText(text).then(() => showToast('คัดลอกสำเร็จ!')).catch(() => showToast('ไม่สามารถคัดลอกได้'));
                 };
 
@@ -1267,9 +1272,9 @@ export default function App() {
                     ctx.fillStyle = '#C084FC'; ctx.globalAlpha = 0.2; ctx.beginPath(); ctx.arc(W - 30, 30, 80, 0, Math.PI * 2); ctx.fill(); ctx.globalAlpha = 1;
                     ctx.fillStyle = '#C084FC'; ctx.beginPath(); ctx.arc(W/2, 38, 20, 0, Math.PI*2); ctx.fill();
                     ctx.fillStyle = '#FFF'; ctx.font = 'bold 18px sans-serif'; ctx.textAlign = 'center'; ctx.fillText('✻', W/2, 44);
-                    ctx.fillStyle = '#FFF'; ctx.font = 'bold 22px sans-serif'; ctx.fillText('Master Invoice', W/2, 82);
-                    ctx.fillStyle = '#999'; ctx.font = 'bold 14px sans-serif'; ctx.fillText(bill.fruit || '', W/2, 102);
-                    ctx.fillStyle = '#777'; ctx.font = '11px sans-serif'; ctx.fillText(dateLabel, W/2, 122);
+                    ctx.fillStyle = '#FFF'; ctx.font = 'bold 22px sans-serif'; ctx.fillText('สรุปบิลรวมน้ำหนัก', W/2, 82);
+                    ctx.fillStyle = '#FDE047'; ctx.font = 'bold 18px sans-serif'; ctx.fillText(bill.fruit || '', W/2, 106);
+                    ctx.fillStyle = '#FFF'; ctx.globalAlpha = 0.5; ctx.font = '11px sans-serif'; ctx.fillText(dateLabel, W/2, 126); ctx.globalAlpha = 1;
                     ctx.fillStyle = '#666'; ctx.font = '10px sans-serif'; ctx.fillText(`ยอดสุทธิ ${Number(bill.totalWeight).toLocaleString()} กก.  •  ${bill.roundCount} รอบ`, W/2, 140);
                     let y = 180;
                     ctx.fillStyle = '#C084FC'; ctx.font = 'bold 10px sans-serif'; ctx.textAlign = 'left'; ctx.fillText('สรุปยอดตามประเภท', PADDING, y); y += 18;
@@ -1291,7 +1296,12 @@ export default function App() {
                     if (navigator.share && navigator.canShare) {
                       const res = await fetch(dataUrl); const blob = await res.blob();
                       const file = new File([blob], `master-bill-${bill.id}.png`, { type: 'image/png' });
-                      if (navigator.canShare({ files: [file] })) { await navigator.share({ files: [file], title: 'Master Invoice' }); }
+                      if (navigator.canShare({ files: [file] })) { 
+                        await navigator.share({ 
+                          files: [file], 
+                          title: `สรุปบิลรวมน้ำหนัก ${bill.fruit || ''} (${dateLabel})`
+                        }); 
+                      }
                       else downloadImage(dataUrl);
                     } else downloadImage(dataUrl);
                     showToast('สร้างรูปได้สำเร็จ!');
