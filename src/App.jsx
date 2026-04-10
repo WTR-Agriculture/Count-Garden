@@ -1132,8 +1132,8 @@ export default function App() {
           </button>
         </div>
 
-        {/* Active Filter Chips - rounds only */}
-        {historySubTab === 'rounds' && filterDate && (
+        {/* Active Filter Chips - Visible in both tabs */}
+        {filterDate && (
           <div className="flex flex-wrap items-center gap-2 mb-1 px-1 mt-3">
             <span className="bg-[#C084FC]/10 text-[#C084FC] border border-[#C084FC]/20 px-3 py-1.5 rounded-full text-xs font-bold flex items-center gap-2 animate-in slide-in-from-left-2 duration-300">
               <Calendar className="w-3.5 h-3.5" />
@@ -1143,45 +1143,60 @@ export default function App() {
           </div>
         )}
 
-        {historySubTab === 'rounds' && (
-          <div className="flex gap-2 items-center w-full mt-3">
-            <div className="flex-1 bg-neutral-50 border border-neutral-200 rounded-full flex items-center px-3 py-1.5 shadow-sm focus-within:ring-2 focus-within:ring-[#C084FC]/20 focus-within:border-[#C084FC] transition-all">
-              <Search className="w-3.5 h-3.5 text-neutral-400 mr-1.5" />
-              <input type="text" placeholder="ค้นหา... (ผลไม้, รอบ, สวน)" value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} className="bg-transparent border-none outline-none text-xs w-full text-neutral-700 font-medium placeholder-neutral-300" />
-              {searchTerm && (<button onClick={() => setSearchTerm('')} className="text-neutral-400 hover:text-neutral-600 px-1 transition-colors"><X className="w-3.5 h-3.5" /></button>)}
-            </div>
-            <div className="relative shrink-0">
-              <button className={`border rounded-full w-8 h-8 flex items-center justify-center transition-all shadow-sm active:scale-95 shrink-0 overflow-hidden relative ${filterDate ? 'bg-[#C084FC] border-[#C084FC] text-white' : 'bg-white border-neutral-200 text-neutral-500 hover:bg-neutral-50'}`}>
-                <Calendar className="w-3.5 h-3.5" />
-                <input type="date" onClick={(e) => { try { if (e.target.showPicker) e.target.showPicker(); } catch (err) { } }} onChange={handleHistorySearchDateChange} className="absolute inset-0 w-full h-full opacity-0 cursor-pointer" />
-              </button>
-            </div>
-            <div className="flex lg:hidden bg-neutral-100 p-0.5 rounded-full border border-neutral-200 shadow-inner shrink-0">
-              <button onClick={() => setViewMode('list')} className={`w-7 h-7 flex items-center justify-center rounded-full transition-all ${viewMode === 'list' ? 'bg-white shadow-[0_2px_5px_rgba(0,0,0,0.1)] text-neutral-900 font-bold' : 'text-neutral-400 hover:text-neutral-600'}`}><List className="w-3.5 h-3.5" /></button>
-              <button onClick={() => setViewMode('card')} className={`w-7 h-7 flex items-center justify-center rounded-full transition-all ${viewMode === 'card' ? 'bg-white shadow-[0_2px_5px_rgba(0,0,0,0.1)] text-neutral-900 font-bold' : 'text-neutral-400 hover:text-neutral-600'}`}><LayoutGrid className="w-3.5 h-3.5" /></button>
-            </div>
+        <div className="flex gap-2 items-center w-full mt-3">
+          <div className="flex-1 bg-neutral-50 border border-neutral-200 rounded-full flex items-center px-3 py-1.5 shadow-sm focus-within:ring-2 focus-within:ring-[#C084FC]/20 focus-within:border-[#C084FC] transition-all">
+            <Search className="w-3.5 h-3.5 text-neutral-400 mr-1.5" />
+            <input 
+              type="text" 
+              placeholder={historySubTab === 'rounds' ? "ค้นหา... (ผลไม้, รอบ, สวน)" : "ค้นหาบิลรวม... (ระบุชนิดผลไม้)"} 
+              value={searchTerm} 
+              onChange={(e) => setSearchTerm(e.target.value)} 
+              className="bg-transparent border-none outline-none text-xs w-full text-neutral-700 font-medium placeholder-neutral-300" 
+            />
+            {searchTerm && (<button onClick={() => setSearchTerm('')} className="text-neutral-400 hover:text-neutral-600 px-1 transition-colors"><X className="w-3.5 h-3.5" /></button>)}
           </div>
-        )}
+          <div className="relative shrink-0">
+            <button className={`border rounded-full w-8 h-8 flex items-center justify-center transition-all shadow-sm active:scale-95 shrink-0 overflow-hidden relative ${filterDate ? 'bg-[#C084FC] border-[#C084FC] text-white' : 'bg-white border-neutral-200 text-neutral-500 hover:bg-neutral-50'}`}>
+              <Calendar className="w-3.5 h-3.5" />
+              <input type="date" onClick={(e) => { try { if (e.target.showPicker) e.target.showPicker(); } catch (err) { } }} onChange={handleHistorySearchDateChange} className="absolute inset-0 w-full h-full opacity-0 cursor-pointer" />
+            </button>
+          </div>
+          <div className="flex lg:hidden bg-neutral-100 p-0.5 rounded-full border border-neutral-200 shadow-inner shrink-0">
+            <button onClick={() => setViewMode('list')} className={`w-7 h-7 flex items-center justify-center rounded-full transition-all ${viewMode === 'list' ? 'bg-white shadow-[0_2px_5px_rgba(0,0,0,0.1)] text-neutral-900 font-bold' : 'text-neutral-400 hover:text-neutral-600'}`}><List className="w-3.5 h-3.5" /></button>
+            <button onClick={() => setViewMode('card')} className={`w-7 h-7 flex items-center justify-center rounded-full transition-all ${viewMode === 'card' ? 'bg-white shadow-[0_2px_5px_rgba(0,0,0,0.1)] text-neutral-900 font-bold' : 'text-neutral-400 hover:text-neutral-600'}`}><LayoutGrid className="w-3.5 h-3.5" /></button>
+          </div>
+        </div>
       </div>
 
       {/* BODY: conditionally show rounds or master bills */}
       {historySubTab === 'masterBills' ? (
         <div className="flex-1 overflow-y-auto p-3 md:p-6 pb-28 hide-scrollbar">
-          {masterBillsHistory.length === 0 ? (
-            <div className="h-full flex flex-col items-center justify-center text-neutral-400 mt-16">
-              <div className="w-16 h-16 bg-neutral-100 rounded-full flex items-center justify-center mb-3">
-                <ImageIcon className="w-6 h-6 text-neutral-300" />
-              </div>
-              <p className="font-bold text-base text-neutral-700">ยังไม่มีบิลรวม</p>
-              <p className="text-[11px] text-center max-w-[200px] mt-1 font-medium">เมื่อสร้างบิลรวมสำเร็จ ประวัติจะมาแสดงที่นี่ค่ะ</p>
-              <button
-                onClick={() => setHistorySubTab('rounds')}
-                className="mt-4 px-5 py-2.5 bg-[#C084FC] text-white rounded-full text-xs font-bold shadow-md hover:bg-[#A855F7] transition-all"
-              >ไปเลือกรอบเพื่อรวมบิล</button>
-            </div>
-          ) : (
-            <div className="space-y-4 max-w-3xl mx-auto">
-              {masterBillsHistory.map(bill => {
+          {(() => {
+            const filteredMasterBills = masterBillsHistory.filter(bill => {
+              const matchesDate = !filterDate || (bill.dateFrom?.includes(filterDate) || bill.dateTo?.includes(filterDate));
+              const matchesSearch = !searchTerm || (
+                (bill.fruit || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+                (bill.dateFrom || '').includes(searchTerm) ||
+                (bill.dateTo || '').includes(searchTerm)
+              );
+              return matchesDate && matchesSearch;
+            });
+
+            if (filteredMasterBills.length === 0) {
+              return (
+                <div className="h-full flex flex-col items-center justify-center text-neutral-400 mt-16">
+                  <div className="w-16 h-16 bg-neutral-100 rounded-full flex items-center justify-center mb-3">
+                    <Search className="w-6 h-6 text-neutral-300" />
+                  </div>
+                  <p className="font-bold text-base text-neutral-700">ไม่พบบิลรวม</p>
+                  <p className="text-[11px] text-center max-w-[200px] mt-1 font-medium">ลองเปลี่ยนคำค้นหา หรือสร้างบิลรวมใหม่ค่ะ</p>
+                </div>
+              );
+            }
+
+            return (
+              <div className="space-y-4 max-w-3xl mx-auto">
+                {filteredMasterBills.map(bill => {
                 const isExpanded = expandedMasterBill === bill.id;
                 const dateFrom = bill.dateFrom ? formatDisplayDate(bill.dateFrom) : '-';
                 const dateTo = bill.dateTo ? formatDisplayDate(bill.dateTo) : '-';
@@ -1250,23 +1265,26 @@ export default function App() {
                   <div key={bill.id} className="bg-white rounded-2xl border border-neutral-100 shadow-[0_2px_10px_rgb(0,0,0,0.03)] overflow-hidden transition-all hover:border-neutral-200">
                     {/* Bill Card Header */}
                     <div className="p-4 flex items-center gap-3 cursor-pointer" onClick={() => setExpandedMasterBill(isExpanded ? null : bill.id)}>
-                      <div className="w-10 h-10 rounded-full bg-[#C084FC]/10 flex items-center justify-center shrink-0">
-                        <ImageIcon className="w-5 h-5 text-[#C084FC]" />
-                      </div>
                       <div className="flex-1 min-w-0">
-                        <div className="font-extrabold text-neutral-900 text-sm">{dateLabel}</div>
-                        <div className="flex items-center gap-2 mt-0.5">
-                          {bill.fruit && <span className="text-[9px] font-black bg-[#C084FC] text-white px-1.5 py-0.5 rounded-md uppercase">{bill.fruit}</span>}
+                        <div className="flex items-center gap-3 mb-2">
+                          {bill.fruit && (
+                            <span className="bg-[#C084FC] text-white px-4 py-1.5 rounded-xl text-xs font-black shadow-lg shadow-purple-200 border border-white/20 animate-in zoom-in-50 duration-300 shrink-0 uppercase tracking-wider">
+                              {bill.fruit}
+                            </span>
+                          )}
+                          <div className="font-black text-neutral-900 text-[15px] truncate">{dateLabel}</div>
+                        </div>
+                        <div className="flex items-center gap-2">
                           <span className="text-[10px] font-medium text-neutral-500">{bill.roundCount} รอบ</span>
                           <span className="w-1 h-1 rounded-full bg-neutral-300"></span>
-                          <span className="text-[10px] font-bold text-[#C084FC]">{catEntries.length} ประเภท</span>
+                          <span className="text-[11px] font-bold text-[#C084FC]">{catEntries.length} ประเภท</span>
                         </div>
                       </div>
                       <div className="text-right shrink-0">
-                        <div className="text-xl font-black text-neutral-900">{Number(bill.totalWeight).toLocaleString()}</div>
-                        <div className="text-[10px] font-bold text-neutral-400">กก.</div>
+                        <div className="text-2xl font-black text-neutral-900 leading-none">{Number(bill.totalWeight).toLocaleString()}</div>
+                        <div className="text-[10px] font-bold text-neutral-400 mt-0.5">กก.</div>
                       </div>
-                      <ChevronDown className={`w-4 h-4 text-neutral-400 transition-transform shrink-0 ${isExpanded ? 'rotate-180' : ''}`} />
+                      <ChevronDown className={`w-5 h-5 text-neutral-300 transition-transform shrink-0 ${isExpanded ? 'rotate-180' : ''}`} />
                     </div>
 
                     {/* Expanded Detail */}
@@ -1304,9 +1322,10 @@ export default function App() {
                 );
               })}
             </div>
-          )}
-        </div>
-      ) : (
+          );
+        })()}
+      </div>
+) : (
         <div className="flex-1 overflow-y-auto p-3 md:p-6 pb-28 hide-scrollbar">
 
           {filteredHistory.length === 0 ? (
