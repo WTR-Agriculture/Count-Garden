@@ -1258,40 +1258,95 @@ export default function App() {
                 const handleReshareImage = async () => {
                   setIsGeneratingImg(true);
                   try {
+                    const sortedRounds = (bill.roundIds || [])
+                      .map(rid => historyRecords.find(r => r.id === rid))
+                      .filter(Boolean)
+                      .sort((a, b) => new Date(a.date) - new Date(b.date) || a.round - b.round);
+
                     const SCALE = 2, W = 420, PADDING = 32, CONTENT_W = W - PADDING * 2;
                     const catSectionH = catEntries.length * 68 + 60;
-                    const H = 220 + catSectionH + 100;
+                    const auditLogH = (sortedRounds.length * 28) + 60;
+                    const H = 240 + catSectionH + 100 + auditLogH + 60;
                     const canvas = document.createElement('canvas');
                     canvas.width = W * SCALE; canvas.height = H * SCALE;
                     const ctx = canvas.getContext('2d');
                     ctx.scale(SCALE, SCALE);
                     ctx.fillStyle = '#FDFBF7'; ctx.fillRect(0, 0, W, H);
                     ctx.strokeStyle = '#E5E5E5'; ctx.lineWidth = 1; ctx.strokeRect(0.5, 0.5, W - 1, H - 1);
-                    // Header
-                    ctx.fillStyle = '#1A1A1A'; ctx.beginPath(); ctx.roundRect(0, 0, W, 140, [0, 0, 32, 32]); ctx.fill();
-                    ctx.fillStyle = '#C084FC'; ctx.globalAlpha = 0.2; ctx.beginPath(); ctx.arc(W - 30, 30, 80, 0, Math.PI * 2); ctx.fill(); ctx.globalAlpha = 1;
-                    ctx.fillStyle = '#C084FC'; ctx.beginPath(); ctx.arc(W/2, 38, 20, 0, Math.PI*2); ctx.fill();
-                    ctx.fillStyle = '#FFF'; ctx.font = 'bold 18px sans-serif'; ctx.textAlign = 'center'; ctx.fillText('✻', W/2, 44);
-                    ctx.fillStyle = '#FFF'; ctx.font = 'bold 22px sans-serif'; ctx.fillText('สรุปบิลรวมน้ำหนัก', W/2, 82);
-                    ctx.fillStyle = '#FDE047'; ctx.font = 'bold 18px sans-serif'; ctx.fillText(bill.fruit || '', W/2, 106);
-                    ctx.fillStyle = '#FFF'; ctx.globalAlpha = 0.5; ctx.font = '11px sans-serif'; ctx.fillText(dateLabel, W/2, 126); ctx.globalAlpha = 1;
-                    ctx.fillStyle = '#666'; ctx.font = '10px sans-serif'; ctx.fillText(`ยอดสุทธิ ${Number(bill.totalWeight).toLocaleString()} กก.  •  ${bill.roundCount} รอบ`, W/2, 140);
-                    let y = 180;
-                    ctx.fillStyle = '#C084FC'; ctx.font = 'bold 10px sans-serif'; ctx.textAlign = 'left'; ctx.fillText('สรุปยอดตามประเภท', PADDING, y); y += 18;
+
+                    let y = PADDING;
+                    // --- Logo ---
+                    const logoSize = 48;
+                    ctx.fillStyle = '#1A1A1A';
+                    ctx.beginPath(); ctx.arc(W / 2, y + logoSize / 2, logoSize / 2, 0, Math.PI * 2); ctx.fill();
+                    ctx.fillStyle = '#FFFFFF'; ctx.font = 'bold 24px sans-serif'; ctx.textAlign = 'center';
+                    ctx.fillText('✻', W / 2, y + logoSize / 2 + 8);
+                    y += logoSize + 32;
+
+                    // --- Farm Name ---
+                    ctx.fillStyle = '#1A1A1A'; ctx.font = 'bold 28px sans-serif'; ctx.textAlign = 'center';
+                    ctx.fillText(setupData.farmName || 'AgriWeigh Pro', W / 2, y);
+                    y += 28;
+
+                    // --- Header Label ---
+                    ctx.fillStyle = '#888'; ctx.font = 'bold 16px sans-serif';
+                    ctx.fillText(`บิลชั่งน้ำหนัก ${bill.fruit || ''}`, W / 2, y);
+                    y += 22;
+
+                    // --- Date Range ---
+                    ctx.fillStyle = '#AAA'; ctx.font = 'bold 12px sans-serif';
+                    ctx.fillText(`ช่วงวันที่: ${dateLabel}`, W / 2, y);
+                    y += 20;
+
+                    // --- Summary Line ---
+                    ctx.fillStyle = '#BBB'; ctx.font = '11px sans-serif';
+                    ctx.fillText(`จำนวน ${bill.roundCount} รอบ  •  น้ำหนักสุทธิ ${Number(bill.totalWeight).toLocaleString()} กก.`, W / 2, y);
+                    y += 28;
+
+                    // --- Dashed Line ---
+                    ctx.strokeStyle = '#D4D4D4'; ctx.lineWidth = 1.5; ctx.setLineDash([5, 4]);
+                    ctx.beginPath(); ctx.moveTo(PADDING, y); ctx.lineTo(W - PADDING, y); ctx.stroke();
+                    ctx.setLineDash([]);
+                    y += 32;
+
+                    // --- Summary Cards ---
+                    ctx.fillStyle = '#C084FC'; ctx.font = 'bold 11px sans-serif'; ctx.textAlign = 'left';
+                    ctx.fillText('สรุปยอดตามประเภท', PADDING, y); y += 18;
                     catEntries.forEach(([cat, weight]) => {
                       const catHex = getCategoryHex(cat);
-                      ctx.fillStyle = '#FFF'; ctx.beginPath(); ctx.roundRect(PADDING, y, CONTENT_W, 52, 12); ctx.fill();
-                      ctx.strokeStyle = '#F0F0F0'; ctx.lineWidth = 1; ctx.beginPath(); ctx.roundRect(PADDING, y, CONTENT_W, 52, 12); ctx.stroke();
-                      ctx.fillStyle = catHex; ctx.beginPath(); ctx.arc(PADDING + 18, y + 26, 5, 0, Math.PI * 2); ctx.fill();
-                      ctx.fillStyle = '#1A1A1A'; ctx.font = 'bold 15px sans-serif'; ctx.textAlign = 'left'; ctx.fillText(cat, PADDING + 30, y + 30);
-                      ctx.font = 'bold 18px sans-serif'; ctx.textAlign = 'right'; ctx.fillText(Number(weight).toLocaleString(), W - PADDING - 36, y + 30);
-                      ctx.fillStyle = '#888'; ctx.font = '11px sans-serif'; ctx.fillText('กก.', W - PADDING - 10, y + 30); y += 60;
+                      ctx.fillStyle = '#FFF'; ctx.beginPath(); ctx.roundRect(PADDING, y, CONTENT_W, 56, 14); ctx.fill();
+                      ctx.strokeStyle = '#F0F0F0'; ctx.lineWidth = 1; ctx.strokeRect(PADDING + 0.5, y + 0.5, CONTENT_W - 1, 56 - 1);
+                      ctx.fillStyle = catHex; ctx.beginPath(); ctx.arc(PADDING + 20, y + 28, 6, 0, Math.PI * 2); ctx.fill();
+                      ctx.fillStyle = '#1A1A1A'; ctx.font = 'bold 17px sans-serif'; ctx.textAlign = 'left'; ctx.fillText(cat, PADDING + 34, y + 33);
+                      ctx.font = 'bold 20px sans-serif'; ctx.textAlign = 'right'; ctx.fillText(Number(weight).toLocaleString(), W - PADDING - 40, y + 33);
+                      ctx.fillStyle = '#888'; ctx.font = '12px sans-serif'; ctx.fillText('กก.', W - PADDING - 10, y + 33); y += 64;
                     });
-                    ctx.fillStyle = '#1A1A1A'; ctx.beginPath(); ctx.roundRect(PADDING, y, CONTENT_W, 64, 14); ctx.fill();
-                    ctx.fillStyle = '#999'; ctx.font = 'bold 11px sans-serif'; ctx.textAlign = 'left'; ctx.fillText('ยอดรวมสุทธิ', PADDING + 16, y + 24);
-                    ctx.fillStyle = '#FDE047'; ctx.font = 'bold 28px sans-serif'; ctx.textAlign = 'right'; ctx.fillText(Number(bill.totalWeight).toLocaleString(), W - PADDING - 42, y + 46);
-                    ctx.fillStyle = '#999'; ctx.font = 'bold 12px sans-serif'; ctx.fillText('กก.', W - PADDING - 12, y + 46); y += 80;
-                    ctx.fillStyle = '#CCC'; ctx.font = '9px sans-serif'; ctx.textAlign = 'center'; ctx.fillText('บันทึกโดย AgriWeigh Pro', W / 2, y);
+                    y += 12;
+
+                    // --- Grand Total ---
+                    ctx.fillStyle = '#1A1A1A'; ctx.beginPath(); ctx.roundRect(PADDING, y, CONTENT_W, 72, 16); ctx.fill();
+                    ctx.fillStyle = '#999'; ctx.font = 'bold 12px sans-serif'; ctx.textAlign = 'left'; ctx.fillText('ยอดรวมสุทธิ', PADDING + 20, y + 28);
+                    ctx.fillStyle = '#FDE047'; ctx.font = 'bold 32px sans-serif'; ctx.textAlign = 'right'; ctx.fillText(Number(bill.totalWeight).toLocaleString(), W - PADDING - 46, y + 50);
+                    ctx.fillStyle = '#999'; ctx.font = 'bold 13px sans-serif'; ctx.fillText('กก.', W - PADDING - 15, y + 50); y += 100;
+
+                    // --- Audit Log ---
+                    ctx.strokeStyle = '#E5E5E5'; ctx.lineWidth = 1; ctx.setLineDash([4, 4]);
+                    ctx.beginPath(); ctx.moveTo(PADDING, y); ctx.lineTo(W - PADDING, y); ctx.stroke();
+                    ctx.setLineDash([]); y += 24;
+                    ctx.fillStyle = '#AAA'; ctx.font = 'bold 10px sans-serif'; ctx.textAlign = 'left'; ctx.fillText('AUDIT LOG - รายละเอียดรายรอบ', PADDING, y); y += 20;
+
+                    sortedRounds.forEach(r => {
+                      ctx.fillStyle = '#555'; ctx.font = 'bold 12px sans-serif'; ctx.textAlign = 'left';
+                      ctx.fillText(`รอบ ${r.round}  •  ${formatDisplayDate(r.date)}`, PADDING, y);
+                      ctx.fillStyle = '#1A1A1A'; ctx.font = 'bold 12px sans-serif'; ctx.textAlign = 'right';
+                      ctx.fillText(`${Number(r.totalWeight).toLocaleString()} กก.`, W - PADDING, y);
+                      y += 28;
+                    });
+                    y += 24;
+
+                    // --- Footer ---
+                    ctx.fillStyle = '#CCC'; ctx.font = '10px sans-serif'; ctx.textAlign = 'center'; ctx.fillText('บันทึกโดย AgriWeigh Pro', W / 2, y);
+
                     const dataUrl = canvas.toDataURL('image/png');
                     if (navigator.share && navigator.canShare) {
                       const res = await fetch(dataUrl); const blob = await res.blob();
@@ -1803,95 +1858,91 @@ export default function App() {
         ctx.strokeRect(0.5, 0.5, W - 1, H - 1);
 
         let y = PADDING;
-
-        // Header black bar
+        // --- Logo ---
+        const logoSize = 48;
         ctx.fillStyle = '#1A1A1A';
-        ctx.beginPath(); ctx.roundRect(0, 0, W, 140, [0, 0, 32, 32]); ctx.fill();
-        ctx.fillStyle = '#C084FC'; ctx.globalAlpha = 0.2;
-        ctx.beginPath(); ctx.arc(W - 30, 30, 80, 0, Math.PI * 2); ctx.fill();
-        ctx.globalAlpha = 1;
+        ctx.beginPath(); ctx.arc(W / 2, y + logoSize / 2, logoSize / 2, 0, Math.PI * 2); ctx.fill();
+        ctx.fillStyle = '#FFFFFF'; ctx.font = 'bold 24px sans-serif'; ctx.textAlign = 'center';
+        ctx.fillText('✻', W / 2, y + logoSize / 2 + 8);
+        y += logoSize + 32;
 
-        // Logo
-        ctx.fillStyle = '#C084FC';
-        ctx.beginPath(); ctx.arc(W / 2, 38, 20, 0, Math.PI * 2); ctx.fill();
-        ctx.fillStyle = '#FFFFFF'; ctx.font = 'bold 18px sans-serif'; ctx.textAlign = 'center';
-        ctx.fillText('✻', W / 2, 44);
+        // --- Farm Name ---
+        ctx.fillStyle = '#1A1A1A'; ctx.font = 'bold 28px sans-serif'; ctx.textAlign = 'center';
+        ctx.fillText(setupData.farmName || 'AgriWeigh Pro', W / 2, y);
+        y += 28;
 
-        // Title
-        ctx.fillStyle = '#FFFFFF'; ctx.font = 'bold 22px sans-serif'; ctx.textAlign = 'center';
-        ctx.fillText('Master Invoice', W / 2, 82);
-        ctx.fillStyle = '#999999'; ctx.font = '11px sans-serif';
-        ctx.fillText(dateRange, W / 2, 102);
-        ctx.fillStyle = '#666666'; ctx.font = '10px sans-serif';
-        ctx.fillText(`รวม ${sortedRounds.length} รอบ  •  ยอดสุทธิ ${totalWeight.toLocaleString()} กก.`, W / 2, 120);
+        // --- Header Label ---
+        ctx.fillStyle = '#888'; ctx.font = 'bold 16px sans-serif';
+        ctx.fillText(`บิลชั่งน้ำหนัก ${masterFruit}`, W / 2, y);
+        y += 22;
 
-        y = 160;
+        // --- Date Range ---
+        ctx.fillStyle = '#AAA'; ctx.font = 'bold 12px sans-serif';
+        ctx.fillText(`ช่วงวันที่: ${dateRange}`, W / 2, y);
+        y += 20;
 
-        // Category Summary Label
-        ctx.fillStyle = '#C084FC'; ctx.font = 'bold 10px sans-serif'; ctx.textAlign = 'left';
-        ctx.fillText('สรุปยอดตามประเภท', PADDING, y);
-        y += 18;
+        // --- Summary Line ---
+        ctx.fillStyle = '#BBB'; ctx.font = '11px sans-serif';
+        ctx.fillText(`จำนวน ${sortedRounds.length} รอบ  •  น้ำหนักสุทธิ ${totalWeight.toLocaleString()} กก.`, W / 2, y);
+        y += 28;
 
-        // Category Cards
-        catEntries.forEach(([cat, weight]) => {
-          const catHex = getCategoryHex(cat);
-          ctx.fillStyle = '#FFFFFF';
-          ctx.beginPath(); ctx.roundRect(PADDING, y, CONTENT_W, 52, 12); ctx.fill();
-          ctx.strokeStyle = '#F0F0F0'; ctx.lineWidth = 1;
-          ctx.beginPath(); ctx.roundRect(PADDING, y, CONTENT_W, 52, 12); ctx.stroke();
-          ctx.fillStyle = catHex;
-          ctx.beginPath(); ctx.arc(PADDING + 18, y + 26, 5, 0, Math.PI * 2); ctx.fill();
-          ctx.fillStyle = '#1A1A1A'; ctx.font = 'bold 15px sans-serif'; ctx.textAlign = 'left';
-          ctx.fillText(cat, PADDING + 30, y + 30);
-          ctx.font = 'bold 18px sans-serif'; ctx.textAlign = 'right';
-          ctx.fillText(weight.toLocaleString(), W - PADDING - 36, y + 30);
-          ctx.fillStyle = '#888'; ctx.font = '11px sans-serif';
-          ctx.fillText('กก.', W - PADDING - 10, y + 30);
-          y += 60;
-        });
-
-        // Total Bar
-        ctx.fillStyle = '#1A1A1A';
-        ctx.beginPath(); ctx.roundRect(PADDING, y, CONTENT_W, 64, 14); ctx.fill();
-        ctx.fillStyle = '#999'; ctx.font = 'bold 11px sans-serif'; ctx.textAlign = 'left';
-        ctx.fillText('ยอดรวมสุทธิ', PADDING + 16, y + 24);
-        ctx.fillStyle = '#FDE047'; ctx.font = 'bold 28px sans-serif'; ctx.textAlign = 'right';
-        ctx.fillText(totalWeight.toLocaleString(), W - PADDING - 42, y + 46);
-        ctx.fillStyle = '#999'; ctx.font = 'bold 12px sans-serif';
-        ctx.fillText('กก.', W - PADDING - 12, y + 46);
-        y += 80;
-
-        // Audit Log
-        ctx.strokeStyle = '#E5E5E5'; ctx.lineWidth = 1; ctx.setLineDash([4, 4]);
+        // --- Dashed Line ---
+        ctx.strokeStyle = '#D4D4D4'; ctx.lineWidth = 1.5; ctx.setLineDash([5, 4]);
         ctx.beginPath(); ctx.moveTo(PADDING, y); ctx.lineTo(W - PADDING, y); ctx.stroke();
         ctx.setLineDash([]);
-        y += 16;
-        ctx.fillStyle = '#AAAAAA'; ctx.font = 'bold 9px sans-serif'; ctx.textAlign = 'left';
-        ctx.fillText('AUDIT LOG - รายละเอียดรายรอบ', PADDING, y);
-        y += 16;
+        y += 32;
+
+        // --- Summary Cards ---
+        ctx.fillStyle = '#C084FC'; ctx.font = 'bold 11px sans-serif'; ctx.textAlign = 'left';
+        ctx.fillText('สรุปยอดตามประเภท', PADDING, y); y += 18;
+        catEntries.forEach(([cat, weight]) => {
+          const catHex = getCategoryHex(cat);
+          ctx.fillStyle = '#FFF'; ctx.beginPath(); ctx.roundRect(PADDING, y, CONTENT_W, 56, 14); ctx.fill();
+          ctx.strokeStyle = '#F0F0F0'; ctx.lineWidth = 1; ctx.strokeRect(PADDING + 0.5, y + 0.5, CONTENT_W - 1, 56 - 1);
+          ctx.fillStyle = catHex; ctx.beginPath(); ctx.arc(PADDING + 20, y + 28, 6, 0, Math.PI * 2); ctx.fill();
+          ctx.fillStyle = '#1A1A1A'; ctx.font = 'bold 17px sans-serif'; ctx.textAlign = 'left'; ctx.fillText(cat, PADDING + 34, y + 33);
+          ctx.font = 'bold 20px sans-serif'; ctx.textAlign = 'right'; ctx.fillText(weight.toLocaleString(), W - PADDING - 40, y + 33);
+          ctx.fillStyle = '#888'; ctx.font = '12px sans-serif'; ctx.fillText('กก.', W - PADDING - 10, y + 33); y += 64;
+        });
+        y += 12;
+
+        // --- Grand Total ---
+        ctx.fillStyle = '#1A1A1A'; ctx.beginPath(); ctx.roundRect(PADDING, y, CONTENT_W, 72, 16); ctx.fill();
+        ctx.fillStyle = '#999'; ctx.font = 'bold 12px sans-serif'; ctx.textAlign = 'left'; ctx.fillText('ยอดรวมสุทธิ', PADDING + 20, y + 28);
+        ctx.fillStyle = '#FDE047'; ctx.font = 'bold 32px sans-serif'; ctx.textAlign = 'right'; ctx.fillText(totalWeight.toLocaleString(), W - PADDING - 46, y + 50);
+        ctx.fillStyle = '#999'; ctx.font = 'bold 13px sans-serif'; ctx.fillText('กก.', W - PADDING - 15, y + 50); y += 100;
+
+        // --- Audit Log ---
+        ctx.strokeStyle = '#E5E5E5'; ctx.lineWidth = 1; ctx.setLineDash([4, 4]);
+        ctx.beginPath(); ctx.moveTo(PADDING, y); ctx.lineTo(W - PADDING, y); ctx.stroke();
+        ctx.setLineDash([]); y += 24;
+        ctx.fillStyle = '#AAA'; ctx.font = 'bold 10px sans-serif'; ctx.textAlign = 'left'; ctx.fillText('AUDIT LOG - รายละเอียดรายรอบ', PADDING, y); y += 20;
+
         sortedRounds.forEach(r => {
-          ctx.fillStyle = '#555'; ctx.font = 'bold 11px sans-serif'; ctx.textAlign = 'left';
+          ctx.fillStyle = '#555'; ctx.font = 'bold 12px sans-serif'; ctx.textAlign = 'left';
           ctx.fillText(`รอบ ${r.round}  •  ${formatDisplayDate(r.date)}`, PADDING, y);
-          ctx.fillStyle = '#1A1A1A'; ctx.font = 'bold 11px sans-serif'; ctx.textAlign = 'right';
+          ctx.fillStyle = '#1A1A1A'; ctx.font = 'bold 12px sans-serif'; ctx.textAlign = 'right';
           ctx.fillText(`${r.totalWeight.toLocaleString()} กก.`, W - PADDING, y);
           y += 28;
         });
-        y += 8;
+        y += 24;
 
-        // Footer
-        ctx.fillStyle = '#CCCCCC'; ctx.font = '9px sans-serif'; ctx.textAlign = 'center';
-        ctx.fillText('บันทึกโดย AgriWeigh Pro', W / 2, y);
+        // --- Footer ---
+        ctx.fillStyle = '#CCC'; ctx.font = '10px sans-serif'; ctx.textAlign = 'center'; ctx.fillText('บันทึกโดย AgriWeigh Pro', W / 2, y);
 
         const dataUrl = canvas.toDataURL('image/png');
         if (navigator.share && navigator.canShare) {
           const res = await fetch(dataUrl);
           const blob = await res.blob();
-          const file = new File([blob], `master-invoice-${Date.now()}.png`, { type: 'image/png' });
+          const file = new File([blob], `master-weight-summary-${Date.now()}.png`, { type: 'image/png' });
           if (navigator.canShare({ files: [file] })) {
-            await navigator.share({ files: [file], title: 'Master Invoice - AgriWeigh' });
+            await navigator.share({ 
+              files: [file], 
+              title: `สรุปบิลรวมน้ำหนัก ${masterFruit} (${dateRange})` 
+            });
           } else { downloadImage(dataUrl); }
         } else { downloadImage(dataUrl); }
-        showToast('สร้างใบสรุปรวมสำเร็จ!');
+        showToast('สรุปบิลรวมน้ำหนักสำเร็จ!');
       } catch (e) {
         console.error('Master image failed', e);
         showToast('เกิดข้อผิดพลาดในการสร้างรูปภาพ');
