@@ -30,3 +30,15 @@
 .animate-spin-slow {
   animation: spin-slow 12s linear infinite;
 }
+
+.bottom-fade-overlay {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 120px;
+  background: linear-gradient(to top, #FDFBF7 20%, transparent 100%);
+  pointer-events: none;
+  z-index: 40;
+}
+

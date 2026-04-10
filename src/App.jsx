@@ -59,6 +59,27 @@ const INACTIVE_COLOR = 'bg-white text-neutral-500 border-neutral-200';
 const GAS_URL = import.meta.env.VITE_GAS_URL;
 
 export default function App() {
+  const [showNav, setShowNav] = useState(true);
+  const lastScrollY = useRef(0);
+  const scrollContainerRef = useRef(null);
+
+  // Handle Scroll for Auto-Hide Navbar
+  const handleScroll = (e) => {
+    const currentScrollY = e.target.scrollTop;
+    const isScrollingDown = currentScrollY > lastScrollY.current;
+    
+    // Threshold to prevent flickering (hide only if scrolled significantly)
+    if (Math.abs(currentScrollY - lastScrollY.current) < 10) return;
+
+    if (isScrollingDown && currentScrollY > 100) {
+      setShowNav(false);
+    } else {
+      setShowNav(true);
+    }
+    
+    lastScrollY.current = currentScrollY;
+  };
+
   const getTodayThaiFormat = () => {
     const d = new Date();
     const thaiMonths = ["ม.ค.", "ก.พ.", "มี.ค.", "เม.ย.", "พ.ค.", "มิ.ย.", "ก.ค.", "ส.ค.", "ก.ย.", "ต.ค.", "พ.ย.", "ธ.ค."];
@@ -1067,7 +1088,11 @@ export default function App() {
       </div>
 
       {/* --- Main Content Area --- */}
-      <div className="flex-1 overflow-y-auto overflow-x-hidden lg:overflow-hidden flex flex-col relative w-full h-full">
+      <div 
+        ref={scrollContainerRef}
+        onScroll={handleScroll}
+        className="flex-1 overflow-y-auto overflow-x-hidden lg:overflow-hidden flex flex-col relative w-full h-full"
+      >
         {activeTab === 'record' ? (
           isRecording ? renderActiveScreen() : renderSetupScreen()
         ) : activeTab === 'history' ? (
@@ -1085,6 +1110,9 @@ export default function App() {
              <p className="text-sm lg:text-base text-neutral-500 font-medium">Feature under construction.</p>
           </div>
         )}
+
+        {/* --- Bottom Fade Overlay (Mobile only) --- */}
+        <div className={`lg:hidden bottom-fade-overlay transition-opacity duration-500 ${showNav ? 'opacity-100' : 'opacity-0'}`}></div>
       </div>
 
       {/* --- Delete Confirmation Modal --- */}
@@ -1111,12 +1139,12 @@ export default function App() {
       {showSummaryModal && renderSummaryModal()}
 
       {/* --- Mobile & Tablet Bottom Navigation --- */}
-      <div className="lg:hidden fixed bottom-3 left-3 right-3 z-50 pointer-events-none pb-safe">
+      <div className={`lg:hidden fixed bottom-3 left-3 right-3 z-50 pointer-events-none pb-safe transition-all duration-300 ${showNav ? 'translate-y-0 opacity-100' : 'translate-y-24 opacity-0'}`}>
         <div className="bg-neutral-900/95 backdrop-blur-md px-4 py-2.5 flex justify-between items-center rounded-full shadow-2xl pointer-events-auto max-w-sm mx-auto border border-neutral-800">
-          <BottomNavItem icon={<Sparkles />} label="Record" isActive={activeTab === 'record'} onClick={() => setActiveTab('record')} />
-          <BottomNavItem icon={<History />} label="History" isActive={activeTab === 'history'} onClick={() => setActiveTab('history')} />
-          <BottomNavItem icon={<BarChart2 />} label="Stats" isActive={activeTab === 'dashboard'} onClick={() => setActiveTab('dashboard')} />
-          <BottomNavItem icon={<Settings />} label="Settings" isActive={activeTab === 'settings'} onClick={() => setActiveTab('settings')} />
+          <BottomNavItem icon={<Sparkles />} label="Record" isActive={activeTab === 'record'} onClick={() => { setActiveTab('record'); setShowNav(true); }} />
+          <BottomNavItem icon={<History />} label="History" isActive={activeTab === 'history'} onClick={() => { setActiveTab('history'); setShowNav(true); }} />
+          <BottomNavItem icon={<BarChart2 />} label="Stats" isActive={activeTab === 'dashboard'} onClick={() => { setActiveTab('dashboard'); setShowNav(true); }} />
+          <BottomNavItem icon={<Settings />} label="Settings" isActive={activeTab === 'settings'} onClick={() => { setActiveTab('settings'); setShowNav(true); }} />
         </div>
       </div>
 
