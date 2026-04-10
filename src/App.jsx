@@ -1,11 +1,11 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { 
-  History, 
-  Settings, 
-  BarChart2, 
-  Trash2, 
-  Delete, 
-  Edit2, 
+import {
+  History,
+  Settings,
+  BarChart2,
+  Trash2,
+  Delete,
+  Edit2,
   ChevronDown,
   AlertCircle,
   Undo2,
@@ -34,18 +34,18 @@ import {
 
 // --- Static Default Data ---
 const DEFAULT_CATEGORY_COLORS = {
-  'ยาว': 'bg-[#4ADE80] text-neutral-900 border-[#4ADE80]', 
-  'แหลม': 'bg-[#C084FC] text-white border-[#C084FC]', 
-  'กลม': 'bg-[#FDE047] text-neutral-900 border-[#FDE047]', 
-  'ลาย': 'bg-[#93C5FD] text-neutral-900 border-[#93C5FD]', 
-  'ตั้งฉ่าย': 'bg-[#F9A8D4] text-neutral-900 border-[#F9A8D4]', 
+  'ยาว': 'bg-[#4ADE80] text-neutral-900 border-[#4ADE80]',
+  'แหลม': 'bg-[#C084FC] text-white border-[#C084FC]',
+  'กลม': 'bg-[#FDE047] text-neutral-900 border-[#FDE047]',
+  'ลาย': 'bg-[#93C5FD] text-neutral-900 border-[#93C5FD]',
+  'ตั้งฉ่าย': 'bg-[#F9A8D4] text-neutral-900 border-[#F9A8D4]',
 };
 const DEFAULT_CATEGORY_HEX = {
-  'ยาว': '#4ADE80', 
-  'แหลม': '#C084FC', 
-  'กลม': '#FDE047', 
-  'ลาย': '#93C5FD', 
-  'ตั้งฉ่าย': '#F9A8D4', 
+  'ยาว': '#4ADE80',
+  'แหลม': '#C084FC',
+  'กลม': '#FDE047',
+  'ลาย': '#93C5FD',
+  'ตั้งฉ่าย': '#F9A8D4',
 };
 
 // Fallback palette for dynamically added categories
@@ -72,7 +72,7 @@ export default function App() {
   const handleScroll = (e) => {
     const currentScrollY = e.target.scrollTop;
     const isScrollingDown = currentScrollY > lastScrollY.current;
-    
+
     // Threshold to prevent flickering (hide only if scrolled significantly)
     if (Math.abs(currentScrollY - lastScrollY.current) < 10) return;
 
@@ -81,14 +81,16 @@ export default function App() {
     } else {
       setShowNav(true);
     }
-    
+
     lastScrollY.current = currentScrollY;
   };
 
   const getTodayThaiFormat = () => {
     const d = new Date();
-    const thaiMonths = ["ม.ค.", "ก.พ.", "มี.ค.", "เม.ย.", "พ.ค.", "มิ.ย.", "ก.ค.", "ส.ค.", "ก.ย.", "ต.ค.", "พ.ย.", "ธ.ค."];
-    return `${d.getDate()} ${thaiMonths[d.getMonth()]} ${d.getFullYear()}`;
+    const day = String(d.getDate()).padStart(2, '0');
+    const month = String(d.getMonth() + 1).padStart(2, '0');
+    const year = d.getFullYear();
+    return `${day}/${month}/${year}`;
   };
 
   // --- Dynamic Master Data (Linked Fruits and Categories) ---
@@ -100,7 +102,7 @@ export default function App() {
       'กล้วย': ['หอมทอง', 'น้ำว้า', 'ไข่']
     };
   });
-  
+
   const fruits = Object.keys(masterData);
 
   // Helpers for dynamic colors (Using String Hash so color stays consistent)
@@ -121,7 +123,7 @@ export default function App() {
   // --- State Management ---
   const [activeTab, setActiveTab] = useState('record');
   const [isRecording, setIsRecording] = useState(false);
-  
+
   const [setupData, setSetupData] = useState({
     date: getTodayThaiFormat(),
     round: 1,
@@ -138,8 +140,8 @@ export default function App() {
 
   const [showSummaryModal, setShowSummaryModal] = useState(false);
   const [expandedCats, setExpandedCats] = useState([]);
-  const [editingId, setEditingId] = useState(null); 
-  const [deleteConfirmId, setDeleteConfirmId] = useState(null); 
+  const [editingId, setEditingId] = useState(null);
+  const [deleteConfirmId, setDeleteConfirmId] = useState(null);
   const [historyRecords, setHistoryRecords] = useState(() => {
     const local = localStorage.getItem('cg_historyRecords');
     return local ? JSON.parse(local) : [];
@@ -160,9 +162,9 @@ export default function App() {
   const roundScrollRef = useRef(null);
 
   // Dashboard State
-  const [dashboardRange, setDashboardRange] = useState('daily'); 
+  const [dashboardRange, setDashboardRange] = useState('daily');
   const [dashboardDate, setDashboardDate] = useState(getTodayThaiFormat());
-  const [dashboardFruitFilter, setDashboardFruitFilter] = useState('All'); 
+  const [dashboardFruitFilter, setDashboardFruitFilter] = useState('All');
 
   // Settings State 
   const [settingsActiveFruit, setSettingsActiveFruit] = useState(fruits[0] || '');
@@ -192,7 +194,7 @@ export default function App() {
   // Sync Queue Processor
   const processSyncQueue = async () => {
     if (syncQueue.length === 0 || !navigator.onLine || !GAS_URL) return;
-    
+
     const queue = [...syncQueue];
     setSyncQueue([]); // Optimistically clear
 
@@ -257,23 +259,23 @@ export default function App() {
   // --- Derived State ---
   const grandTotal = records.reduce((sum, record) => sum + record.weight, 0);
   const getCategoryTotal = (category) => records.filter(r => r.category === category).reduce((sum, r) => sum + r.weight, 0);
-  
-  const groupedRecords = currentCategories.map(cat => ({ 
-    category: cat, 
-    items: records.filter(r => r.category === cat), 
-    total: getCategoryTotal(cat) 
+
+  const groupedRecords = currentCategories.map(cat => ({
+    category: cat,
+    items: records.filter(r => r.category === cat),
+    total: getCategoryTotal(cat)
   })).filter(g => g.items.length > 0);
-  
-  const filteredHistory = historyRecords.filter(record => 
-    record.date.includes(searchTerm) || 
-    record.round.toString().includes(searchTerm) || 
+
+  const filteredHistory = historyRecords.filter(record =>
+    record.date.includes(searchTerm) ||
+    record.round.toString().includes(searchTerm) ||
     record.fruit.includes(searchTerm)
   );
 
   // --- Handlers ---
   const handleStartRound = () => { setIsRecording(true); setActiveCategory(''); setErrorMsg(''); };
   const handleEditSetup = () => { setIsRecording(false); };
-  
+
   const handleSetupDateChange = (e) => {
     if (!e.target.value) return;
     const dateObj = new Date(e.target.value);
@@ -287,15 +289,15 @@ export default function App() {
     setErrorMsg('');
     if (!activeCategory) { setErrorMsg('กรุณาเลือกประเภทก่อนระบุน้ำหนัก'); setTimeout(() => setErrorMsg(''), 2000); return; }
     if (val === 'BACKSPACE') setInputValue(prev => prev.slice(0, -1));
-    else if (val === '.') { if (!inputValue.includes('.')) setInputValue(prev => prev ? prev + '.' : '0.'); } 
+    else if (val === '.') { if (!inputValue.includes('.')) setInputValue(prev => prev ? prev + '.' : '0.'); }
     else if (inputValue.length < 6) setInputValue(prev => prev + val);
   };
 
   const handleEnter = () => {
     if (!activeCategory || !inputValue || parseFloat(inputValue) <= 0) return;
-    const newRecord = { id: Date.now().toString() + Math.random(), category: activeCategory, weight: parseFloat(inputValue), timestamp: new Date().toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit', second:'2-digit' }) };
+    const newRecord = { id: Date.now().toString() + Math.random(), category: activeCategory, weight: parseFloat(inputValue), timestamp: new Date().toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit', second: '2-digit' }) };
     setRecords(prev => [newRecord, ...prev]);
-    setInputValue(''); 
+    setInputValue('');
   };
 
   const handleDeleteLast = () => { if (records.length > 0) setRecords(prev => prev.slice(1)); };
@@ -305,8 +307,8 @@ export default function App() {
     let flatRecords = [];
     recordToEdit.details.forEach(detail => { detail.items.forEach((itemWeight, idx) => { flatRecords.push({ id: `edit-${Date.now()}-${idx}-${Math.random()}`, category: detail.category, weight: itemWeight, timestamp: recordToEdit.timestamp }); }); });
     setSetupData({ date: recordToEdit.date, round: recordToEdit.round, fruit: recordToEdit.fruit });
-    setRecords(flatRecords.reverse()); 
-    setEditingId(recordToEdit.id); setActiveTab('record'); setIsRecording(true); setExpandedHistory([]); 
+    setRecords(flatRecords.reverse());
+    setEditingId(recordToEdit.id); setActiveTab('record'); setIsRecording(true); setExpandedHistory([]);
   };
 
   const handleCancelEdit = () => {
@@ -323,8 +325,8 @@ export default function App() {
       timestamp: new Date().toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' }),
       details: groupedRecords.map(g => ({ category: g.category, total: g.total, count: g.items.length, items: g.items.map(item => item.weight).reverse() }))
     };
-    
-    if (editingId) { setHistoryRecords(prev => prev.map(r => r.id === editingId ? historyEntry : r)); setEditingId(null); } 
+
+    if (editingId) { setHistoryRecords(prev => prev.map(r => r.id === editingId ? historyEntry : r)); setEditingId(null); }
     else { setHistoryRecords(prev => [historyEntry, ...prev]); }
 
     setShowSummaryModal(false); setIsRecording(false); setRecords([]); setActiveCategory(''); setInputValue('');
@@ -349,11 +351,25 @@ export default function App() {
         });
         if (!response.ok) throw new Error('Fetch failed');
         loadGASData();
-      } catch(e) { 
-        console.error('GAS save failed, adding to sync queue', e); 
+      } catch (e) {
+        console.error('GAS save failed, adding to sync queue', e);
         setSyncQueue(prev => [...prev, payload]);
       }
     }
+  };
+
+  const formatDisplayDate = (dateStr) => {
+    if (!dateStr) return '';
+    try {
+      const d = new Date(dateStr);
+      if (!isNaN(d.getTime())) {
+        const day = String(d.getDate()).padStart(2, '0');
+        const month = String(d.getMonth() + 1).padStart(2, '0');
+        const year = d.getFullYear();
+        return `${day}/${month}/${year}`;
+      }
+    } catch (e) { }
+    return String(dateStr).split('T')[0];
   };
 
   // --- Sharing Handlers ---
@@ -367,9 +383,9 @@ export default function App() {
     };
 
     let text = `📊 รายงานน้ำหนัก [${data.fruit}]\n`;
-    text += `📅 วันที่: ${data.date} (รอบที่ ${data.round})\n`;
+    text += `วันที่: ${formatDisplayDate(data.date)} (รอบที่ ${data.round})\n`;
     text += `-------------------------\n`;
-    
+
     data.details.forEach(d => {
       text += `✅ ${d.category}: ${d.total.toLocaleString()} กก.\n`;
       text += `รายการ: (${d.items.join(', ')})\n\n`;
@@ -459,7 +475,7 @@ export default function App() {
       ctx.fillText('วันที่ / DATE', PADDING, y);
       ctx.fillStyle = '#111111';
       ctx.font = 'bold 16px sans-serif';
-      ctx.fillText(data.date, PADDING, y + 18);
+      ctx.fillText(formatDisplayDate(data.date), PADDING, y + 18);
       ctx.fillStyle = '#AAAAAA';
       ctx.font = 'bold 10px sans-serif';
       ctx.fillText('ผลไม้ / FRUIT', PADDING, y + 42);
@@ -574,19 +590,19 @@ export default function App() {
 
       <div className="bg-white p-6 lg:p-10 rounded-3xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-neutral-100 w-full max-w-sm lg:max-w-md transition-all relative z-10">
         <h2 className="text-3xl lg:text-4xl font-black text-neutral-900 mb-6 lg:mb-8 text-center tracking-tight">
-          Start now <br/><span className="text-[#4ADE80] font-sans font-bold text-2xl">Recording</span>
+          Start now <br /><span className="text-[#4ADE80] font-sans font-bold text-2xl">Recording</span>
         </h2>
-        
+
         <div className="space-y-4 mb-8">
           <div>
             <label className="block text-xs font-semibold text-neutral-500 mb-1.5 ml-2">วันที่ (Date)</label>
             <div className="w-full bg-neutral-50 hover:bg-neutral-100 transition-colors text-neutral-800 p-3.5 rounded-full font-medium text-sm border border-neutral-100 flex items-center justify-center gap-2 relative overflow-hidden cursor-pointer shadow-sm">
               <Calendar className="w-4 h-4 text-neutral-400" />
-              <span>{setupData.date}</span>
-              <input type="date" onClick={(e) => { try { if (e.target.showPicker) e.target.showPicker(); } catch (err) {} }} onChange={handleSetupDateChange} className="absolute inset-0 w-full h-full opacity-0 cursor-pointer" />
+              <span>{formatDisplayDate(setupData.date)}</span>
+              <input type="date" onClick={(e) => { try { if (e.target.showPicker) e.target.showPicker(); } catch (err) { } }} onChange={handleSetupDateChange} className="absolute inset-0 w-full h-full opacity-0 cursor-pointer" />
             </div>
           </div>
-          
+
           <div className="space-y-4">
             <div>
               <label className="block text-xs font-semibold text-neutral-500 mb-2 ml-2 uppercase tracking-widest">รอบ (Round)</label>
@@ -594,8 +610,8 @@ export default function App() {
                 {/* Horizontal Fade Edges */}
                 <div className="absolute left-0 top-0 bottom-0 w-8 bg-gradient-to-r from-white to-transparent z-10 pointer-events-none"></div>
                 <div className="absolute right-0 top-0 bottom-0 w-8 bg-gradient-to-l from-white to-transparent z-10 pointer-events-none"></div>
-                
-                <div 
+
+                <div
                   ref={roundScrollRef}
                   className="flex gap-2.5 overflow-x-auto hide-scrollbar py-2 px-8 snap-x snap-mandatory"
                 >
@@ -603,13 +619,13 @@ export default function App() {
                     const r = i + 1;
                     const isSelected = setupData.round === r;
                     return (
-                      <button 
+                      <button
                         key={r}
                         data-selected={isSelected}
-                        onClick={() => setSetupData(prev => ({...prev, round: r}))}
+                        onClick={() => setSetupData(prev => ({ ...prev, round: r }))}
                         className={`shrink-0 w-12 h-12 rounded-2xl font-black text-sm flex items-center justify-center transition-all snap-center
-                          ${isSelected 
-                            ? 'bg-[#FDE047] text-neutral-900 shadow-[0_4px_12px_rgba(253,224,71,0.4)] scale-110' 
+                          ${isSelected
+                            ? 'bg-[#FDE047] text-neutral-900 shadow-[0_4px_12px_rgba(253,224,71,0.4)] scale-110'
                             : 'bg-neutral-50 text-neutral-400 border border-neutral-100 hover:bg-neutral-100 hover:text-neutral-600'}`}
                       >
                         {r}
@@ -622,11 +638,11 @@ export default function App() {
 
             <div className="relative">
               <label className="block text-xs font-semibold text-neutral-500 mb-1.5 ml-2 uppercase tracking-widest">ผลไม้ (Fruit)</label>
-              <select 
+              <select
                 value={setupData.fruit}
                 onChange={(e) => {
-                   setSetupData(prev => ({...prev, fruit: e.target.value}));
-                   setActiveCategory(''); // ล้างประเภทเมื่อเปลี่ยนผลไม้
+                  setSetupData(prev => ({ ...prev, fruit: e.target.value }));
+                  setActiveCategory(''); // ล้างประเภทเมื่อเปลี่ยนผลไม้
                 }}
                 className="w-full bg-white border-2 border-neutral-200 text-neutral-800 p-4 pl-6 pr-10 rounded-2xl font-bold text-base appearance-none hover:border-neutral-300 transition-colors focus:outline-none focus:border-neutral-900 shadow-sm cursor-pointer"
               >
@@ -646,7 +662,7 @@ export default function App() {
 
   const renderActiveScreen = () => (
     <div className="flex-1 flex flex-col bg-[#FDFBF7] min-h-full w-full lg:overflow-hidden lg:pb-0">
-      
+
       <div className={`p-3 lg:px-6 lg:py-4 flex flex-wrap justify-between items-center z-20 shrink-0 gap-3 w-full transition-colors border-b ${editingId ? 'bg-amber-50 border-amber-100' : 'bg-[#FDFBF7] border-transparent'}`}>
         <div className="flex flex-wrap items-center gap-2 text-neutral-600 font-medium flex-1">
           {editingId ? (
@@ -657,7 +673,7 @@ export default function App() {
             </>
           ) : (
             <>
-              <button onClick={handleEditSetup} className="bg-white border border-neutral-200 px-3 py-1.5 rounded-full text-[11px] lg:text-xs font-bold shadow-sm flex items-center gap-1.5 hover:bg-neutral-50 shrink-0 transition-colors"><Edit2 className="w-3 h-3 text-neutral-400" /> {setupData.date}</button>
+              <button onClick={handleEditSetup} className="bg-white border border-neutral-200 px-3 py-1.5 rounded-full text-[11px] lg:text-xs font-bold shadow-sm flex items-center gap-1.5 hover:bg-neutral-50 shrink-0 transition-colors"><Edit2 className="w-3 h-3 text-neutral-400" /> {formatDisplayDate(setupData.date)}</button>
               <div className="bg-[#4ADE80] text-neutral-900 px-3 py-1.5 rounded-full text-[11px] lg:text-xs font-bold shadow-sm shrink-0">รอบ {setupData.round}</div>
               <div className="bg-[#C084FC] text-white px-3 py-1.5 rounded-full text-[11px] lg:text-xs font-bold shadow-sm shrink-0">{setupData.fruit}</div>
             </>
@@ -670,14 +686,14 @@ export default function App() {
 
       <div className="px-3 py-1.5 lg:px-6 z-10">
         <div className="bg-[#FDE047] rounded-3xl p-4 lg:p-6 flex flex-col md:flex-row md:items-center md:justify-between shadow-sm relative overflow-hidden">
-           <Asterisk className="absolute -right-2 -top-2 w-16 h-16 text-black opacity-5" />
-           <div>
-             <h3 className="font-extrabold tracking-tight text-xl lg:text-2xl text-neutral-800 mb-0.5 uppercase">Total Weight</h3>
-             <p className="text-neutral-700 font-medium text-[11px] lg:text-xs">ยอดรวมสุทธิของรอบนี้</p>
-           </div>
-           <div className="text-4xl lg:text-5xl font-black tracking-tight text-neutral-900 mt-2 md:mt-0">
-              {grandTotal.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 2 })} <span className="text-lg lg:text-xl font-bold text-neutral-700 ml-1">กก.</span>
-           </div>
+          <Asterisk className="absolute -right-2 -top-2 w-16 h-16 text-black opacity-5" />
+          <div>
+            <h3 className="font-extrabold tracking-tight text-xl lg:text-2xl text-neutral-800 mb-0.5 uppercase">Total Weight</h3>
+            <p className="text-neutral-700 font-medium text-[11px] lg:text-xs">ยอดรวมสุทธิของรอบนี้</p>
+          </div>
+          <div className="text-4xl lg:text-5xl font-black tracking-tight text-neutral-900 mt-2 md:mt-0">
+            {grandTotal.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 2 })} <span className="text-lg lg:text-xl font-bold text-neutral-700 ml-1">กก.</span>
+          </div>
         </div>
       </div>
 
@@ -701,7 +717,7 @@ export default function App() {
       </div>
 
       <div className="flex flex-col lg:flex-row bg-white rounded-3xl lg:rounded-t-3xl shadow-[0_-5px_20px_rgb(0,0,0,0.02)] border border-neutral-100 mx-2 lg:mx-4 mb-2 mt-1 lg:flex-1 lg:overflow-hidden">
-        
+
         <div className="flex flex-col p-3 lg:p-6 md:border-r border-neutral-100 transition-all duration-300 h-[260px] md:h-[320px] lg:h-auto lg:flex-1">
           <div className="flex justify-between items-center mb-2 shrink-0">
             <h3 className="text-base lg:text-xl font-extrabold tracking-tight text-neutral-800">Recent Activity</h3>
@@ -717,17 +733,18 @@ export default function App() {
               records.map((record) => {
                 const bgColorOnly = getCategoryColorClass(record.category).split(' ')[0];
                 return (
-                <div key={record.id} className="group bg-white p-2 lg:p-4 rounded-xl flex justify-between items-center border border-neutral-100 hover:border-neutral-200 hover:shadow-sm transition-all animate-in fade-in slide-in-from-bottom-2 duration-300">
-                  <div className="flex items-center gap-2.5">
-                    <div className={`w-7 h-7 lg:w-8 lg:h-8 rounded-full ${bgColorOnly} flex items-center justify-center text-white font-bold text-xs lg:text-sm`}>{record.category.charAt(0)}</div>
-                    <div><div className="font-bold text-neutral-900 text-xs lg:text-base">{record.category}</div><div className="text-[9px] lg:text-xs text-neutral-400 font-medium">{record.timestamp}</div></div>
+                  <div key={record.id} className="group bg-white p-2 lg:p-4 rounded-xl flex justify-between items-center border border-neutral-100 hover:border-neutral-200 hover:shadow-sm transition-all animate-in fade-in slide-in-from-bottom-2 duration-300">
+                    <div className="flex items-center gap-2.5">
+                      <div className={`w-7 h-7 lg:w-8 lg:h-8 rounded-full ${bgColorOnly} flex items-center justify-center text-white font-bold text-xs lg:text-sm`}>{record.category.charAt(0)}</div>
+                      <div><div className="font-bold text-neutral-900 text-xs lg:text-base">{record.category}</div><div className="text-[9px] lg:text-xs text-neutral-400 font-medium">{record.timestamp}</div></div>
+                    </div>
+                    <div className="flex items-center gap-2 lg:gap-4">
+                      <div className="flex items-baseline gap-1"><span className="text-lg lg:text-2xl font-black text-neutral-800 tracking-tight">{record.weight}</span><span className="text-neutral-400 text-[9px] lg:text-xs font-medium">กก.</span></div>
+                      <button onClick={() => handleDeleteRecord(record.id)} className="text-red-400 bg-red-50 hover:text-red-600 hover:bg-red-100 w-7 h-7 lg:w-8 lg:h-8 flex items-center justify-center rounded-full transition-colors active:scale-95"><Trash2 className="w-3 h-3 lg:w-3.5 lg:h-3.5" /></button>
+                    </div>
                   </div>
-                  <div className="flex items-center gap-2 lg:gap-4">
-                    <div className="flex items-baseline gap-1"><span className="text-lg lg:text-2xl font-black text-neutral-800 tracking-tight">{record.weight}</span><span className="text-neutral-400 text-[9px] lg:text-xs font-medium">กก.</span></div>
-                    <button onClick={() => handleDeleteRecord(record.id)} className="text-red-400 bg-red-50 hover:text-red-600 hover:bg-red-100 w-7 h-7 lg:w-8 lg:h-8 flex items-center justify-center rounded-full transition-colors active:scale-95"><Trash2 className="w-3 h-3 lg:w-3.5 lg:h-3.5" /></button>
-                  </div>
-                </div>
-              )})
+                )
+              })
             )}
           </div>
         </div>
@@ -741,7 +758,7 @@ export default function App() {
               </div>
               <div className="text-4xl lg:text-5xl font-black tracking-tight text-neutral-900 flex items-center">{inputValue || <span className="text-neutral-200 font-sans">0</span>}</div>
             </div>
-             {errorMsg && (
+            {errorMsg && (
               <div className="absolute inset-0 bg-neutral-900 text-white text-xs lg:text-sm font-bold rounded-2xl flex items-center justify-center shadow-xl animate-in zoom-in-95 duration-200 z-50">
                 <AlertCircle className="w-4 h-4 text-[#FDE047] mr-2" /> {errorMsg}
               </div>
@@ -768,76 +785,77 @@ export default function App() {
   const renderSummaryModal = () => (
     <div className="fixed inset-0 z-[100] bg-neutral-900/60 backdrop-blur-sm flex items-end md:items-center justify-center md:p-4">
       <div className="bg-[#FDFBF7] w-full max-w-lg rounded-t-[2rem] md:rounded-[2rem] shadow-2xl flex flex-col max-h-[90vh] animate-in slide-in-from-bottom-10 fade-in duration-300">
-        
+
         <div className="p-4 md:p-6 border-b border-neutral-100 flex justify-between items-center shrink-0">
-           <div>
-              <h2 className="text-xl lg:text-2xl font-extrabold tracking-tight text-neutral-900 flex items-center gap-2">{editingId ? 'บันทึกการแก้ไขรอบที่' : 'สรุปรอบที่'} {setupData.round}</h2>
-              <p className="text-neutral-500 text-xs mt-1 flex items-center gap-2"><span className="bg-white border border-neutral-200 px-2 py-0.5 rounded-md font-medium">{setupData.date}</span><span className="font-semibold text-neutral-700">{setupData.fruit}</span></p>
-           </div>
-           <div className={`w-10 h-10 ${editingId ? 'bg-amber-300' : 'bg-[#4ADE80]'} rounded-full flex items-center justify-center shadow-sm`}>
-              {editingId ? <Edit2 className="w-5 h-5 text-neutral-900" /> : <CheckCircle className="w-5 h-5 text-neutral-900" />}
-           </div>
+          <div>
+            <h2 className="text-xl lg:text-2xl font-extrabold tracking-tight text-neutral-900 flex items-center gap-2">{editingId ? 'บันทึกการแก้ไขรอบที่' : 'สรุปรอบที่'} {setupData.round}</h2>
+            <p className="text-neutral-500 text-xs mt-1 flex items-center gap-2"><span className="bg-white border border-neutral-200 px-2 py-0.5 rounded-md font-medium">{formatDisplayDate(setupData.date)}</span><span className="font-semibold text-neutral-700">{setupData.fruit}</span></p>
+          </div>
+          <div className={`w-10 h-10 ${editingId ? 'bg-amber-300' : 'bg-[#4ADE80]'} rounded-full flex items-center justify-center shadow-sm`}>
+            {editingId ? <Edit2 className="w-5 h-5 text-neutral-900" /> : <CheckCircle className="w-5 h-5 text-neutral-900" />}
+          </div>
         </div>
 
         <div className="flex-1 overflow-y-auto p-3 md:p-6 space-y-2.5">
-           <p className="text-[10px] font-bold text-neutral-400 uppercase tracking-widest px-2 mb-1.5">แยกตามประเภท (Categories)</p>
-           {groupedRecords.map(group => {
-              const bgColorClass = getCategoryColorClass(group.category).split(' ')[0];
-              const isExpanded = expandedCats.includes(group.category);
-              
-              return (
+          <p className="text-[10px] font-bold text-neutral-400 uppercase tracking-widest px-2 mb-1.5">แยกตามประเภท (Categories)</p>
+          {groupedRecords.map(group => {
+            const bgColorClass = getCategoryColorClass(group.category).split(' ')[0];
+            const isExpanded = expandedCats.includes(group.category);
+
+            return (
               <div key={group.category} className="bg-white border border-neutral-100 rounded-xl overflow-hidden shadow-sm transition-all">
-                 <div onClick={() => toggleCatExpand(group.category)} className="w-full flex items-center justify-between p-3 hover:bg-neutral-50 transition-colors cursor-pointer">
-                    <div className="flex items-center gap-2.5">
-                       <div className={`w-2 h-8 rounded-full ${bgColorClass}`}></div>
-                       <div className="text-left">
-                          <div className="font-bold text-neutral-900 text-base">{group.category}</div>
-                          <div className="text-[10px] font-medium text-neutral-500 bg-neutral-100 px-2 py-0.5 rounded-full inline-block mt-0.5">{group.items.length} รายการ</div>
-                       </div>
+                <div onClick={() => toggleCatExpand(group.category)} className="w-full flex items-center justify-between p-3 hover:bg-neutral-50 transition-colors cursor-pointer">
+                  <div className="flex items-center gap-2.5">
+                    <div className={`w-2 h-8 rounded-full ${bgColorClass}`}></div>
+                    <div className="text-left">
+                      <div className="font-bold text-neutral-900 text-base">{group.category}</div>
+                      <div className="text-[10px] font-medium text-neutral-500 bg-neutral-100 px-2 py-0.5 rounded-full inline-block mt-0.5">{group.items.length} รายการ</div>
                     </div>
-                    <div className="flex items-center gap-2.5">
-                       <div className="text-lg font-black tracking-tight text-neutral-800">{group.total.toLocaleString()} <span className="text-[10px] font-medium text-neutral-400">กก.</span></div>
-                       <div className={`w-7 h-7 rounded-full bg-neutral-50 flex items-center justify-center transition-transform ${isExpanded ? 'rotate-180 bg-neutral-100' : ''}`}><ChevronDown className="w-3.5 h-3.5 text-neutral-500" /></div>
+                  </div>
+                  <div className="flex items-center gap-2.5">
+                    <div className="text-lg font-black tracking-tight text-neutral-800">{group.total.toLocaleString()} <span className="text-[10px] font-medium text-neutral-400">กก.</span></div>
+                    <div className={`w-7 h-7 rounded-full bg-neutral-50 flex items-center justify-center transition-transform ${isExpanded ? 'rotate-180 bg-neutral-100' : ''}`}><ChevronDown className="w-3.5 h-3.5 text-neutral-500" /></div>
+                  </div>
+                </div>
+                {isExpanded && (
+                  <div className="px-3 pb-4 pt-1 bg-neutral-50 border-t border-neutral-100">
+                    <p className="text-[10px] text-neutral-400 font-medium mb-1.5">รายละเอียดน้ำหนักแต่ละรายการ:</p>
+                    <div className="flex flex-wrap gap-1.5">
+                      {group.items.map((item, index) => (
+                        <span key={item.id} className="bg-white border border-neutral-200 px-2.5 py-1 rounded-full text-xs font-bold text-neutral-700 shadow-sm flex items-center gap-1">
+                          <span className="text-[9px] text-neutral-300 font-normal">{index + 1}.</span> {item.weight}
+                        </span>
+                      ))}
                     </div>
-                 </div>
-                 {isExpanded && (
-                    <div className="px-3 pb-4 pt-1 bg-neutral-50 border-t border-neutral-100">
-                       <p className="text-[10px] text-neutral-400 font-medium mb-1.5">รายละเอียดน้ำหนักแต่ละรายการ:</p>
-                       <div className="flex flex-wrap gap-1.5">
-                          {group.items.map((item, index) => (
-                             <span key={item.id} className="bg-white border border-neutral-200 px-2.5 py-1 rounded-full text-xs font-bold text-neutral-700 shadow-sm flex items-center gap-1">
-                                <span className="text-[9px] text-neutral-300 font-normal">{index + 1}.</span> {item.weight}
-                             </span>
-                          ))}
-                       </div>
-                    </div>
-                 )}
+                  </div>
+                )}
               </div>
-           )})}
+            )
+          })}
         </div>
 
         <div className="p-4 md:p-6 bg-white border-t border-neutral-100 rounded-t-[2rem] md:rounded-b-[2rem] shrink-0 shadow-[0_-10px_20px_rgb(0,0,0,0.02)]">
-           <div className="flex justify-between items-center mb-4 bg-[#FDE047]/20 p-3.5 rounded-xl border border-[#FDE047]/50">
-              <span className="text-neutral-700 font-bold text-sm">ยอดรวมสุทธิทั้งรอบ</span>
-              <div className="text-3xl font-black tracking-tight text-neutral-900">{grandTotal.toLocaleString()} <span className="text-sm font-bold text-neutral-500">กก.</span></div>
-           </div>
+          <div className="flex justify-between items-center mb-4 bg-[#FDE047]/20 p-3.5 rounded-xl border border-[#FDE047]/50">
+            <span className="text-neutral-700 font-bold text-sm">ยอดรวมสุทธิทั้งรอบ</span>
+            <div className="text-3xl font-black tracking-tight text-neutral-900">{grandTotal.toLocaleString()} <span className="text-sm font-bold text-neutral-500">กก.</span></div>
+          </div>
 
-           {/* Share Actions */}
-           <div className="flex gap-2 mb-3">
-              <button onClick={() => handleShareText()} className="flex-1 py-3 px-2 rounded-xl border border-neutral-200 bg-white hover:bg-neutral-50 flex items-center justify-center gap-2 text-xs font-bold text-neutral-600 transition-all active:scale-95">
-                 <MessageSquare className="w-4 h-4 text-green-500" /> แชร์ข้อความ
-              </button>
-              <button onClick={() => handleShareImage()} className="flex-1 py-3 px-2 rounded-xl border border-neutral-200 bg-white hover:bg-neutral-50 flex items-center justify-center gap-2 text-xs font-bold text-neutral-600 transition-all active:scale-95">
-                 <ImageIcon className="w-4 h-4 text-[#C084FC]" /> แชร์เป็นรูปภาพ
-              </button>
-           </div>
+          {/* Share Actions */}
+          <div className="flex gap-2 mb-3">
+            <button onClick={() => handleShareText()} className="flex-1 py-3 px-2 rounded-xl border border-neutral-200 bg-white hover:bg-neutral-50 flex items-center justify-center gap-2 text-xs font-bold text-neutral-600 transition-all active:scale-95">
+              <MessageSquare className="w-4 h-4 text-green-500" /> แชร์ข้อความ
+            </button>
+            <button onClick={() => handleShareImage()} className="flex-1 py-3 px-2 rounded-xl border border-neutral-200 bg-white hover:bg-neutral-50 flex items-center justify-center gap-2 text-xs font-bold text-neutral-600 transition-all active:scale-95">
+              <ImageIcon className="w-4 h-4 text-[#C084FC]" /> แชร์เป็นรูปภาพ
+            </button>
+          </div>
 
-           <div className="flex gap-2.5">
-              <button onClick={() => setShowSummaryModal(false)} className="flex-1 py-3 rounded-full font-bold text-sm text-neutral-600 bg-neutral-100 hover:bg-neutral-200 active:scale-95 transition-all">กลับไปแก้ไข</button>
-              <button onClick={handleConfirmRound} className="flex-[2] py-3 rounded-full font-bold text-sm text-white bg-neutral-900 hover:bg-black active:scale-95 transition-all shadow-lg flex justify-center items-center gap-1.5">
-                 {editingId ? 'บันทึกการแก้ไข' : 'ยืนยันบันทึกรอบ'} {editingId ? <Edit2 className="w-4 h-4 text-amber-300" /> : <CheckCircle className="w-4 h-4 text-[#4ADE80]" />}
-              </button>
-           </div>
+          <div className="flex gap-2.5">
+            <button onClick={() => setShowSummaryModal(false)} className="flex-1 py-3 rounded-full font-bold text-sm text-neutral-600 bg-neutral-100 hover:bg-neutral-200 active:scale-95 transition-all">กลับไปแก้ไข</button>
+            <button onClick={handleConfirmRound} className="flex-[2] py-3 rounded-full font-bold text-sm text-white bg-neutral-900 hover:bg-black active:scale-95 transition-all shadow-lg flex justify-center items-center gap-1.5">
+              {editingId ? 'บันทึกการแก้ไข' : 'ยืนยันบันทึกรอบ'} {editingId ? <Edit2 className="w-4 h-4 text-amber-300" /> : <CheckCircle className="w-4 h-4 text-[#4ADE80]" />}
+            </button>
+          </div>
         </div>
 
       </div>
@@ -847,228 +865,232 @@ export default function App() {
   const renderHistoryScreen = () => (
     <div className="flex-1 flex flex-col bg-[#FDFBF7] min-h-full w-full overflow-hidden">
       <div className="p-4 md:p-6 shrink-0 relative overflow-hidden bg-white border-b border-neutral-100">
-         <div className="absolute top-0 right-0 w-48 h-48 bg-[#C084FC] rounded-full blur-[80px] opacity-10"></div>
-         <h2 className="text-2xl lg:text-3xl font-extrabold tracking-tight text-neutral-900 relative z-10 flex items-center gap-2">History <span className="text-neutral-300 font-normal">|</span> <span className="text-[#C084FC] font-bold text-lg lg:text-xl">ประวัติ</span></h2>
-         
-         <div className="mt-4 flex gap-2 relative z-10 items-center">
-            <div className="flex-1 bg-neutral-50 border border-neutral-200 rounded-full flex items-center px-3 py-1.5 shadow-sm">
-               <Search className="w-3.5 h-3.5 text-neutral-400 mr-1.5" />
-               <input type="text" placeholder="ค้นหา... (วันที่, ผลไม้)" value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} className="bg-transparent border-none outline-none text-xs w-full text-neutral-700 font-medium" />
-               {searchTerm && (<button onClick={() => setSearchTerm('')} className="text-neutral-400 hover:text-neutral-600 px-1">&times;</button>)}
-            </div>
-            
-            <div className="relative shrink-0">
-              <button className="bg-white border border-neutral-200 rounded-full w-8 h-8 flex items-center justify-center text-neutral-500 shadow-sm hover:bg-neutral-50 active:scale-95 shrink-0 overflow-hidden relative">
-                 <Calendar className="w-3.5 h-3.5" />
-                 <input type="date" onClick={(e) => { try { if (e.target.showPicker) e.target.showPicker(); } catch (err) {} }} onChange={handleHistorySearchDateChange} className="absolute inset-0 w-full h-full opacity-0 cursor-pointer" />
-              </button>
-            </div>
+        <div className="absolute top-0 right-0 w-48 h-48 bg-[#C084FC] rounded-full blur-[80px] opacity-10"></div>
+        <h2 className="text-2xl lg:text-3xl font-extrabold tracking-tight text-neutral-900 relative z-10 flex items-center gap-2">History <span className="text-neutral-300 font-normal">|</span> <span className="text-[#C084FC] font-bold text-lg lg:text-xl">ประวัติ</span></h2>
 
-            <div className="flex lg:hidden bg-neutral-100 p-0.5 rounded-full border border-neutral-200 shadow-inner shrink-0">
-               <button onClick={() => setViewMode('list')} className={`w-7 h-7 flex items-center justify-center rounded-full transition-all ${viewMode === 'list' ? 'bg-white shadow-[0_2px_5px_rgba(0,0,0,0.1)] text-neutral-900 font-bold' : 'text-neutral-400 hover:text-neutral-600'}`}><List className="w-3.5 h-3.5" /></button>
-               <button onClick={() => setViewMode('card')} className={`w-7 h-7 flex items-center justify-center rounded-full transition-all ${viewMode === 'card' ? 'bg-white shadow-[0_2px_5px_rgba(0,0,0,0.1)] text-neutral-900 font-bold' : 'text-neutral-400 hover:text-neutral-600'}`}><LayoutGrid className="w-3.5 h-3.5" /></button>
-            </div>
-         </div>
+        <div className="mt-4 flex gap-2 relative z-10 items-center">
+          <div className="flex-1 bg-neutral-50 border border-neutral-200 rounded-full flex items-center px-3 py-1.5 shadow-sm">
+            <Search className="w-3.5 h-3.5 text-neutral-400 mr-1.5" />
+            <input type="text" placeholder="ค้นหา... (วันที่, ผลไม้)" value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} className="bg-transparent border-none outline-none text-xs w-full text-neutral-700 font-medium" />
+            {searchTerm && (<button onClick={() => setSearchTerm('')} className="text-neutral-400 hover:text-neutral-600 px-1">&times;</button>)}
+          </div>
+
+          <div className="relative shrink-0">
+            <button className="bg-white border border-neutral-200 rounded-full w-8 h-8 flex items-center justify-center text-neutral-500 shadow-sm hover:bg-neutral-50 active:scale-95 shrink-0 overflow-hidden relative">
+              <Calendar className="w-3.5 h-3.5" />
+              <input type="date" onClick={(e) => { try { if (e.target.showPicker) e.target.showPicker(); } catch (err) { } }} onChange={handleHistorySearchDateChange} className="absolute inset-0 w-full h-full opacity-0 cursor-pointer" />
+            </button>
+          </div>
+
+          <div className="flex lg:hidden bg-neutral-100 p-0.5 rounded-full border border-neutral-200 shadow-inner shrink-0">
+            <button onClick={() => setViewMode('list')} className={`w-7 h-7 flex items-center justify-center rounded-full transition-all ${viewMode === 'list' ? 'bg-white shadow-[0_2px_5px_rgba(0,0,0,0.1)] text-neutral-900 font-bold' : 'text-neutral-400 hover:text-neutral-600'}`}><List className="w-3.5 h-3.5" /></button>
+            <button onClick={() => setViewMode('card')} className={`w-7 h-7 flex items-center justify-center rounded-full transition-all ${viewMode === 'card' ? 'bg-white shadow-[0_2px_5px_rgba(0,0,0,0.1)] text-neutral-900 font-bold' : 'text-neutral-400 hover:text-neutral-600'}`}><LayoutGrid className="w-3.5 h-3.5" /></button>
+          </div>
+        </div>
       </div>
 
       <div className="flex-1 overflow-y-auto p-3 md:p-6 pb-28 hide-scrollbar">
-         {filteredHistory.length === 0 ? (
-            <div className="h-full flex flex-col items-center justify-center text-neutral-400">
-               <div className="w-16 h-16 bg-neutral-100 rounded-full flex items-center justify-center mb-3"><Search className="w-6 h-6 text-neutral-300" /></div>
-               <p className="font-bold text-base text-neutral-700">ไม่พบข้อมูล</p>
-               <p className="text-[11px] text-center max-w-[200px] mt-1 font-medium">ลองเปลี่ยนคำค้นหา หรือเลือกวันที่จากปฏิทินอีกครั้ง</p>
-            </div>
-         ) : (
-            <>
-               <div className="block lg:hidden space-y-3 max-w-3xl mx-auto">
-                  {filteredHistory.map(record => {
-                     const isExpanded = expandedHistory.includes(record.id);
-                     if (viewMode === 'list') {
-                        return (
-                           <div key={record.id} className="bg-white rounded-2xl border border-neutral-100 shadow-[0_2px_10px_rgb(0,0,0,0.02)] overflow-hidden transition-all hover:border-neutral-200">
-                              <div className="p-3 flex justify-between items-center cursor-pointer" onClick={() => toggleHistoryExpand(record.id)}>
-                                 <div className="flex items-center gap-3">
-                                    <div className="bg-[#4ADE80] text-neutral-900 w-10 h-10 rounded-full flex items-center justify-center font-bold text-xs shadow-sm shrink-0 whitespace-nowrap">ร.{record.round}</div>
-                                    <div>
-                                       <div className="font-bold text-neutral-900 text-sm flex items-center gap-1.5">{record.fruit} <span className="bg-neutral-100 text-neutral-500 text-[8px] px-1.5 py-0.5 rounded-full font-bold">{record.details.length} ประเภท</span></div>
-                                       <div className="text-[9px] text-neutral-400 font-medium flex items-center gap-1 mt-0.5"><Calendar className="w-2.5 h-2.5"/>{record.date} • {record.timestamp}</div>
-                                    </div>
-                                 </div>
-                                 <div className="text-right">
-                                    <div className="text-lg font-black tracking-tight text-neutral-900">{record.totalWeight.toLocaleString()} <span className="text-[9px] font-bold text-neutral-500">กก.</span></div>
-                                    <div className="text-[9px] text-[#C084FC] font-bold flex items-center justify-end gap-0.5 mt-0.5">{isExpanded ? 'ปิด' : 'รายละเอียด'} <ChevronDown className={`w-3 h-3 transition-transform ${isExpanded ? 'rotate-180' : ''}`} /></div>
-                                 </div>
-                              </div>
-                              {isExpanded && (
-                                 <div className="px-3 pb-3 bg-neutral-50 border-t border-neutral-100 pt-3">
-                                    <div className="flex flex-col gap-2">
-                                       {record.details.map(detail => {
-                                          const catColor = getCategoryColorClass(detail.category).split(' ')[0];
-                                          return (
-                                          <div key={detail.category} className="bg-white p-2.5 rounded-xl border border-neutral-100 shadow-sm flex flex-col gap-2">
-                                             <div className="flex items-center gap-2">
-                                                <div className={`w-1.5 h-8 rounded-full ${catColor}`}></div>
-                                                <div className="flex-1 flex justify-between items-start">
-                                                   <div><div className="text-xs font-bold text-neutral-900">{detail.category}</div><div className="text-[9px] font-medium text-neutral-400">{detail.count} รายการ</div></div>
-                                                   <div className="text-base font-black tracking-tight text-neutral-800">{detail.total.toLocaleString()} <span className="text-[9px] font-medium text-neutral-500">กก.</span></div>
-                                             </div>
-                                             </div>
-                                             {detail.items && detail.items.length > 0 && (
-                                                <div className="pt-1.5 border-t border-neutral-50 flex flex-wrap gap-1">
-                                                   {detail.items.map((weight, idx) => (<span key={idx} className="bg-neutral-50 border border-neutral-100 px-1.5 py-0.5 rounded text-[10px] font-bold text-neutral-600 shadow-sm">{weight}</span>))}
-                                                </div>
-                                             )}
-                                          </div>
-                                       )})}
-                                    </div>
-                                    <div className="mt-3 flex justify-end gap-2 items-center">
-                                       <div className="flex bg-white border border-neutral-100 p-1 rounded-full gap-1 shadow-sm mr-2">
-                                          <button onClick={() => handleShareText(record)} className="p-2 text-neutral-400 hover:text-green-500 transition-colors" title="แชร์ข้อความ"><MessageSquare className="w-3.5 h-3.5" /></button>
-                                          <button onClick={() => handleShareImage(record)} className="p-2 text-neutral-400 hover:text-[#C084FC] transition-colors" title="แชร์รูปภาพ"><ImageIcon className="w-3.5 h-3.5" /></button>
-                                       </div>
-                                       <button onClick={() => setDeleteConfirmId(record.id)} className="px-3 py-1.5 bg-white border border-red-200 rounded-full text-[10px] font-bold text-red-500 hover:bg-red-50 shadow-sm flex items-center gap-1"><Trash2 className="w-3 h-3" /> ลบ</button>
-                                       <button onClick={() => handleEditHistory(record)} className="px-3 py-1.5 bg-white border border-neutral-200 rounded-full text-[10px] font-bold text-neutral-600 hover:bg-neutral-50 shadow-sm flex items-center gap-1"><Edit2 className="w-3 h-3" /> แก้ไขข้อมูล</button>
-                                    </div>
-                                 </div>
-                              )}
-                           </div>
-                        );
-                     }
-                     return (
-                     <div key={record.id} className="bg-white rounded-3xl border border-neutral-100 shadow-[0_2px_15px_rgb(0,0,0,0.02)] overflow-hidden transition-all hover:border-neutral-200">
-                        <div onClick={() => toggleHistoryExpand(record.id)} className="p-4 cursor-pointer">
-                           <div className="flex justify-between items-start mb-3">
-                              <div className="flex items-center gap-1.5 text-[10px] font-semibold text-neutral-500">
-                                 <span className="flex items-center gap-1 bg-neutral-100 px-2 py-0.5 rounded-md"><Calendar className="w-2.5 h-2.5"/> {record.date}</span>
-                                 <span className="flex items-center gap-1 bg-neutral-100 px-2 py-0.5 rounded-md"><Clock className="w-2.5 h-2.5"/> {record.timestamp}</span>
-                              </div>
-                              <div className="bg-[#4ADE80] text-neutral-900 px-2.5 py-0.5 rounded-full text-[10px] font-bold shadow-sm whitespace-nowrap">รอบ {record.round}</div>
-                           </div>
-                           <div className="flex items-end justify-between">
-                              <div>
-                                 <p className="text-[9px] font-bold text-neutral-400 uppercase tracking-widest mb-0.5">ผลไม้</p>
-                                 <div className="flex items-center gap-1.5">
-                                    <h3 className="text-lg font-bold text-neutral-900">{record.fruit}</h3>
-                                    <span className="bg-neutral-100 text-neutral-500 text-[9px] px-1.5 py-0.5 rounded-full font-bold">{record.details.length} ประเภท</span>
-                                 </div>
-                              </div>
-                              <div className="text-right">
-                                 <p className="text-[9px] font-bold text-neutral-400 uppercase tracking-widest mb-0.5">ยอดรวมสุทธิ</p>
-                                 <div className="text-2xl font-black tracking-tight text-neutral-900">{record.totalWeight.toLocaleString()} <span className="text-[11px] font-bold text-neutral-500">กก.</span></div>
-                              </div>
-                           </div>
-                           <div className="mt-3.5 flex items-center justify-center gap-1 text-[10px] font-bold text-[#C084FC]">
-                              {isExpanded ? 'ปิดรายละเอียด' : 'ดูรายละเอียดประเภท'} <ChevronDown className={`w-3.5 h-3.5 transition-transform ${isExpanded ? 'rotate-180' : ''}`} />
-                           </div>
+        {filteredHistory.length === 0 ? (
+          <div className="h-full flex flex-col items-center justify-center text-neutral-400">
+            <div className="w-16 h-16 bg-neutral-100 rounded-full flex items-center justify-center mb-3"><Search className="w-6 h-6 text-neutral-300" /></div>
+            <p className="font-bold text-base text-neutral-700">ไม่พบข้อมูล</p>
+            <p className="text-[11px] text-center max-w-[200px] mt-1 font-medium">ลองเปลี่ยนคำค้นหา หรือเลือกวันที่จากปฏิทินอีกครั้ง</p>
+          </div>
+        ) : (
+          <>
+            <div className="block lg:hidden space-y-3 max-w-3xl mx-auto">
+              {filteredHistory.map(record => {
+                const isExpanded = expandedHistory.includes(record.id);
+                if (viewMode === 'list') {
+                  return (
+                    <div key={record.id} className="bg-white rounded-2xl border border-neutral-100 shadow-[0_2px_10px_rgb(0,0,0,0.02)] overflow-hidden transition-all hover:border-neutral-200">
+                      <div className="p-3 flex justify-between items-center cursor-pointer" onClick={() => toggleHistoryExpand(record.id)}>
+                        <div className="flex items-center gap-3">
+                          <div className="bg-[#4ADE80] text-neutral-900 w-10 h-10 rounded-full flex items-center justify-center font-bold text-xs shadow-sm shrink-0 whitespace-nowrap">ร.{record.round}</div>
+                          <div>
+                            <div className="font-bold text-neutral-900 text-sm flex items-center gap-1.5">{record.fruit} <span className="bg-neutral-100 text-neutral-500 text-[8px] px-1.5 py-0.5 rounded-full font-bold">{record.details.length} ประเภท</span></div>
+                            <div className="text-[9px] text-neutral-400 font-medium flex items-center gap-1 mt-0.5"><Calendar className="w-2.5 h-2.5" />{formatDisplayDate(record.date)} • {record.timestamp}</div>
+                          </div>
                         </div>
-                        {isExpanded && (
-                           <div className="px-4 pb-4 bg-neutral-50 border-t border-neutral-100 pt-3.5">
-                              <div className="flex flex-col gap-2">
-                                 {record.details.map(detail => {
-                                    const catColor = getCategoryColorClass(detail.category).split(' ')[0];
-                                    return (
-                                    <div key={detail.category} className="bg-white p-2.5 rounded-xl border border-neutral-100 shadow-sm flex flex-col gap-2">
-                                       <div className="flex items-center gap-2">
-                                          <div className={`w-1.5 h-8 rounded-full ${catColor}`}></div>
-                                          <div className="flex-1 flex justify-between items-start">
-                                             <div><div className="text-xs font-bold text-neutral-900">{detail.category}</div><div className="text-[9px] font-medium text-neutral-400">{detail.count} รายการ</div></div>
-                                             <div className="text-base font-black tracking-tight text-neutral-800">{detail.total.toLocaleString()} <span className="text-[9px] font-medium text-neutral-500">กก.</span></div>
-                                          </div>
-                                       </div>
-                                       {detail.items && detail.items.length > 0 && (
-                                          <div className="pt-1.5 border-t border-neutral-50 flex flex-wrap gap-1">
-                                             {detail.items.map((weight, idx) => (<span key={idx} className="bg-neutral-50 border border-neutral-100 px-1.5 py-0.5 rounded text-[10px] font-bold text-neutral-600 shadow-sm">{weight}</span>))}
-                                          </div>
-                                       )}
+                        <div className="text-right">
+                          <div className="text-lg font-black tracking-tight text-neutral-900">{record.totalWeight.toLocaleString()} <span className="text-[9px] font-bold text-neutral-500">กก.</span></div>
+                          <div className="text-[9px] text-[#C084FC] font-bold flex items-center justify-end gap-0.5 mt-0.5">{isExpanded ? 'ปิด' : 'รายละเอียด'} <ChevronDown className={`w-3 h-3 transition-transform ${isExpanded ? 'rotate-180' : ''}`} /></div>
+                        </div>
+                      </div>
+                      {isExpanded && (
+                        <div className="px-3 pb-3 bg-neutral-50 border-t border-neutral-100 pt-3">
+                          <div className="flex flex-col gap-2">
+                            {record.details.map(detail => {
+                              const catColor = getCategoryColorClass(detail.category).split(' ')[0];
+                              return (
+                                <div key={detail.category} className="bg-white p-2.5 rounded-xl border border-neutral-100 shadow-sm flex flex-col gap-2">
+                                  <div className="flex items-center gap-2">
+                                    <div className={`w-1.5 h-8 rounded-full ${catColor}`}></div>
+                                    <div className="flex-1 flex justify-between items-start">
+                                      <div><div className="text-xs font-bold text-neutral-900">{detail.category}</div><div className="text-[9px] font-medium text-neutral-400">{detail.count} รายการ</div></div>
+                                      <div className="text-base font-black tracking-tight text-neutral-800">{detail.total.toLocaleString()} <span className="text-[9px] font-medium text-neutral-500">กก.</span></div>
                                     </div>
-                                 )})}
+                                  </div>
+                                  {detail.items && detail.items.length > 0 && (
+                                    <div className="pt-1.5 border-t border-neutral-50 flex flex-wrap gap-1">
+                                      {detail.items.map((weight, idx) => (<span key={idx} className="bg-neutral-50 border border-neutral-100 px-1.5 py-0.5 rounded text-[10px] font-bold text-neutral-600 shadow-sm">{weight}</span>))}
+                                    </div>
+                                  )}
+                                </div>
+                              )
+                            })}
+                          </div>
+                          <div className="mt-3 flex justify-end gap-2 items-center">
+                            <div className="flex bg-white border border-neutral-100 p-1 rounded-full gap-1 shadow-sm mr-2">
+                              <button onClick={() => handleShareText(record)} className="p-2 text-neutral-400 hover:text-green-500 transition-colors" title="แชร์ข้อความ"><MessageSquare className="w-3.5 h-3.5" /></button>
+                              <button onClick={() => handleShareImage(record)} className="p-2 text-neutral-400 hover:text-[#C084FC] transition-colors" title="แชร์รูปภาพ"><ImageIcon className="w-3.5 h-3.5" /></button>
+                            </div>
+                            <button onClick={() => setDeleteConfirmId(record.id)} className="px-3 py-1.5 bg-white border border-red-200 rounded-full text-[10px] font-bold text-red-500 hover:bg-red-50 shadow-sm flex items-center gap-1"><Trash2 className="w-3 h-3" /> ลบ</button>
+                            <button onClick={() => handleEditHistory(record)} className="px-3 py-1.5 bg-white border border-neutral-200 rounded-full text-[10px] font-bold text-neutral-600 hover:bg-neutral-50 shadow-sm flex items-center gap-1"><Edit2 className="w-3 h-3" /> แก้ไขข้อมูล</button>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  );
+                }
+                return (
+                  <div key={record.id} className="bg-white rounded-3xl border border-neutral-100 shadow-[0_2px_15px_rgb(0,0,0,0.02)] overflow-hidden transition-all hover:border-neutral-200">
+                    <div onClick={() => toggleHistoryExpand(record.id)} className="p-4 cursor-pointer">
+                      <div className="flex justify-between items-start mb-3">
+                        <div className="flex items-center gap-1.5 text-[10px] font-semibold text-neutral-500">
+                          <span className="flex items-center gap-1 bg-neutral-100 px-2 py-0.5 rounded-md"><Calendar className="w-2.5 h-2.5" /> {formatDisplayDate(record.date)}</span>
+                          <span className="flex items-center gap-1 bg-neutral-100 px-2 py-0.5 rounded-md"><Clock className="w-2.5 h-2.5" /> {record.timestamp}</span>
+                        </div>
+                        <div className="bg-[#4ADE80] text-neutral-900 px-2.5 py-0.5 rounded-full text-[10px] font-bold shadow-sm whitespace-nowrap">รอบ {record.round}</div>
+                      </div>
+                      <div className="flex items-end justify-between">
+                        <div>
+                          <p className="text-[9px] font-bold text-neutral-400 uppercase tracking-widest mb-0.5">ผลไม้</p>
+                          <div className="flex items-center gap-1.5">
+                            <h3 className="text-lg font-bold text-neutral-900">{record.fruit}</h3>
+                            <span className="bg-neutral-100 text-neutral-500 text-[9px] px-1.5 py-0.5 rounded-full font-bold">{record.details.length} ประเภท</span>
+                          </div>
+                        </div>
+                        <div className="text-right">
+                          <p className="text-[9px] font-bold text-neutral-400 uppercase tracking-widest mb-0.5">ยอดรวมสุทธิ</p>
+                          <div className="text-2xl font-black tracking-tight text-neutral-900">{record.totalWeight.toLocaleString()} <span className="text-[11px] font-bold text-neutral-500">กก.</span></div>
+                        </div>
+                      </div>
+                      <div className="mt-3.5 flex items-center justify-center gap-1 text-[10px] font-bold text-[#C084FC]">
+                        {isExpanded ? 'ปิดรายละเอียด' : 'ดูรายละเอียดประเภท'} <ChevronDown className={`w-3.5 h-3.5 transition-transform ${isExpanded ? 'rotate-180' : ''}`} />
+                      </div>
+                    </div>
+                    {isExpanded && (
+                      <div className="px-4 pb-4 bg-neutral-50 border-t border-neutral-100 pt-3.5">
+                        <div className="flex flex-col gap-2">
+                          {record.details.map(detail => {
+                            const catColor = getCategoryColorClass(detail.category).split(' ')[0];
+                            return (
+                              <div key={detail.category} className="bg-white p-2.5 rounded-xl border border-neutral-100 shadow-sm flex flex-col gap-2">
+                                <div className="flex items-center gap-2">
+                                  <div className={`w-1.5 h-8 rounded-full ${catColor}`}></div>
+                                  <div className="flex-1 flex justify-between items-start">
+                                    <div><div className="text-xs font-bold text-neutral-900">{detail.category}</div><div className="text-[9px] font-medium text-neutral-400">{detail.count} รายการ</div></div>
+                                    <div className="text-base font-black tracking-tight text-neutral-800">{detail.total.toLocaleString()} <span className="text-[9px] font-medium text-neutral-500">กก.</span></div>
+                                  </div>
+                                </div>
+                                {detail.items && detail.items.length > 0 && (
+                                  <div className="pt-1.5 border-t border-neutral-50 flex flex-wrap gap-1">
+                                    {detail.items.map((weight, idx) => (<span key={idx} className="bg-neutral-50 border border-neutral-100 px-1.5 py-0.5 rounded text-[10px] font-bold text-neutral-600 shadow-sm">{weight}</span>))}
+                                  </div>
+                                )}
                               </div>
-                              <div className="mt-3 flex justify-end gap-2 items-center">
-                                 <div className="flex bg-white border border-neutral-100 p-1 rounded-full gap-1 shadow-sm mr-2">
-                                    <button onClick={() => handleShareText(record)} className="p-2 text-neutral-400 hover:text-green-500 transition-colors" title="แชร์ข้อความ"><MessageSquare className="w-3.5 h-3.5" /></button>
-                                    <button onClick={() => handleShareImage(record)} className="p-2 text-neutral-400 hover:text-[#C084FC] transition-colors" title="แชร์รูปภาพ"><ImageIcon className="w-3.5 h-3.5" /></button>
-                                 </div>
-                                 <button onClick={() => setDeleteConfirmId(record.id)} className="px-3 py-1.5 bg-white border border-red-200 rounded-full text-[10px] font-bold text-red-500 hover:bg-red-50 shadow-sm flex items-center gap-1"><Trash2 className="w-3 h-3" /> ลบ</button>
-                                 <button onClick={() => handleEditHistory(record)} className="px-3 py-1.5 bg-white border border-neutral-200 rounded-full text-[10px] font-bold text-neutral-600 hover:bg-neutral-50 shadow-sm flex items-center gap-1"><Edit2 className="w-3 h-3" /> แก้ไขข้อมูล</button>
-                              </div>
-                           </div>
-                        )}
-                     </div>
-                  )})}
-               </div>
+                            )
+                          })}
+                        </div>
+                        <div className="mt-3 flex justify-end gap-2 items-center">
+                          <div className="flex bg-white border border-neutral-100 p-1 rounded-full gap-1 shadow-sm mr-2">
+                            <button onClick={() => handleShareText(record)} className="p-2 text-neutral-400 hover:text-green-500 transition-colors" title="แชร์ข้อความ"><MessageSquare className="w-3.5 h-3.5" /></button>
+                            <button onClick={() => handleShareImage(record)} className="p-2 text-neutral-400 hover:text-[#C084FC] transition-colors" title="แชร์รูปภาพ"><ImageIcon className="w-3.5 h-3.5" /></button>
+                          </div>
+                          <button onClick={() => setDeleteConfirmId(record.id)} className="px-3 py-1.5 bg-white border border-red-200 rounded-full text-[10px] font-bold text-red-500 hover:bg-red-50 shadow-sm flex items-center gap-1"><Trash2 className="w-3 h-3" /> ลบ</button>
+                          <button onClick={() => handleEditHistory(record)} className="px-3 py-1.5 bg-white border border-neutral-200 rounded-full text-[10px] font-bold text-neutral-600 hover:bg-neutral-50 shadow-sm flex items-center gap-1"><Edit2 className="w-3 h-3" /> แก้ไขข้อมูล</button>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )
+              })}
+            </div>
 
-               <div className="hidden lg:block bg-white rounded-3xl border border-neutral-100 shadow-[0_2px_15px_rgb(0,0,0,0.02)] overflow-hidden">
-                  <table className="w-full text-left border-collapse">
-                     <thead>
-                        <tr className="bg-neutral-50 border-b border-neutral-100 text-neutral-500 text-xs uppercase tracking-widest">
-                           <th className="p-4 pl-6 font-bold">วันที่</th><th className="p-4 font-bold">เวลา</th><th className="p-4 font-bold text-center">รอบ</th><th className="p-4 font-bold">ผลไม้</th><th className="p-4 font-bold">รายละเอียด</th><th className="p-4 font-bold text-right">ยอดรวมสุทธิ</th><th className="p-4 pr-6 font-bold text-center">จัดการ</th>
+            <div className="hidden lg:block bg-white rounded-3xl border border-neutral-100 shadow-[0_2px_15px_rgb(0,0,0,0.02)] overflow-hidden">
+              <table className="w-full text-left border-collapse">
+                <thead>
+                  <tr className="bg-neutral-50 border-b border-neutral-100 text-neutral-500 text-xs uppercase tracking-widest">
+                    <th className="p-4 pl-6 font-bold">วันที่</th><th className="p-4 font-bold">เวลา</th><th className="p-4 font-bold text-center">รอบ</th><th className="p-4 font-bold">ผลไม้</th><th className="p-4 font-bold">รายละเอียด</th><th className="p-4 font-bold text-right">ยอดรวมสุทธิ</th><th className="p-4 pr-6 font-bold text-center">จัดการ</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {filteredHistory.map((record, index) => {
+                    const isExpanded = expandedHistory.includes(record.id);
+                    const isLast = index === filteredHistory.length - 1;
+                    return (
+                      <React.Fragment key={record.id}>
+                        <tr onClick={() => toggleHistoryExpand(record.id)} className={`hover:bg-neutral-50/50 cursor-pointer transition-colors group ${!isExpanded && !isLast ? 'border-b border-neutral-50' : ''} ${isExpanded ? 'bg-neutral-50/50 border-b border-neutral-100' : ''}`}>
+                          <td className="p-4 pl-6 text-sm font-semibold text-neutral-700"><span className="flex items-center gap-2"><Calendar className="w-4 h-4 text-neutral-400" /> {formatDisplayDate(record.date)}</span></td>
+                          <td className="p-4 text-sm font-medium text-neutral-500"><span className="flex items-center gap-2"><Clock className="w-4 h-4 text-neutral-400" /> {record.timestamp}</span></td>
+                          <td className="p-4 text-center"><span className="bg-[#4ADE80] text-neutral-900 px-3 py-1 rounded-full text-xs font-bold shadow-sm whitespace-nowrap">รอบที่ {record.round}</span></td>
+                          <td className="p-4"><span className="text-base font-bold text-neutral-900">{record.fruit}</span></td>
+                          <td className="p-4"><span className="bg-neutral-100 text-neutral-600 border border-neutral-200 text-xs px-3 py-1 rounded-full font-bold">{record.details.length} ประเภท</span></td>
+                          <td className="p-4 text-right"><span className="text-xl font-black tracking-tight text-neutral-900">{record.totalWeight.toLocaleString()}</span><span className="text-xs font-bold text-neutral-500 ml-1">กก.</span></td>
+                          <td className="p-4 pr-6 text-center"><div className="flex items-center justify-center"><button className={`p-2 rounded-full transition-all ${isExpanded ? 'bg-[#C084FC] text-white shadow-md' : 'text-neutral-400 hover:text-neutral-700 hover:bg-neutral-100 shadow-sm bg-white border border-neutral-200'}`}><ChevronDown className={`w-4 h-4 transition-transform ${isExpanded ? 'rotate-180' : ''}`} /></button></div></td>
                         </tr>
-                     </thead>
-                     <tbody>
-                        {filteredHistory.map((record, index) => {
-                           const isExpanded = expandedHistory.includes(record.id);
-                           const isLast = index === filteredHistory.length - 1;
-                           return (
-                              <React.Fragment key={record.id}>
-                                 <tr onClick={() => toggleHistoryExpand(record.id)} className={`hover:bg-neutral-50/50 cursor-pointer transition-colors group ${!isExpanded && !isLast ? 'border-b border-neutral-50' : ''} ${isExpanded ? 'bg-neutral-50/50 border-b border-neutral-100' : ''}`}>
-                                    <td className="p-4 pl-6 text-sm font-semibold text-neutral-700"><span className="flex items-center gap-2"><Calendar className="w-4 h-4 text-neutral-400"/> {record.date}</span></td>
-                                    <td className="p-4 text-sm font-medium text-neutral-500"><span className="flex items-center gap-2"><Clock className="w-4 h-4 text-neutral-400"/> {record.timestamp}</span></td>
-                                    <td className="p-4 text-center"><span className="bg-[#4ADE80] text-neutral-900 px-3 py-1 rounded-full text-xs font-bold shadow-sm whitespace-nowrap">รอบที่ {record.round}</span></td>
-                                    <td className="p-4"><span className="text-base font-bold text-neutral-900">{record.fruit}</span></td>
-                                    <td className="p-4"><span className="bg-neutral-100 text-neutral-600 border border-neutral-200 text-xs px-3 py-1 rounded-full font-bold">{record.details.length} ประเภท</span></td>
-                                    <td className="p-4 text-right"><span className="text-xl font-black tracking-tight text-neutral-900">{record.totalWeight.toLocaleString()}</span><span className="text-xs font-bold text-neutral-500 ml-1">กก.</span></td>
-                                    <td className="p-4 pr-6 text-center"><div className="flex items-center justify-center"><button className={`p-2 rounded-full transition-all ${isExpanded ? 'bg-[#C084FC] text-white shadow-md' : 'text-neutral-400 hover:text-neutral-700 hover:bg-neutral-100 shadow-sm bg-white border border-neutral-200'}`}><ChevronDown className={`w-4 h-4 transition-transform ${isExpanded ? 'rotate-180' : ''}`} /></button></div></td>
-                                 </tr>
-                                 {isExpanded && (
-                                    <tr className="bg-neutral-50/80 border-b border-neutral-100">
-                                       <td colSpan="7" className="p-6 lg:px-8">
-                                          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-                                             {record.details.map(detail => {
-                                                const catColor = getCategoryColorClass(detail.category).split(' ')[0];
-                                                return (
-                                                <div key={detail.category} className="bg-white p-4 rounded-2xl border border-neutral-200 shadow-sm flex flex-col gap-3 hover:border-neutral-300 transition-colors">
-                                                   <div className="flex items-center gap-3">
-                                                      <div className={`w-2 h-10 rounded-full ${catColor}`}></div>
-                                                      <div className="flex-1 flex justify-between items-start">
-                                                         <div><div className="text-sm font-bold text-neutral-900">{detail.category}</div><div className="text-xs font-medium text-neutral-500 mt-0.5">{detail.count} รายการ</div></div>
-                                                         <div className="text-lg font-black tracking-tight text-neutral-800">{detail.total.toLocaleString()} <span className="text-xs font-medium text-neutral-500">กก.</span></div>
-                                                      </div>
-                                                   </div>
-                                                   {detail.items && detail.items.length > 0 && (
-                                                      <div className="pt-2 border-t border-neutral-100 flex flex-wrap gap-1.5">
-                                                         {detail.items.map((weight, idx) => (<span key={idx} className="bg-neutral-50 border border-neutral-200 px-2 py-1 rounded-md text-xs font-bold text-neutral-600 shadow-sm">{weight}</span>))}
-                                                      </div>
-                                                   )}
-                                                </div>
-                                             )})}
-                                          </div>
-                                          <div className="mt-5 flex justify-end gap-3 items-center">
-                                             <div className="flex bg-white border border-neutral-100 p-1.5 rounded-full gap-2 shadow-sm mr-2">
-                                                <button onClick={() => handleShareText(record)} className="p-2 text-neutral-400 hover:text-green-500 transition-colors flex items-center gap-2" title="แชร์ข้อความ"><MessageSquare className="w-4 h-4" /> <span className="text-[10px] font-bold">แชร์ข้อความ</span></button>
-                                                <button onClick={() => handleShareImage(record)} className="p-2 text-neutral-400 hover:text-[#C084FC] transition-colors flex items-center gap-2" title="แชร์รูปภาพ"><ImageIcon className="w-4 h-4" /> <span className="text-[10px] font-bold">แชร์รูปภาพ</span></button>
-                                             </div>
-                                             <button onClick={() => handleEditHistory(record)} className="px-5 py-2.5 bg-white border border-neutral-200 rounded-full text-sm font-bold text-neutral-600 hover:bg-neutral-50 shadow-sm flex items-center gap-2 transition-all active:scale-95"><Edit2 className="w-4 h-4" /> แก้ไขข้อมูลรอบนี้</button>
-                                             <button onClick={() => setDeleteConfirmId(record.id)} className="px-5 py-2.5 bg-white border border-red-200 rounded-full text-sm font-bold text-red-500 hover:bg-red-50 shadow-sm flex items-center gap-2 transition-all active:scale-95"><Trash2 className="w-4 h-4" /> ลบข้อมูล</button>
-                                          </div>
-                                       </td>
-                                    </tr>
-                                 )}
-                              </React.Fragment>
-                           )
-                        })}
-                     </tbody>
-                  </table>
-               </div>
-            </>
-         )}
+                        {isExpanded && (
+                          <tr className="bg-neutral-50/80 border-b border-neutral-100">
+                            <td colSpan="7" className="p-6 lg:px-8">
+                              <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+                                {record.details.map(detail => {
+                                  const catColor = getCategoryColorClass(detail.category).split(' ')[0];
+                                  return (
+                                    <div key={detail.category} className="bg-white p-4 rounded-2xl border border-neutral-200 shadow-sm flex flex-col gap-3 hover:border-neutral-300 transition-colors">
+                                      <div className="flex items-center gap-3">
+                                        <div className={`w-2 h-10 rounded-full ${catColor}`}></div>
+                                        <div className="flex-1 flex justify-between items-start">
+                                          <div><div className="text-sm font-bold text-neutral-900">{detail.category}</div><div className="text-xs font-medium text-neutral-500 mt-0.5">{detail.count} รายการ</div></div>
+                                          <div className="text-lg font-black tracking-tight text-neutral-800">{detail.total.toLocaleString()} <span className="text-xs font-medium text-neutral-500">กก.</span></div>
+                                        </div>
+                                      </div>
+                                      {detail.items && detail.items.length > 0 && (
+                                        <div className="pt-2 border-t border-neutral-100 flex flex-wrap gap-1.5">
+                                          {detail.items.map((weight, idx) => (<span key={idx} className="bg-neutral-50 border border-neutral-200 px-2 py-1 rounded-md text-xs font-bold text-neutral-600 shadow-sm">{weight}</span>))}
+                                        </div>
+                                      )}
+                                    </div>
+                                  )
+                                })}
+                              </div>
+                              <div className="mt-5 flex justify-end gap-3 items-center">
+                                <div className="flex bg-white border border-neutral-100 p-1.5 rounded-full gap-2 shadow-sm mr-2">
+                                  <button onClick={() => handleShareText(record)} className="p-2 text-neutral-400 hover:text-green-500 transition-colors flex items-center gap-2" title="แชร์ข้อความ"><MessageSquare className="w-4 h-4" /> <span className="text-[10px] font-bold">แชร์ข้อความ</span></button>
+                                  <button onClick={() => handleShareImage(record)} className="p-2 text-neutral-400 hover:text-[#C084FC] transition-colors flex items-center gap-2" title="แชร์รูปภาพ"><ImageIcon className="w-4 h-4" /> <span className="text-[10px] font-bold">แชร์รูปภาพ</span></button>
+                                </div>
+                                <button onClick={() => handleEditHistory(record)} className="px-5 py-2.5 bg-white border border-neutral-200 rounded-full text-sm font-bold text-neutral-600 hover:bg-neutral-50 shadow-sm flex items-center gap-2 transition-all active:scale-95"><Edit2 className="w-4 h-4" /> แก้ไขข้อมูลรอบนี้</button>
+                                <button onClick={() => setDeleteConfirmId(record.id)} className="px-5 py-2.5 bg-white border border-red-200 rounded-full text-sm font-bold text-red-500 hover:bg-red-50 shadow-sm flex items-center gap-2 transition-all active:scale-95"><Trash2 className="w-4 h-4" /> ลบข้อมูล</button>
+                              </div>
+                            </td>
+                          </tr>
+                        )}
+                      </React.Fragment>
+                    )
+                  })}
+                </tbody>
+              </table>
+            </div>
+          </>
+        )}
       </div>
     </div>
   );
 
   const renderDashboardScreen = () => {
-    const statsHistory = dashboardFruitFilter === 'All' 
-        ? historyRecords 
-        : historyRecords.filter(r => r.fruit === dashboardFruitFilter);
+    const statsHistory = dashboardFruitFilter === 'All'
+      ? historyRecords
+      : historyRecords.filter(r => r.fruit === dashboardFruitFilter);
 
     let totalDashboardWeight = 0;
     let totalRounds = statsHistory.length;
@@ -1090,8 +1112,8 @@ export default function App() {
     let conicGradientString = '';
     if (totalDashboardWeight > 0) {
       let currentPercentage = 0;
-      const sortedCats = Object.entries(catTotals).sort((a,b) => b[1] - a[1]);
-      
+      const sortedCats = Object.entries(catTotals).sort((a, b) => b[1] - a[1]);
+
       const gradientParts = sortedCats.map(([cat, weight]) => {
         const percentage = (weight / totalDashboardWeight) * 100;
         const color = getCategoryHex(cat);
@@ -1127,65 +1149,65 @@ export default function App() {
     return (
       <div className="flex-1 flex flex-col bg-[#FDFBF7] min-h-full w-full overflow-hidden animate-in fade-in duration-300">
         <div className="p-4 md:p-6 shrink-0 relative overflow-hidden bg-white border-b border-neutral-100">
-           <div className="absolute top-0 right-0 w-48 h-48 bg-[#FDE047] rounded-full blur-[80px] opacity-20"></div>
-           <h2 className="text-2xl lg:text-3xl font-extrabold tracking-tight text-neutral-900 relative z-10 flex items-center gap-2">
-             Statistics <span className="text-neutral-300 font-normal">|</span> <span className="text-[#FDE047] font-bold text-lg lg:text-xl drop-shadow-sm">สถิติ</span>
-           </h2>
-           
-           <div className="mt-4 flex flex-col md:flex-row gap-3 relative z-10">
-              <div className="flex bg-neutral-100 p-1 rounded-full border border-neutral-200 shadow-inner overflow-x-auto hide-scrollbar">
-                {['daily', 'weekly', 'monthly', 'yearly'].map((range) => {
-                  const labels = { daily: 'รายวัน', weekly: 'รายสัปดาห์', monthly: 'รายเดือน', yearly: 'รายปี' };
-                  return (
-                    <button 
-                      key={range} onClick={() => setDashboardRange(range)}
-                      className={`px-4 py-1.5 rounded-full text-[11px] lg:text-xs font-bold transition-all whitespace-nowrap ${dashboardRange === range ? 'bg-white shadow-[0_2px_8px_rgba(0,0,0,0.08)] text-neutral-900' : 'text-neutral-500 hover:text-neutral-800'}`}
-                    >
-                      {labels[range]}
-                    </button>
-                  );
-                })}
+          <div className="absolute top-0 right-0 w-48 h-48 bg-[#FDE047] rounded-full blur-[80px] opacity-20"></div>
+          <h2 className="text-2xl lg:text-3xl font-extrabold tracking-tight text-neutral-900 relative z-10 flex items-center gap-2">
+            Statistics <span className="text-neutral-300 font-normal">|</span> <span className="text-[#FDE047] font-bold text-lg lg:text-xl drop-shadow-sm">สถิติ</span>
+          </h2>
+
+          <div className="mt-4 flex flex-col md:flex-row gap-3 relative z-10">
+            <div className="flex bg-neutral-100 p-1 rounded-full border border-neutral-200 shadow-inner overflow-x-auto hide-scrollbar">
+              {['daily', 'weekly', 'monthly', 'yearly'].map((range) => {
+                const labels = { daily: 'รายวัน', weekly: 'รายสัปดาห์', monthly: 'รายเดือน', yearly: 'รายปี' };
+                return (
+                  <button
+                    key={range} onClick={() => setDashboardRange(range)}
+                    className={`px-4 py-1.5 rounded-full text-[11px] lg:text-xs font-bold transition-all whitespace-nowrap ${dashboardRange === range ? 'bg-white shadow-[0_2px_8px_rgba(0,0,0,0.08)] text-neutral-900' : 'text-neutral-500 hover:text-neutral-800'}`}
+                  >
+                    {labels[range]}
+                  </button>
+                );
+              })}
+            </div>
+
+            <div className="relative shrink-0 ml-auto md:ml-0 flex items-center gap-2">
+              <div className="relative">
+                <select
+                  value={dashboardFruitFilter}
+                  onChange={e => setDashboardFruitFilter(e.target.value)}
+                  className="bg-white border border-neutral-200 rounded-full pl-3 pr-8 py-1.5 text-neutral-700 shadow-sm hover:bg-neutral-50 appearance-none outline-none font-bold text-[11px] lg:text-xs cursor-pointer"
+                >
+                  <option value="All">รวมผลไม้ทุกชนิด</option>
+                  {fruits.map(f => <option key={f} value={f}>{f}</option>)}
+                </select>
+                <ChevronDown className="w-3.5 h-3.5 text-neutral-400 absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
               </div>
 
-              <div className="relative shrink-0 ml-auto md:ml-0 flex items-center gap-2">
-                <div className="relative">
-                  <select 
-                    value={dashboardFruitFilter} 
-                    onChange={e => setDashboardFruitFilter(e.target.value)}
-                    className="bg-white border border-neutral-200 rounded-full pl-3 pr-8 py-1.5 text-neutral-700 shadow-sm hover:bg-neutral-50 appearance-none outline-none font-bold text-[11px] lg:text-xs cursor-pointer"
-                  >
-                    <option value="All">รวมผลไม้ทุกชนิด</option>
-                    {fruits.map(f => <option key={f} value={f}>{f}</option>)}
-                  </select>
-                  <ChevronDown className="w-3.5 h-3.5 text-neutral-400 absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
-                </div>
-                
-                <button className="bg-white border border-neutral-200 rounded-full px-4 py-1.5 flex items-center justify-center text-neutral-700 shadow-sm hover:bg-neutral-50 active:scale-95 shrink-0 overflow-hidden relative font-bold text-[11px] lg:text-xs gap-2">
-                   <Calendar className="w-3.5 h-3.5 text-neutral-400" />
-                   {dashboardDate}
-                   <input type="date" onClick={(e) => { try { if (e.target.showPicker) e.target.showPicker(); } catch (err) {} }} onChange={handleDashboardDateChange} className="absolute inset-0 w-full h-full opacity-0 cursor-pointer" />
-                </button>
-              </div>
-           </div>
+              <button className="bg-white border border-neutral-200 rounded-full px-4 py-1.5 flex items-center justify-center text-neutral-700 shadow-sm hover:bg-neutral-50 active:scale-95 shrink-0 overflow-hidden relative font-bold text-[11px] lg:text-xs gap-2">
+                <Calendar className="w-3.5 h-3.5 text-neutral-400" />
+                {dashboardDate}
+                <input type="date" onClick={(e) => { try { if (e.target.showPicker) e.target.showPicker(); } catch (err) { } }} onChange={handleDashboardDateChange} className="absolute inset-0 w-full h-full opacity-0 cursor-pointer" />
+              </button>
+            </div>
+          </div>
         </div>
 
         <div className="flex-1 overflow-y-auto p-4 md:p-6 pb-28 space-y-4 lg:space-y-6">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div className="bg-white p-5 rounded-3xl border border-neutral-100 shadow-[0_2px_15px_rgb(0,0,0,0.02)] flex flex-col relative overflow-hidden">
-              <div className="w-10 h-10 bg-[#FDE047]/20 rounded-full flex items-center justify-center mb-3 text-[#FDE047]"><BarChart2 className="w-5 h-5 text-neutral-800"/></div>
+              <div className="w-10 h-10 bg-[#FDE047]/20 rounded-full flex items-center justify-center mb-3 text-[#FDE047]"><BarChart2 className="w-5 h-5 text-neutral-800" /></div>
               <p className="text-[11px] font-bold text-neutral-400 uppercase tracking-widest mb-1">ยอดรวมทั้งหมด</p>
               <div className="text-3xl font-black tracking-tight text-neutral-900">{totalDashboardWeight.toLocaleString()} <span className="text-xs font-bold text-neutral-500">กก.</span></div>
               <div className="absolute -right-4 -bottom-4 w-24 h-24 bg-[#FDE047] rounded-full blur-[40px] opacity-20"></div>
             </div>
-            
+
             <div className="bg-white p-5 rounded-3xl border border-neutral-100 shadow-[0_2px_15px_rgb(0,0,0,0.02)] flex flex-col">
-              <div className="w-10 h-10 bg-[#4ADE80]/20 rounded-full flex items-center justify-center mb-3 text-[#4ADE80]"><ListChecks className="w-5 h-5 text-neutral-800"/></div>
+              <div className="w-10 h-10 bg-[#4ADE80]/20 rounded-full flex items-center justify-center mb-3 text-[#4ADE80]"><ListChecks className="w-5 h-5 text-neutral-800" /></div>
               <p className="text-[11px] font-bold text-neutral-400 uppercase tracking-widest mb-1">จำนวนรอบ</p>
               <div className="text-3xl font-black tracking-tight text-neutral-900">{totalRounds} <span className="text-xs font-bold text-neutral-500">รอบ</span></div>
             </div>
 
             <div className="bg-white p-5 rounded-3xl border border-neutral-100 shadow-[0_2px_15px_rgb(0,0,0,0.02)] flex flex-col">
-              <div className="w-10 h-10 bg-[#C084FC]/20 rounded-full flex items-center justify-center mb-3 text-[#C084FC]"><TrendingUp className="w-5 h-5 text-neutral-800"/></div>
+              <div className="w-10 h-10 bg-[#C084FC]/20 rounded-full flex items-center justify-center mb-3 text-[#C084FC]"><TrendingUp className="w-5 h-5 text-neutral-800" /></div>
               <p className="text-[11px] font-bold text-neutral-400 uppercase tracking-widest mb-1">ประเภทที่เยอะที่สุด</p>
               <div className="text-3xl font-black tracking-tight text-neutral-900">{topCategory}</div>
             </div>
@@ -1205,10 +1227,10 @@ export default function App() {
                   </div>
                 </div>
                 <div className="w-full flex flex-wrap justify-center gap-3">
-                  {Object.entries(catTotals).sort((a,b)=>b[1]-a[1]).map(([cat, weight]) => (
+                  {Object.entries(catTotals).sort((a, b) => b[1] - a[1]).map(([cat, weight]) => (
                     <div key={cat} className="flex items-center gap-1.5 bg-neutral-50 px-2.5 py-1 rounded-lg border border-neutral-100">
                       <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: getCategoryHex(cat) }}></div>
-                      <span className="text-[10px] font-bold text-neutral-700">{cat} <span className="text-neutral-400 ml-1">{Math.round((weight/totalDashboardWeight)*100)}%</span></span>
+                      <span className="text-[10px] font-bold text-neutral-700">{cat} <span className="text-neutral-400 ml-1">{Math.round((weight / totalDashboardWeight) * 100)}%</span></span>
                     </div>
                   ))}
                 </div>
@@ -1232,7 +1254,7 @@ export default function App() {
                         {data.value.toLocaleString()} กก.
                       </div>
                       <div className={`w-full max-w-[40px] rounded-t-lg transition-all duration-500 hover:opacity-80 relative overflow-hidden ${isToday ? 'bg-neutral-900' : 'bg-neutral-200'}`} style={{ height: `${heightPercent}%`, minHeight: '4px' }}>
-                         {isToday && <div className="absolute inset-0 bg-[#FDE047] opacity-20"></div>}
+                        {isToday && <div className="absolute inset-0 bg-[#FDE047] opacity-20"></div>}
                       </div>
                       <span className={`text-[9px] lg:text-[10px] font-bold ${isToday ? 'text-neutral-900' : 'text-neutral-400'}`}>{data.label}</span>
                     </div>
@@ -1251,24 +1273,24 @@ export default function App() {
       if (!newFruit.trim()) return;
       const name = newFruit.trim();
       if (!masterData[name]) {
-        setMasterData(prev => ({...prev, [name]: []}));
+        setMasterData(prev => ({ ...prev, [name]: [] }));
         setSettingsActiveFruit(name);
       }
       setNewFruit('');
       if (GAS_URL) {
         try { await fetch(GAS_URL, { method: 'POST', body: JSON.stringify({ action: 'addFruit', payload: { fruitName: name } }) }); }
-        catch(e) { console.error('GAS addFruit failed', e); }
+        catch (e) { console.error('GAS addFruit failed', e); }
       }
     };
 
     const handleRemoveFruit = async (f) => {
-      const newData = {...masterData};
+      const newData = { ...masterData };
       delete newData[f];
       setMasterData(newData);
-      if (setupData.fruit === f) setSetupData(prev => ({...prev, fruit: Object.keys(newData)[0] || ''}));
+      if (setupData.fruit === f) setSetupData(prev => ({ ...prev, fruit: Object.keys(newData)[0] || '' }));
       if (GAS_URL) {
         try { await fetch(GAS_URL, { method: 'POST', body: JSON.stringify({ action: 'deleteFruit', payload: { fruitName: f } }) }); }
-        catch(e) { console.error('GAS deleteFruit failed', e); }
+        catch (e) { console.error('GAS deleteFruit failed', e); }
       }
     };
 
@@ -1282,7 +1304,7 @@ export default function App() {
       setNewCat('');
       if (GAS_URL) {
         try { await fetch(GAS_URL, { method: 'POST', body: JSON.stringify({ action: 'addCategory', payload: { fruitName: settingsActiveFruit, categoryName: catName } }) }); }
-        catch(e) { console.error('GAS addCategory failed', e); }
+        catch (e) { console.error('GAS addCategory failed', e); }
       }
     };
 
@@ -1294,34 +1316,34 @@ export default function App() {
       if (activeCategory === c) setActiveCategory('');
       if (GAS_URL) {
         try { await fetch(GAS_URL, { method: 'POST', body: JSON.stringify({ action: 'deleteCategory', payload: { fruitName: settingsActiveFruit, categoryName: c } }) }); }
-        catch(e) { console.error('GAS deleteCategory failed', e); }
+        catch (e) { console.error('GAS deleteCategory failed', e); }
       }
     };
 
     return (
       <div className="flex-1 flex flex-col bg-[#FDFBF7] min-h-full w-full overflow-hidden animate-in fade-in duration-300">
         <div className="p-4 md:p-6 shrink-0 relative overflow-hidden bg-white border-b border-neutral-100">
-           <div className="absolute top-0 right-0 w-48 h-48 bg-neutral-200 rounded-full blur-[80px] opacity-20"></div>
-           <h2 className="text-2xl lg:text-3xl font-extrabold tracking-tight text-neutral-900 relative z-10 flex items-center gap-2">
-             Settings <span className="text-neutral-300 font-normal">|</span> <span className="text-neutral-400 font-bold text-lg lg:text-xl drop-shadow-sm">ตั้งค่าระบบ</span>
-           </h2>
-           <p className="text-xs text-neutral-500 mt-2">จัดการรายชื่อผลไม้และประเภทเพื่อใช้ในระบบบันทึกและสถิติ</p>
+          <div className="absolute top-0 right-0 w-48 h-48 bg-neutral-200 rounded-full blur-[80px] opacity-20"></div>
+          <h2 className="text-2xl lg:text-3xl font-extrabold tracking-tight text-neutral-900 relative z-10 flex items-center gap-2">
+            Settings <span className="text-neutral-300 font-normal">|</span> <span className="text-neutral-400 font-bold text-lg lg:text-xl drop-shadow-sm">ตั้งค่าระบบ</span>
+          </h2>
+          <p className="text-xs text-neutral-500 mt-2">จัดการรายชื่อผลไม้และประเภทเพื่อใช้ในระบบบันทึกและสถิติ</p>
         </div>
 
         <div className="flex-1 overflow-y-auto p-4 md:p-6 pb-28 space-y-6">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
-            
+
             <div className="bg-white p-5 lg:p-6 rounded-3xl border border-neutral-100 shadow-[0_2px_15px_rgb(0,0,0,0.02)]">
               <h3 className="font-extrabold text-neutral-800 mb-4 flex items-center gap-2">
-                <div className="w-8 h-8 rounded-full bg-[#C084FC]/20 text-[#C084FC] flex items-center justify-center"><Leaf className="w-4 h-4"/></div>
+                <div className="w-8 h-8 rounded-full bg-[#C084FC]/20 text-[#C084FC] flex items-center justify-center"><Leaf className="w-4 h-4" /></div>
                 จัดการ "ผลไม้" (Fruits)
               </h3>
-              
+
               <div className="flex gap-2 mb-5">
-                <input 
-                  type="text" value={newFruit} onChange={e=>setNewFruit(e.target.value)} 
+                <input
+                  type="text" value={newFruit} onChange={e => setNewFruit(e.target.value)}
                   onKeyDown={e => e.key === 'Enter' && handleAddFruit()}
-                  placeholder="เพิ่มชื่อผลไม้ เช่น ทุเรียน..." 
+                  placeholder="เพิ่มชื่อผลไม้ เช่น ทุเรียน..."
                   className="flex-1 bg-neutral-50 border border-neutral-200 rounded-xl px-4 py-2.5 text-sm outline-none focus:border-[#C084FC] focus:bg-white transition-colors"
                 />
                 <button onClick={handleAddFruit} className="bg-[#C084FC] hover:bg-[#A855F7] text-white px-4 py-2.5 rounded-xl font-bold text-sm shadow-sm transition-all active:scale-95 flex items-center gap-1">
@@ -1331,13 +1353,13 @@ export default function App() {
 
               <div className="space-y-2">
                 {fruits.map(f => (
-                  <div 
-                    key={f} 
+                  <div
+                    key={f}
                     onClick={() => setSettingsActiveFruit(f)}
                     className={`flex justify-between items-center p-3 px-4 rounded-xl border transition-colors cursor-pointer group ${settingsActiveFruit === f ? 'bg-[#C084FC]/10 border-[#C084FC]' : 'bg-neutral-50 border-neutral-100 hover:border-neutral-200'}`}
                   >
                     <span className="font-bold text-neutral-800 text-sm">{f}</span>
-                    <button onClick={(e) => { e.stopPropagation(); handleRemoveFruit(f); }} className="text-neutral-300 hover:text-red-500 hover:bg-red-50 p-1.5 rounded-full transition-colors focus:opacity-100"><Trash2 className="w-4 h-4"/></button>
+                    <button onClick={(e) => { e.stopPropagation(); handleRemoveFruit(f); }} className="text-neutral-300 hover:text-red-500 hover:bg-red-50 p-1.5 rounded-full transition-colors focus:opacity-100"><Trash2 className="w-4 h-4" /></button>
                   </div>
                 ))}
                 {fruits.length === 0 && <p className="text-center text-xs text-neutral-400 py-4">ไม่มีข้อมูลผลไม้ในระบบ</p>}
@@ -1346,16 +1368,16 @@ export default function App() {
 
             <div className="bg-white p-5 lg:p-6 rounded-3xl border border-neutral-100 shadow-[0_2px_15px_rgb(0,0,0,0.02)]">
               <h3 className="font-extrabold text-neutral-800 mb-4 flex items-center gap-2">
-                <div className="w-8 h-8 rounded-full bg-[#4ADE80]/20 text-[#4ADE80] flex items-center justify-center"><LayoutGrid className="w-4 h-4"/></div>
+                <div className="w-8 h-8 rounded-full bg-[#4ADE80]/20 text-[#4ADE80] flex items-center justify-center"><LayoutGrid className="w-4 h-4" /></div>
                 ประเภทของ "{settingsActiveFruit || 'ยังไม่ได้เลือกผลไม้'}"
               </h3>
-              
+
               <div className="flex gap-2 mb-5">
-                <input 
-                  type="text" value={newCat} onChange={e=>setNewCat(e.target.value)} 
+                <input
+                  type="text" value={newCat} onChange={e => setNewCat(e.target.value)}
                   onKeyDown={e => e.key === 'Enter' && handleAddCat()}
                   disabled={!settingsActiveFruit}
-                  placeholder="เพิ่มประเภท เช่น ไซส์ S..." 
+                  placeholder="เพิ่มประเภท เช่น ไซส์ S..."
                   className="flex-1 bg-neutral-50 border border-neutral-200 rounded-xl px-4 py-2.5 text-sm outline-none focus:border-[#4ADE80] focus:bg-white transition-colors disabled:opacity-50"
                 />
                 <button onClick={handleAddCat} disabled={!settingsActiveFruit} className="bg-[#4ADE80] hover:bg-[#22C55E] disabled:bg-neutral-200 disabled:text-neutral-400 text-neutral-900 px-4 py-2.5 rounded-xl font-bold text-sm shadow-sm transition-all active:scale-95 flex items-center gap-1">
@@ -1367,14 +1389,15 @@ export default function App() {
                 {settingsActiveFruit && masterData[settingsActiveFruit]?.map(c => {
                   const hexColor = getCategoryHex(c);
                   return (
-                  <div key={c} className="flex justify-between items-center p-3 px-4 bg-neutral-50 rounded-xl border border-neutral-100 hover:border-neutral-200 transition-colors group">
-                    <div className="flex items-center gap-3">
-                      <div className="w-3 h-3 rounded-full" style={{ backgroundColor: hexColor }}></div>
-                      <span className="font-bold text-neutral-800 text-sm">{c}</span>
+                    <div key={c} className="flex justify-between items-center p-3 px-4 bg-neutral-50 rounded-xl border border-neutral-100 hover:border-neutral-200 transition-colors group">
+                      <div className="flex items-center gap-3">
+                        <div className="w-3 h-3 rounded-full" style={{ backgroundColor: hexColor }}></div>
+                        <span className="font-bold text-neutral-800 text-sm">{c}</span>
+                      </div>
+                      <button onClick={() => handleRemoveCat(c)} className="text-neutral-300 hover:text-red-500 hover:bg-red-50 p-1.5 rounded-full transition-colors opacity-0 group-hover:opacity-100 focus:opacity-100"><Trash2 className="w-4 h-4" /></button>
                     </div>
-                    <button onClick={() => handleRemoveCat(c)} className="text-neutral-300 hover:text-red-500 hover:bg-red-50 p-1.5 rounded-full transition-colors opacity-0 group-hover:opacity-100 focus:opacity-100"><Trash2 className="w-4 h-4"/></button>
-                  </div>
-                )})}
+                  )
+                })}
                 {(!settingsActiveFruit || masterData[settingsActiveFruit]?.length === 0) && <p className="text-center text-xs text-neutral-400 py-4">ไม่มีข้อมูลประเภท</p>}
               </div>
             </div>
@@ -1387,26 +1410,26 @@ export default function App() {
 
   return (
     <div className="w-full h-[100dvh] flex flex-col lg:flex-row bg-[#FDFBF7] overflow-hidden font-sans relative">
-      
+
       {/* --- Desktop Sidebar (Light Theme) --- */}
       <div className="hidden lg:flex flex-col w-72 bg-[#FDFBF7] border-r border-neutral-200 z-30 shrink-0">
         <div className="p-8 flex items-center gap-3">
           <Asterisk className="w-8 h-8 text-neutral-900 animate-spin-slow" />
           <h1 className="text-3xl font-extrabold tracking-tight text-neutral-900">AgriWeigh</h1>
         </div>
-        
+
         <div className="flex-1 py-4 flex flex-col gap-2 px-6">
           <SidebarItem icon={<Sparkles />} label="Recording" isActive={activeTab === 'record'} onClick={() => setActiveTab('record')} />
           <SidebarItem icon={<History />} label="History" isActive={activeTab === 'history'} onClick={() => setActiveTab('history')} />
           <SidebarItem icon={<BarChart2 />} label="Statistics" isActive={activeTab === 'dashboard'} onClick={() => setActiveTab('dashboard')} />
-          
+
           <div className="mt-10 mb-2 px-4 text-xs font-bold text-neutral-400 uppercase tracking-widest">System</div>
           <SidebarItem icon={<Settings />} label="Settings" isActive={activeTab === 'settings'} onClick={() => setActiveTab('settings')} />
         </div>
       </div>
 
       {/* --- Main Content Area --- */}
-      <div 
+      <div
         ref={scrollContainerRef}
         onScroll={handleScroll}
         className="flex-1 overflow-y-auto overflow-x-hidden lg:overflow-hidden flex flex-col relative w-full h-full"
@@ -1433,11 +1456,11 @@ export default function App() {
           renderSettingsScreen()
         ) : (
           <div className="flex-1 flex items-center justify-center flex-col text-neutral-400 bg-[#FDFBF7] w-full">
-             <div className="w-24 h-24 lg:w-32 lg:h-32 bg-neutral-100 rounded-full flex items-center justify-center mb-6">
-               <Settings className="w-10 h-10 lg:w-12 lg:h-12 text-neutral-300" />
-             </div>
-             <p className="font-extrabold tracking-tight text-2xl lg:text-3xl text-neutral-800 mb-2">Coming Soon</p>
-             <p className="text-sm lg:text-base text-neutral-500 font-medium">Feature under construction.</p>
+            <div className="w-24 h-24 lg:w-32 lg:h-32 bg-neutral-100 rounded-full flex items-center justify-center mb-6">
+              <Settings className="w-10 h-10 lg:w-12 lg:h-12 text-neutral-300" />
+            </div>
+            <p className="font-extrabold tracking-tight text-2xl lg:text-3xl text-neutral-800 mb-2">Coming Soon</p>
+            <p className="text-sm lg:text-base text-neutral-500 font-medium">Feature under construction.</p>
           </div>
         )}
 
@@ -1448,20 +1471,20 @@ export default function App() {
       {/* --- Delete Confirmation Modal --- */}
       {deleteConfirmId && (
         <div className="fixed inset-0 z-[200] bg-neutral-900/60 backdrop-blur-sm flex items-center justify-center p-4">
-           <div className="bg-white rounded-[2rem] p-6 lg:p-8 w-full max-w-sm shadow-2xl animate-in zoom-in-95 duration-200">
-              <div className="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center mb-4">
-                 <AlertCircle className="w-6 h-6 text-red-500" />
-              </div>
-              <h3 className="text-xl lg:text-2xl font-bold text-neutral-900 mb-2">ยืนยันการลบข้อมูล</h3>
-              <p className="text-sm text-neutral-500 mb-6 font-medium">คุณต้องการลบข้อมูลรอบนี้ใช่หรือไม่? ข้อมูลจะหายไปอย่างถาวร</p>
-              <div className="flex gap-3">
-                 <button onClick={() => setDeleteConfirmId(null)} className="flex-1 py-3 rounded-full font-bold text-neutral-600 bg-neutral-100 hover:bg-neutral-200">ยกเลิก</button>
-                 <button onClick={() => {
-                    setHistoryRecords(prev => prev.filter(r => r.id !== deleteConfirmId));
-                    setDeleteConfirmId(null);
-                 }} className="flex-1 py-3 rounded-full font-bold text-white bg-red-500 hover:bg-red-600 shadow-lg">ลบข้อมูล</button>
-              </div>
-           </div>
+          <div className="bg-white rounded-[2rem] p-6 lg:p-8 w-full max-w-sm shadow-2xl animate-in zoom-in-95 duration-200">
+            <div className="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center mb-4">
+              <AlertCircle className="w-6 h-6 text-red-500" />
+            </div>
+            <h3 className="text-xl lg:text-2xl font-bold text-neutral-900 mb-2">ยืนยันการลบข้อมูล</h3>
+            <p className="text-sm text-neutral-500 mb-6 font-medium">คุณต้องการลบข้อมูลรอบนี้ใช่หรือไม่? ข้อมูลจะหายไปอย่างถาวร</p>
+            <div className="flex gap-3">
+              <button onClick={() => setDeleteConfirmId(null)} className="flex-1 py-3 rounded-full font-bold text-neutral-600 bg-neutral-100 hover:bg-neutral-200">ยกเลิก</button>
+              <button onClick={() => {
+                setHistoryRecords(prev => prev.filter(r => r.id !== deleteConfirmId));
+                setDeleteConfirmId(null);
+              }} className="flex-1 py-3 rounded-full font-bold text-white bg-red-500 hover:bg-red-600 shadow-lg">ลบข้อมูล</button>
+            </div>
+          </div>
         </div>
       )}
 
@@ -1480,7 +1503,8 @@ export default function App() {
 
 
       {/* Inline Styles */}
-      <style dangerouslySetInnerHTML={{__html: `
+      <style dangerouslySetInnerHTML={{
+        __html: `
         input[type="date"]::-webkit-calendar-picker-indicator {
             position: absolute;
             top: 0;
@@ -1517,11 +1541,11 @@ export default function App() {
 // Sidebar Component for Desktop
 const SidebarItem = ({ icon, label, isActive, onClick }) => {
   return (
-    <button 
+    <button
       onClick={onClick}
       className={`flex items-center gap-4 px-6 py-4 rounded-full transition-all w-full text-left font-bold
-        ${isActive 
-          ? 'bg-neutral-900 text-white shadow-md' 
+        ${isActive
+          ? 'bg-neutral-900 text-white shadow-md'
           : 'text-neutral-500 hover:text-neutral-900 hover:bg-neutral-100'}`}
     >
       {React.cloneElement(icon, { className: `w-5 h-5` })}
@@ -1533,7 +1557,7 @@ const SidebarItem = ({ icon, label, isActive, onClick }) => {
 // Bottom Nav Component for Mobile/Tablet
 const BottomNavItem = ({ icon, label, isActive, onClick }) => {
   return (
-    <button 
+    <button
       onClick={onClick}
       className={`flex flex-col items-center gap-1 transition-all
         ${isActive ? 'text-[#FDE047] scale-110' : 'text-neutral-400 hover:text-white'}`}
