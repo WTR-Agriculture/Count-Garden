@@ -183,6 +183,38 @@ export default function App() {
   const [shareModalRecord, setShareModalRecord] = useState(null);
   const [toastMsg, setToastMsg] = useState('');
   const [isGeneratingImg, setIsGeneratingImg] = useState(false);
+  
+  // PWA Install State
+  const [deferredPrompt, setDeferredPrompt] = useState(null);
+  const [showInstallBanner, setShowInstallBanner] = useState(false);
+
+  useEffect(() => {
+    const handleBeforeInstallPrompt = (e) => {
+      e.preventDefault();
+      setDeferredPrompt(e);
+      const dismissed = sessionStorage.getItem('cg_install_dismissed');
+      if (!dismissed) setShowInstallBanner(true);
+    };
+    const handleAppInstalled = () => {
+      setDeferredPrompt(null);
+      setShowInstallBanner(false);
+    };
+    window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+    window.addEventListener('appinstalled', handleAppInstalled);
+    return () => {
+      window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+      window.removeEventListener('appinstalled', handleAppInstalled);
+    };
+  }, []);
+
+  const handleInstallClick = async () => {
+    if (!deferredPrompt) return;
+    deferredPrompt.prompt();
+    await deferredPrompt.userChoice;
+    setDeferredPrompt(null);
+    setShowInstallBanner(false);
+  };
+
 
   // Show Toast
   const showToast = (msg) => { setToastMsg(msg); setTimeout(() => setToastMsg(''), 3000); };
@@ -1541,6 +1573,44 @@ export default function App() {
         {/* --- Bottom Fade Overlay (Mobile only) --- */}
         <div className={`lg:hidden bottom-fade-overlay transition-opacity duration-500 ${showNav ? 'opacity-100' : 'opacity-0'}`}></div>
       </div>
+
+      {/* --- PWA Install Banner --- */}
+      {showInstallBanner && (
+        <div className="fixed bottom-24 left-4 right-4 z-[150] animate-in slide-in-from-bottom-10 fade-in duration-500 lg:left-auto lg:right-6 lg:bottom-6 lg:w-[400px]">
+          <div className="bg-white/95 backdrop-blur-md border border-neutral-100 rounded-2xl shadow-[0_10px_40px_rgba(0,0,0,0.08)] p-4 flex items-center gap-4 relative overflow-hidden group">
+            {/* Background Decorative Sparkle */}
+            <div className="absolute -right-4 -top-4 w-20 h-20 bg-[#4ADE80]/10 rounded-full blur-2xl group-hover:bg-[#C084FC]/10 transition-colors duration-700"></div>
+            
+            <div className="shrink-0 relative">
+              <img src="/icon-192.png" alt="App Icon" className="w-12 h-12 rounded-xl shadow-sm border border-neutral-50" />
+              <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-[#4ADE80] rounded-full border-2 border-white flex items-center justify-center">
+                <Plus className="w-2.5 h-2.5 text-white stroke-[2.5]" />
+              </div>
+            </div>
+
+            <div className="flex-1 min-w-0">
+              <h4 className="text-sm font-extrabold text-neutral-800 truncate leading-tight">เพิ่ม AgriWeigh ไปที่หน้าจอหลัก</h4>
+              <p className="text-[10px] font-medium text-neutral-500 leading-tight mt-0.5">เพื่อการบันทึกน้ำหนักที่รวดเร็วและสะดวกยิ่งขึ้น</p>
+            </div>
+
+            <div className="flex items-center gap-2">
+              <button 
+                onClick={handleInstallClick}
+                className="bg-[#4ADE80] hover:bg-[#22C55E] text-white px-5 py-2 rounded-full font-bold text-xs shadow-md shadow-[#4ADE80]/20 transition-all active:scale-95 whitespace-nowrap"
+              >
+                เพิ่ม
+              </button>
+              <button 
+                onClick={() => { setShowInstallBanner(false); sessionStorage.setItem('cg_install_dismissed', 'true'); }}
+                className="p-1.5 text-neutral-300 hover:text-neutral-500 hover:bg-neutral-50 rounded-full transition-colors"
+                title="ปิด"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* --- Delete Confirmation Modal --- */}
       {deleteConfirmId && (
