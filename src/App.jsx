@@ -318,8 +318,17 @@ export default function App() {
       const mData = await mRes.json();
       const hData = await hRes.json();
       if (!mData.error) {
-        setMasterData(mData);
-        const firstFruit = Object.keys(mData)[0];
+        // If backend returns new format { masterData, farms }
+        const actualMaster = mData.masterData || mData;
+        const actualFarms = mData.farms || [];
+
+        setMasterData(actualMaster);
+        
+        if (actualFarms.length > 0) {
+          setFarmList(actualFarms);
+        }
+
+        const firstFruit = Object.keys(actualMaster)[0];
         if (firstFruit) {
           setSetupData(prev => ({ ...prev, fruit: firstFruit }));
           setSettingsActiveFruit(firstFruit);
@@ -1436,21 +1445,45 @@ export default function App() {
               <div className="w-8 h-8 rounded-full bg-blue-100 text-blue-500 flex items-center justify-center"><Settings className="w-4 h-4" /></div>
               ข้อมูลสวน / ร้าน (Farm)
             </h3>
+            
             <div className="flex gap-2 mb-4">
               <input
                 type="text" id="newFarmInput" placeholder="เพิ่มชื่อสวนใหม่..."
-                onKeyDown={e => { if (e.key === 'Enter' && e.target.value.trim()) { const name = e.target.value.trim(); if (!farmList.includes(name)) { setFarmList(prev => [...prev, name]); } e.target.value = ''; } }}
+                onKeyDown={e => { if (e.key === 'Enter') { const name = e.target.value.trim(); if (name) { 
+                  if (!farmList.includes(name)) { 
+                    setFarmList(prev => [...prev, name]); 
+                    if (GAS_URL) fetch(GAS_URL, { method: 'POST', body: JSON.stringify({ action: 'addFarm', payload: { farmName: name } }) });
+                  }
+                  e.target.value = ''; 
+                }}}}
                 className="flex-1 bg-neutral-50 border border-neutral-200 rounded-xl px-4 py-2.5 text-sm outline-none focus:border-blue-400 focus:bg-white transition-colors"
               />
-              <button onClick={() => { const input = document.getElementById('newFarmInput'); const name = input?.value?.trim(); if (name && !farmList.includes(name)) { setFarmList(prev => [...prev, name]); input.value = ''; } }} className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2.5 rounded-xl font-bold text-sm shadow-sm transition-all active:scale-95 flex items-center gap-1">
+              <button 
+                onClick={() => { 
+                  const input = document.getElementById('newFarmInput'); 
+                  const name = input?.value?.trim(); 
+                  if (name && !farmList.includes(name)) { 
+                    setFarmList(prev => [...prev, name]); 
+                    if (GAS_URL) fetch(GAS_URL, { method: 'POST', body: JSON.stringify({ action: 'addFarm', payload: { farmName: name } }) });
+                    input.value = ''; 
+                  } 
+                }} 
+                className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2.5 rounded-xl font-bold text-sm shadow-sm transition-all active:scale-95 flex items-center gap-1"
+              >
                 <Plus className="w-4 h-4" /> เพิ่ม
               </button>
             </div>
+
             <div className="space-y-2">
               {farmList.map(farm => (
                 <div key={farm} className="flex justify-between items-center p-3 px-4 bg-neutral-50 rounded-xl border border-neutral-100 hover:border-neutral-200 transition-colors group">
                   <span className="font-bold text-neutral-800 text-sm">{farm}</span>
-                  <button onClick={() => { if (farmList.length <= 1) return; setFarmList(prev => prev.filter(f => f !== farm)); if (setupData.farmName === farm) setSetupData(prev => ({ ...prev, farmName: farmList.filter(f => f !== farm)[0] })); }}
+                  <button onClick={() => { 
+                    if (farmList.length <= 1) return; 
+                    setFarmList(prev => prev.filter(f => f !== farm)); 
+                    if (setupData.farmName === farm) setSetupData(prev => ({ ...prev, farmName: farmList.filter(f => f !== farm)[0] }));
+                    if (GAS_URL) fetch(GAS_URL, { method: 'POST', body: JSON.stringify({ action: 'deleteFarm', payload: { farmName: farm } }) });
+                  }}
                     className={`p-1.5 rounded-full transition-colors ${farmList.length <= 1 ? 'text-neutral-200 cursor-not-allowed' : 'text-neutral-300 hover:text-red-500 hover:bg-red-50'}`}>
                     <Trash2 className="w-4 h-4" />
                   </button>
