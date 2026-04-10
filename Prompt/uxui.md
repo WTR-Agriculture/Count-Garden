@@ -17,13 +17,15 @@ import {
   Search,
   Calendar,
   Clock,
-  ChevronRight,
   LayoutGrid,
   List,
   TrendingUp,
   PieChart,
   Plus,
-  Save,
+  Share2,
+  Copy,
+  Image as ImageIcon,
+  Check,
   X
 } from 'lucide-react';
 
@@ -43,7 +45,6 @@ const DEFAULT_CATEGORY_HEX = {
   'ตั้งฉ่าย': '#F9A8D4', 
 };
 
-// Fallback palette for dynamically added categories
 const FALLBACK_COLORS = [
   'bg-[#FCA5A5] text-neutral-900 border-[#FCA5A5]',
   'bg-[#99F6E4] text-neutral-900 border-[#99F6E4]',
@@ -53,53 +54,53 @@ const FALLBACK_COLORS = [
   'bg-[#93C5FD] text-neutral-900 border-[#93C5FD]'
 ];
 const FALLBACK_HEX = ['#FCA5A5', '#99F6E4', '#E9D5FF', '#FDBA74', '#A7F3D0', '#93C5FD'];
-
 const INACTIVE_COLOR = 'bg-white text-neutral-500 border-neutral-200';
 
 export default function App() {
+  // Load html2canvas dynamically for receipt generation
+  useEffect(() => {
+    if (!document.getElementById('html2canvas-script')) {
+      const script = document.createElement('script');
+      script.id = 'html2canvas-script';
+      script.src = 'https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js';
+      script.async = true;
+      document.body.appendChild(script);
+    }
+  }, []);
+
   const getTodayThaiFormat = () => {
     const d = new Date();
     const thaiMonths = ["ม.ค.", "ก.พ.", "มี.ค.", "เม.ย.", "พ.ค.", "มิ.ย.", "ก.ค.", "ส.ค.", "ก.ย.", "ต.ค.", "พ.ย.", "ธ.ค."];
     return `${d.getDate()} ${thaiMonths[d.getMonth()]} ${d.getFullYear()}`;
   };
 
-  // --- Dynamic Master Data (Linked Fruits and Categories) ---
+  // --- Dynamic Master Data ---
+  const [farmName, setFarmName] = useState('สวนคุณวิรัช'); // Default Farm Name
   const [masterData, setMasterData] = useState({
     'มะละกอ': ['ยาว', 'แหลม', 'กลม', 'ลาย', 'ตั้งฉ่าย'],
     'มะม่วง': ['น้ำดอกไม้', 'เขียวเสวย', 'ฟ้าลั่น', 'แก้วขมิ้น'],
     'กล้วย': ['หอมทอง', 'น้ำว้า', 'ไข่']
   });
-  
   const fruits = Object.keys(masterData);
 
-  // Helpers for dynamic colors (Using String Hash so color stays consistent)
   const getCategoryColorClass = (cat) => {
     if (DEFAULT_CATEGORY_COLORS[cat]) return DEFAULT_CATEGORY_COLORS[cat];
-    let hash = 0;
-    for (let i = 0; i < cat.length; i++) hash += cat.charCodeAt(i);
+    let hash = 0; for (let i = 0; i < cat.length; i++) hash += cat.charCodeAt(i);
     return FALLBACK_COLORS[hash % FALLBACK_COLORS.length];
   };
 
   const getCategoryHex = (cat) => {
     if (DEFAULT_CATEGORY_HEX[cat]) return DEFAULT_CATEGORY_HEX[cat];
-    let hash = 0;
-    for (let i = 0; i < cat.length; i++) hash += cat.charCodeAt(i);
+    let hash = 0; for (let i = 0; i < cat.length; i++) hash += cat.charCodeAt(i);
     return FALLBACK_HEX[hash % FALLBACK_HEX.length];
   };
 
   // --- State Management ---
   const [activeTab, setActiveTab] = useState('record');
   const [isRecording, setIsRecording] = useState(false);
+  const [setupData, setSetupData] = useState({ date: getTodayThaiFormat(), round: 1, fruit: fruits[0] || '' });
   
-  const [setupData, setSetupData] = useState({
-    date: getTodayThaiFormat(),
-    round: 1,
-    fruit: fruits[0] || ''
-  });
-
-  // Categories specific to the currently selected fruit
   const currentCategories = masterData[setupData.fruit] || [];
-
   const [activeCategory, setActiveCategory] = useState('');
   const [inputValue, setInputValue] = useState('');
   const [records, setRecords] = useState([]);
@@ -113,12 +114,7 @@ export default function App() {
   // History State
   const [historyRecords, setHistoryRecords] = useState([
     {
-      id: 'mock-1',
-      date: '10 เม.ย. 2026',
-      round: 1,
-      fruit: 'มะละกอ',
-      totalWeight: 1245,
-      timestamp: '08:30',
+      id: 'mock-1', date: '10 เม.ย. 2026', round: 1, fruit: 'มะละกอ', totalWeight: 1245, timestamp: '08:30',
       details: [
          { category: 'ยาว', total: 503, count: 12, items: [45, 52, 40, 48, 41, 44, 46, 38, 42, 39, 35, 33] },
          { category: 'แหลม', total: 400, count: 8, items: [50, 48, 52, 49, 51, 47, 53, 50] },
@@ -126,12 +122,7 @@ export default function App() {
       ]
     },
     {
-      id: 'mock-2',
-      date: '09 เม.ย. 2026',
-      round: 2,
-      fruit: 'มะละกอ',
-      totalWeight: 890,
-      timestamp: '15:45',
+      id: 'mock-2', date: '09 เม.ย. 2026', round: 2, fruit: 'มะละกอ', totalWeight: 890, timestamp: '15:45',
       details: [
          { category: 'ยาว', total: 450, count: 10, items: [45, 45, 45, 45, 45, 45, 45, 45, 45, 45] },
          { category: 'ลาย', total: 440, count: 8, items: [55, 55, 55, 55, 55, 55, 55, 55] }
@@ -142,43 +133,83 @@ export default function App() {
   const [viewMode, setViewMode] = useState('card');
   const [searchTerm, setSearchTerm] = useState('');
 
-  // Dashboard State
+  // Dashboard & Settings State
   const [dashboardRange, setDashboardRange] = useState('daily'); 
   const [dashboardDate, setDashboardDate] = useState(getTodayThaiFormat());
   const [dashboardFruitFilter, setDashboardFruitFilter] = useState('All'); 
-
-  // Settings State 
   const [settingsActiveFruit, setSettingsActiveFruit] = useState(fruits[0] || '');
   const [newFruit, setNewFruit] = useState('');
   const [newCat, setNewCat] = useState('');
 
-  // Safeguard: Ensure settingsActiveFruit is always valid
-  useEffect(() => {
-    if (fruits.length > 0 && !fruits.includes(settingsActiveFruit)) {
-      setSettingsActiveFruit(fruits[0]);
-    }
-  }, [fruits, settingsActiveFruit]);
+  // Sharing State
+  const [shareModalRecord, setShareModalRecord] = useState(null);
+  const [toastMsg, setToastMsg] = useState('');
+  const [isGeneratingImg, setIsGeneratingImg] = useState(false);
+
+  useEffect(() => { if (fruits.length > 0 && !fruits.includes(settingsActiveFruit)) setSettingsActiveFruit(fruits[0]); }, [fruits, settingsActiveFruit]);
+
+  // Show Toast
+  const showToast = (msg) => { setToastMsg(msg); setTimeout(() => setToastMsg(''), 3000); };
 
   // --- Derived State ---
   const grandTotal = records.reduce((sum, record) => sum + record.weight, 0);
   const getCategoryTotal = (category) => records.filter(r => r.category === category).reduce((sum, r) => sum + r.weight, 0);
-  
-  const groupedRecords = currentCategories.map(cat => ({ 
-    category: cat, 
-    items: records.filter(r => r.category === cat), 
-    total: getCategoryTotal(cat) 
-  })).filter(g => g.items.length > 0);
-  
-  const filteredHistory = historyRecords.filter(record => 
-    record.date.includes(searchTerm) || 
-    record.round.toString().includes(searchTerm) || 
-    record.fruit.includes(searchTerm)
-  );
+  const groupedRecords = currentCategories.map(cat => ({ category: cat, items: records.filter(r => r.category === cat), total: getCategoryTotal(cat) })).filter(g => g.items.length > 0);
+  const filteredHistory = historyRecords.filter(record => record.date.includes(searchTerm) || record.round.toString().includes(searchTerm) || record.fruit.includes(searchTerm));
 
-  // --- Handlers ---
+  // --- Sharing Handlers ---
+  const handleCopyText = (record) => {
+    let text = `🧾 สลิปชั่งน้ำหนัก: ${record.fruit}\n`;
+    text += `สวน: ${farmName}\n`;
+    text += `วันที่: ${record.date} (รอบที่ ${record.round})\n`;
+    text += `-------------------------\n`;
+    record.details.forEach(d => {
+        text += `✅ ${d.category}: ${d.total.toLocaleString()} กก.\n`;
+        text += `(${d.items.join(', ')})\n\n`;
+    });
+    text += `-------------------------\n`;
+    text += `💰 ยอดรวมสุทธิ: ${record.totalWeight.toLocaleString()} กก.`;
+
+    const textArea = document.createElement("textarea");
+    textArea.value = text;
+    document.body.appendChild(textArea);
+    textArea.select();
+    try {
+        document.execCommand('copy');
+        showToast('คัดลอกข้อความสำเร็จ!');
+    } catch (err) { console.error('Copy failed', err); }
+    document.body.removeChild(textArea);
+  };
+
+  const handleShareImage = async () => {
+    if (!window.html2canvas) { showToast('กำลังเตรียมระบบรูปภาพ โปรดลองใหม่...'); return; }
+    setIsGeneratingImg(true);
+    
+    setTimeout(async () => {
+      try {
+        const captureArea = document.getElementById('hidden-receipt-node');
+        const canvas = await window.html2canvas(captureArea, { scale: 2, backgroundColor: null });
+        const imgData = canvas.toDataURL('image/png');
+        
+        // Trigger download
+        const link = document.createElement('a');
+        link.download = `receipt-${shareModalRecord.fruit}-round${shareModalRecord.round}.png`;
+        link.href = imgData;
+        link.click();
+        
+        showToast('บันทึกรูปภาพใบเสร็จสำเร็จ!');
+      } catch (err) {
+        console.error('Error generating receipt', err);
+        showToast('เกิดข้อผิดพลาดในการสร้างรูปภาพ');
+      } finally {
+        setIsGeneratingImg(false);
+      }
+    }, 100); 
+  };
+
+  // --- Core Handlers ---
   const handleStartRound = () => { setIsRecording(true); setActiveCategory(''); setErrorMsg(''); };
   const handleEditSetup = () => { setIsRecording(false); };
-  
   const handleSetupDateChange = (e) => {
     if (!e.target.value) return;
     const dateObj = new Date(e.target.value);
@@ -199,8 +230,7 @@ export default function App() {
   const handleEnter = () => {
     if (!activeCategory || !inputValue || parseFloat(inputValue) <= 0) return;
     const newRecord = { id: Date.now().toString() + Math.random(), category: activeCategory, weight: parseFloat(inputValue), timestamp: new Date().toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit', second:'2-digit' }) };
-    setRecords(prev => [newRecord, ...prev]);
-    setInputValue(''); 
+    setRecords(prev => [newRecord, ...prev]); setInputValue(''); 
   };
 
   const handleDeleteLast = () => { if (records.length > 0) setRecords(prev => prev.slice(1)); };
@@ -210,8 +240,7 @@ export default function App() {
     let flatRecords = [];
     recordToEdit.details.forEach(detail => { detail.items.forEach((itemWeight, idx) => { flatRecords.push({ id: `edit-${Date.now()}-${idx}-${Math.random()}`, category: detail.category, weight: itemWeight, timestamp: recordToEdit.timestamp }); }); });
     setSetupData({ date: recordToEdit.date, round: recordToEdit.round, fruit: recordToEdit.fruit });
-    setRecords(flatRecords.reverse()); 
-    setEditingId(recordToEdit.id); setActiveTab('record'); setIsRecording(true); setExpandedHistory([]); 
+    setRecords(flatRecords.reverse()); setEditingId(recordToEdit.id); setActiveTab('record'); setIsRecording(true); setExpandedHistory([]); 
   };
 
   const handleCancelEdit = () => {
@@ -235,6 +264,8 @@ export default function App() {
     setShowSummaryModal(false); setIsRecording(false); setRecords([]); setActiveCategory(''); setInputValue('');
     const nextRound = editingId ? Math.max(...historyRecords.map(r => typeof r.round === 'number' ? r.round : 0), 0) + 1 : setupData.round + 1;
     setSetupData(prev => ({ ...prev, round: nextRound, date: getTodayThaiFormat() }));
+    
+    setShareModalRecord(historyEntry);
   };
 
   const toggleHistoryExpand = (id) => setExpandedHistory(prev => prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id]);
@@ -253,24 +284,18 @@ export default function App() {
   const renderSetupScreen = () => (
     <div className="flex-1 flex flex-col p-4 bg-[#FDFBF7] justify-center items-center min-h-full w-full relative overflow-y-auto lg:overflow-hidden pb-24 lg:pb-4">
       <Asterisk className="absolute top-6 left-6 w-10 h-10 text-[#C084FC] opacity-40 animate-spin-slow" />
-      <Sparkles className="absolute bottom-16 right-6 w-8 h-8 text-[#FDE047] opacity-60" />
-      <div className="absolute top-1/4 right-0 w-48 h-48 bg-[#4ADE80] rounded-full blur-[80px] opacity-20"></div>
-
       <div className="bg-white p-6 lg:p-10 rounded-3xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-neutral-100 w-full max-w-sm lg:max-w-md transition-all relative z-10">
         <h2 className="text-3xl lg:text-4xl font-black text-neutral-900 mb-6 lg:mb-8 text-center tracking-tight">
           Start now <br/><span className="text-[#4ADE80] font-sans font-bold text-2xl">Recording</span>
         </h2>
-        
         <div className="space-y-4 mb-8">
           <div>
             <label className="block text-xs font-semibold text-neutral-500 mb-1.5 ml-2">วันที่ (Date)</label>
             <div className="w-full bg-neutral-50 hover:bg-neutral-100 transition-colors text-neutral-800 p-3.5 rounded-full font-medium text-sm border border-neutral-100 flex items-center justify-center gap-2 relative overflow-hidden cursor-pointer shadow-sm">
-              <Calendar className="w-4 h-4 text-neutral-400" />
-              <span>{setupData.date}</span>
+              <Calendar className="w-4 h-4 text-neutral-400" /><span>{setupData.date}</span>
               <input type="date" onClick={(e) => { try { if (e.target.showPicker) e.target.showPicker(); } catch (err) {} }} onChange={handleSetupDateChange} className="absolute inset-0 w-full h-full opacity-0 cursor-pointer" />
             </div>
           </div>
-          
           <div className="flex gap-3">
             <div className="w-1/3">
               <label className="block text-xs font-semibold text-neutral-500 mb-1.5 ml-2">รอบ (Round)</label>
@@ -278,21 +303,13 @@ export default function App() {
             </div>
             <div className="w-2/3 relative">
               <label className="block text-xs font-semibold text-neutral-500 mb-1.5 ml-2">ผลไม้ (Fruit)</label>
-              <select 
-                value={setupData.fruit}
-                onChange={(e) => {
-                   setSetupData(prev => ({...prev, fruit: e.target.value}));
-                   setActiveCategory(''); // ล้างประเภทเมื่อเปลี่ยนผลไม้
-                }}
-                className="w-full bg-white border-2 border-neutral-200 text-neutral-800 p-3.5 pl-4 pr-10 rounded-full font-bold text-sm appearance-none hover:border-neutral-300 transition-colors focus:outline-none focus:border-neutral-900 shadow-sm cursor-pointer"
-              >
+              <select value={setupData.fruit} onChange={(e) => { setSetupData(prev => ({...prev, fruit: e.target.value})); setActiveCategory(''); }} className="w-full bg-white border-2 border-neutral-200 text-neutral-800 p-3.5 pl-4 pr-10 rounded-full font-bold text-sm appearance-none hover:border-neutral-300 transition-colors focus:outline-none focus:border-neutral-900 shadow-sm cursor-pointer">
                 {fruits.map(f => <option key={f} value={f}>{f}</option>)}
               </select>
               <ChevronDown className="w-4 h-4 text-neutral-400 absolute right-4 top-[38px] pointer-events-none" />
             </div>
           </div>
         </div>
-
         <button onClick={handleStartRound} className="w-full bg-neutral-900 hover:bg-neutral-800 text-white font-bold text-lg py-4 rounded-full shadow-lg hover:shadow-xl active:scale-[0.98] transition-all flex items-center justify-center gap-2 uppercase tracking-wide">
           Get started <ChevronDown className="w-4 h-4 -rotate-90" />
         </button>
@@ -302,7 +319,6 @@ export default function App() {
 
   const renderActiveScreen = () => (
     <div className="flex-1 flex flex-col bg-[#FDFBF7] min-h-full w-full lg:overflow-hidden lg:pb-0">
-      
       <div className={`p-3 lg:px-6 lg:py-4 flex flex-wrap justify-between items-center z-20 shrink-0 gap-3 w-full transition-colors border-b ${editingId ? 'bg-amber-50 border-amber-100' : 'bg-[#FDFBF7] border-transparent'}`}>
         <div className="flex flex-wrap items-center gap-2 text-neutral-600 font-medium flex-1">
           {editingId ? (
@@ -339,7 +355,6 @@ export default function App() {
 
       <div className="py-1.5 lg:py-3 w-full shrink-0 overflow-hidden flex items-center z-10">
         <div className="flex overflow-x-auto hide-scrollbar px-3 lg:px-6 gap-2 pb-1.5 w-full">
-          {/* Loop over categories associated with the current fruit */}
           {currentCategories.length === 0 ? (
             <div className="text-sm font-medium text-neutral-400 py-2">ไม่พบประเภทของผลไม้นี้ กรุณาเพิ่มในตั้งค่า</div>
           ) : currentCategories.map(cat => {
@@ -357,7 +372,6 @@ export default function App() {
       </div>
 
       <div className="flex flex-col lg:flex-row bg-white rounded-3xl lg:rounded-t-3xl shadow-[0_-5px_20px_rgb(0,0,0,0.02)] border border-neutral-100 mx-2 lg:mx-4 mb-2 mt-1 lg:flex-1 lg:overflow-hidden">
-        
         <div className="flex flex-col p-3 lg:p-6 md:border-r border-neutral-100 transition-all duration-300 h-[260px] md:h-[320px] lg:h-auto lg:flex-1">
           <div className="flex justify-between items-center mb-2 shrink-0">
             <h3 className="text-base lg:text-xl font-extrabold tracking-tight text-neutral-800">Recent Activity</h3>
@@ -365,10 +379,7 @@ export default function App() {
           </div>
           <div className="flex-1 overflow-y-auto space-y-1.5 pr-1 pb-2 hide-scrollbar">
             {records.length === 0 ? (
-              <div className="h-full flex flex-col items-center justify-center text-neutral-300">
-                <div className="w-10 h-10 bg-neutral-50 rounded-full flex items-center justify-center mb-2"><Leaf className="w-5 h-5 text-neutral-300" /></div>
-                <p className="text-xs font-medium text-neutral-400">ยังไม่มีรายการ</p>
-              </div>
+              <div className="h-full flex flex-col items-center justify-center text-neutral-300"><div className="w-10 h-10 bg-neutral-50 rounded-full flex items-center justify-center mb-2"><Leaf className="w-5 h-5 text-neutral-300" /></div><p className="text-xs font-medium text-neutral-400">ยังไม่มีรายการ</p></div>
             ) : (
               records.map((record) => {
                 const bgColorOnly = getCategoryColorClass(record.category).split(' ')[0];
@@ -391,16 +402,11 @@ export default function App() {
         <div className="shrink-0 lg:flex-1 xl:w-[420px] xl:flex-none p-3 pb-28 lg:p-6 lg:pb-6 bg-[#FDFBF7] flex flex-col gap-3 rounded-b-3xl lg:rounded-none lg:rounded-br-3xl relative z-20">
           <div className="relative w-full">
             <div className={`bg-white rounded-2xl p-4 shadow-sm border-2 flex items-center justify-between min-h-[60px] lg:min-h-[70px] transition-colors ${activeCategory ? 'border-neutral-900' : 'border-neutral-200'}`}>
-              <div className="flex flex-col">
-                <span className="text-[10px] font-bold text-neutral-400 uppercase tracking-widest mb-0.5">Current</span>
-                <span className={`text-lg lg:text-xl font-bold tracking-tight ${activeCategory ? 'text-neutral-900' : 'text-neutral-300'}`}>{activeCategory || 'Select type'}</span>
-              </div>
+              <div className="flex flex-col"><span className="text-[10px] font-bold text-neutral-400 uppercase tracking-widest mb-0.5">Current</span><span className={`text-lg lg:text-xl font-bold tracking-tight ${activeCategory ? 'text-neutral-900' : 'text-neutral-300'}`}>{activeCategory || 'Select type'}</span></div>
               <div className="text-4xl lg:text-5xl font-black tracking-tight text-neutral-900 flex items-center">{inputValue || <span className="text-neutral-200 font-sans">0</span>}</div>
             </div>
              {errorMsg && (
-              <div className="absolute inset-0 bg-neutral-900 text-white text-xs lg:text-sm font-bold rounded-2xl flex items-center justify-center shadow-xl animate-in zoom-in-95 duration-200 z-50">
-                <AlertCircle className="w-4 h-4 text-[#FDE047] mr-2" /> {errorMsg}
-              </div>
+              <div className="absolute inset-0 bg-neutral-900 text-white text-xs lg:text-sm font-bold rounded-2xl flex items-center justify-center shadow-xl animate-in zoom-in-95 duration-200 z-50"><AlertCircle className="w-4 h-4 text-[#FDE047] mr-2" /> {errorMsg}</div>
             )}
           </div>
 
@@ -566,7 +572,8 @@ export default function App() {
                                           </div>
                                        )})}
                                     </div>
-                                    <div className="mt-3 flex justify-end gap-2">
+                                    <div className="mt-3 flex justify-end gap-2 flex-wrap">
+                                       <button onClick={() => setShareModalRecord(record)} className="px-3 py-1.5 bg-blue-50 border border-blue-200 rounded-full text-[10px] font-bold text-blue-600 hover:bg-blue-100 shadow-sm flex items-center gap-1"><Share2 className="w-3 h-3" /> แชร์บิล</button>
                                        <button onClick={() => setDeleteConfirmId(record.id)} className="px-3 py-1.5 bg-white border border-red-200 rounded-full text-[10px] font-bold text-red-500 hover:bg-red-50 shadow-sm flex items-center gap-1"><Trash2 className="w-3 h-3" /> ลบ</button>
                                        <button onClick={() => handleEditHistory(record)} className="px-3 py-1.5 bg-white border border-neutral-200 rounded-full text-[10px] font-bold text-neutral-600 hover:bg-neutral-50 shadow-sm flex items-center gap-1"><Edit2 className="w-3 h-3" /> แก้ไขข้อมูล</button>
                                     </div>
@@ -624,7 +631,8 @@ export default function App() {
                                     </div>
                                  )})}
                               </div>
-                              <div className="mt-3 flex justify-end gap-2">
+                              <div className="mt-3 flex justify-end gap-2 flex-wrap">
+                                 <button onClick={() => setShareModalRecord(record)} className="px-3 py-1.5 bg-blue-50 border border-blue-200 rounded-full text-[10px] font-bold text-blue-600 hover:bg-blue-100 shadow-sm flex items-center gap-1"><Share2 className="w-3 h-3" /> แชร์บิล</button>
                                  <button onClick={() => setDeleteConfirmId(record.id)} className="px-3 py-1.5 bg-white border border-red-200 rounded-full text-[10px] font-bold text-red-500 hover:bg-red-50 shadow-sm flex items-center gap-1"><Trash2 className="w-3 h-3" /> ลบ</button>
                                  <button onClick={() => handleEditHistory(record)} className="px-3 py-1.5 bg-white border border-neutral-200 rounded-full text-[10px] font-bold text-neutral-600 hover:bg-neutral-50 shadow-sm flex items-center gap-1"><Edit2 className="w-3 h-3" /> แก้ไขข้อมูล</button>
                               </div>
@@ -679,7 +687,8 @@ export default function App() {
                                                 </div>
                                              )})}
                                           </div>
-                                          <div className="mt-5 flex justify-end gap-3">
+                                          <div className="mt-5 flex justify-end gap-3 flex-wrap">
+                                             <button onClick={() => setShareModalRecord(record)} className="px-5 py-2.5 bg-blue-50 border border-blue-200 rounded-full text-sm font-bold text-blue-600 hover:bg-blue-100 shadow-sm flex items-center gap-2 transition-all active:scale-95"><Share2 className="w-4 h-4" /> แชร์บิลรอบนี้</button>
                                              <button onClick={() => handleEditHistory(record)} className="px-5 py-2.5 bg-white border border-neutral-200 rounded-full text-sm font-bold text-neutral-600 hover:bg-neutral-50 shadow-sm flex items-center gap-2 transition-all active:scale-95"><Edit2 className="w-4 h-4" /> แก้ไขข้อมูลรอบนี้</button>
                                              <button onClick={() => setDeleteConfirmId(record.id)} className="px-5 py-2.5 bg-white border border-red-200 rounded-full text-sm font-bold text-red-500 hover:bg-red-50 shadow-sm flex items-center gap-2 transition-all active:scale-95"><Trash2 className="w-4 h-4" /> ลบข้อมูล</button>
                                           </div>
@@ -924,6 +933,20 @@ export default function App() {
         </div>
 
         <div className="flex-1 overflow-y-auto p-4 md:p-6 pb-28 space-y-6">
+          {/* ข้อมูลสวน / ผู้ขาย */}
+          <div className="bg-white p-5 lg:p-6 rounded-3xl border border-neutral-100 shadow-[0_2px_15px_rgb(0,0,0,0.02)] max-w-2xl">
+             <h3 className="font-extrabold text-neutral-800 mb-4 flex items-center gap-2">
+                <div className="w-8 h-8 rounded-full bg-blue-100 text-blue-500 flex items-center justify-center"><Settings className="w-4 h-4"/></div>
+                ข้อมูลร้าน / สวน
+             </h3>
+             <label className="block text-xs font-bold text-neutral-500 mb-2 uppercase tracking-widest">ชื่อที่ใช้แสดงบนใบเสร็จ</label>
+             <input 
+                type="text" value={farmName} onChange={e=>setFarmName(e.target.value)} 
+                placeholder="เช่น สวนคุณวิรัช" 
+                className="w-full bg-neutral-50 border border-neutral-200 rounded-xl px-4 py-3 text-sm font-bold text-neutral-900 outline-none focus:border-blue-400 focus:bg-white transition-colors"
+             />
+          </div>
+
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
             
             <div className="bg-white p-5 lg:p-6 rounded-3xl border border-neutral-100 shadow-[0_2px_15px_rgb(0,0,0,0.02)]">
@@ -1003,6 +1026,13 @@ export default function App() {
   return (
     <div className="w-full h-[100dvh] flex flex-col lg:flex-row bg-[#FDFBF7] overflow-hidden font-sans relative">
       
+      {/* Toast Notification */}
+      {toastMsg && (
+        <div className="fixed top-4 left-1/2 -translate-x-1/2 z-[300] bg-neutral-900 text-white px-6 py-3 rounded-full shadow-2xl flex items-center gap-2 font-bold text-sm animate-in slide-in-from-top-4 fade-in duration-300">
+           <CheckCircle className="w-4 h-4 text-[#4ADE80]" /> {toastMsg}
+        </div>
+      )}
+
       {/* --- Desktop Sidebar (Light Theme) --- */}
       <div className="hidden lg:flex flex-col w-72 bg-[#FDFBF7] border-r border-neutral-200 z-30 shrink-0">
         <div className="p-8 flex items-center gap-3">
@@ -1061,6 +1091,88 @@ export default function App() {
         </div>
       )}
 
+      {/* --- Share Modal Bottom Sheet --- */}
+      {shareModalRecord && (
+        <div className="fixed inset-0 z-[200] bg-neutral-900/60 backdrop-blur-sm flex items-end md:items-center justify-center md:p-4">
+           <div className="bg-white w-full max-w-sm rounded-t-[2rem] md:rounded-[2rem] shadow-2xl flex flex-col animate-in slide-in-from-bottom-10 fade-in duration-300 p-6 md:p-8">
+              <div className="flex justify-between items-center mb-6">
+                 <h3 className="text-xl font-extrabold text-neutral-900 flex items-center gap-2">
+                    <Share2 className="w-5 h-5 text-blue-500" /> แชร์ใบเสร็จ
+                 </h3>
+                 <button onClick={() => setShareModalRecord(null)} className="p-2 bg-neutral-100 rounded-full text-neutral-500 hover:bg-neutral-200"><X className="w-4 h-4" /></button>
+              </div>
+              <div className="space-y-3">
+                 <button onClick={() => { handleCopyText(shareModalRecord); setShareModalRecord(null); }} className="w-full flex items-center gap-4 bg-neutral-50 border border-neutral-200 p-4 rounded-2xl hover:bg-neutral-100 transition-colors active:scale-95 group">
+                    <div className="w-10 h-10 bg-white rounded-full flex items-center justify-center shadow-sm group-hover:shadow-md transition-all text-neutral-700"><Copy className="w-5 h-5" /></div>
+                    <div className="text-left"><p className="font-bold text-neutral-900">คัดลอกข้อความ (Copy Text)</p><p className="text-[10px] text-neutral-500 font-medium">สำหรับส่งข้อความล้วนๆ ไม่มีรูป</p></div>
+                 </button>
+                 <button onClick={handleShareImage} disabled={isGeneratingImg} className="w-full flex items-center gap-4 bg-blue-50 border border-blue-200 p-4 rounded-2xl hover:bg-blue-100 transition-colors active:scale-95 group disabled:opacity-70 disabled:active:scale-100">
+                    <div className="w-10 h-10 bg-white rounded-full flex items-center justify-center shadow-sm group-hover:shadow-md transition-all text-blue-600">
+                       {isGeneratingImg ? <Asterisk className="w-5 h-5 animate-spin-slow" /> : <ImageIcon className="w-5 h-5" />}
+                    </div>
+                    <div className="text-left"><p className="font-bold text-blue-900">{isGeneratingImg ? 'กำลังสร้างรูปภาพ...' : 'บันทึกเป็นรูปภาพ (Share Image)'}</p><p className="text-[10px] text-blue-600/70 font-medium">สร้างใบเสร็จสวยงาม ส่งให้พ่อค้า</p></div>
+                 </button>
+              </div>
+           </div>
+        </div>
+      )}
+
+      {/* --- Hidden Digital Receipt Component for Image Generation --- */}
+      {shareModalRecord && (
+        <div style={{ position: 'absolute', left: '-9999px', top: 0 }}>
+          <div id="hidden-receipt-node" className="bg-[#FDFBF7] p-8 w-[400px] flex flex-col font-sans relative text-neutral-900 border border-neutral-200">
+            {/* Header */}
+            <div className="flex flex-col items-center mb-6">
+              <div className="w-12 h-12 bg-neutral-900 rounded-full flex items-center justify-center text-white mb-3">
+                <Asterisk className="w-6 h-6" />
+              </div>
+              <h2 className="text-2xl font-black text-center">{farmName}</h2>
+              <p className="text-neutral-500 text-sm mt-1 font-bold">บิลชั่งน้ำหนัก {shareModalRecord.fruit}</p>
+              <p className="text-neutral-400 text-xs mt-0.5 font-medium">{shareModalRecord.date} • {shareModalRecord.timestamp} • รอบที่ {shareModalRecord.round}</p>
+            </div>
+
+            {/* Dashed Line */}
+            <div className="w-full border-t-2 border-dashed border-neutral-300 mb-6"></div>
+
+            {/* Body */}
+            <div className="space-y-4 mb-6">
+              {shareModalRecord.details.map(d => {
+                const catHex = getCategoryHex(d.category);
+                return (
+                  <div key={d.category} className="flex flex-col gap-2 p-4 rounded-2xl bg-white border border-neutral-100 shadow-sm">
+                    <div className="flex justify-between items-center">
+                       <div className="flex items-center gap-2">
+                          <div className="w-3 h-3 rounded-full" style={{ backgroundColor: catHex }}></div>
+                          <span className="font-extrabold text-lg">{d.category}</span>
+                       </div>
+                       <span className="font-black text-xl tracking-tight">{d.total.toLocaleString()} <span className="text-xs font-bold text-neutral-500">กก.</span></span>
+                    </div>
+                    {/* Weights only, no count */}
+                    <div className="text-sm font-medium text-neutral-600 leading-relaxed tracking-wide">
+                       {d.items.join(', ')}
+                    </div>
+                  </div>
+                )
+              })}
+            </div>
+
+            {/* Dashed Line */}
+            <div className="w-full border-t-2 border-dashed border-neutral-300 mb-6"></div>
+
+            {/* Footer */}
+            <div className="flex justify-between items-center mb-8 bg-neutral-900 p-5 rounded-2xl text-white">
+               <span className="font-bold text-neutral-300">ยอดรวมสุทธิ</span>
+               <span className="text-4xl font-black tracking-tight text-[#FDE047]">{shareModalRecord.totalWeight.toLocaleString()} <span className="text-base font-bold text-neutral-400">กก.</span></span>
+            </div>
+
+            <div className="text-center">
+               <p className="text-xs font-bold text-neutral-400">ขอบคุณที่ใช้บริการ</p>
+               <p className="text-[10px] text-neutral-300 mt-1 font-medium">บันทึกโดย AgriWeigh</p>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* --- Summary Modal Overlay --- */}
       {showSummaryModal && renderSummaryModal()}
 
@@ -1076,34 +1188,16 @@ export default function App() {
 
       {/* Inline Styles */}
       <style dangerouslySetInnerHTML={{__html: `
+        /* ให้ input type date คลิกปฏิทินติด 100% ทั่วทุกพื้นที่กล่อง */
         input[type="date"]::-webkit-calendar-picker-indicator {
             position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            width: 100%;
-            height: 100%;
-            opacity: 0;
-            cursor: pointer;
+            top: 0; left: 0; right: 0; bottom: 0; width: 100%; height: 100%; opacity: 0; cursor: pointer;
         }
-        .hide-scrollbar::-webkit-scrollbar {
-          display: none;
-        }
-        .hide-scrollbar {
-          -ms-overflow-style: none;
-          scrollbar-width: none;
-        }
-        .pb-safe {
-          padding-bottom: env(safe-area-inset-bottom, 16px);
-        }
-        @keyframes spin-slow {
-          from { transform: rotate(0deg); }
-          to { transform: rotate(360deg); }
-        }
-        .animate-spin-slow {
-          animation: spin-slow 12s linear infinite;
-        }
+        .hide-scrollbar::-webkit-scrollbar { display: none; }
+        .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+        .pb-safe { padding-bottom: env(safe-area-inset-bottom, 16px); }
+        @keyframes spin-slow { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+        .animate-spin-slow { animation: spin-slow 12s linear infinite; }
       `}} />
     </div>
   );
@@ -1112,13 +1206,7 @@ export default function App() {
 // Sidebar Component for Desktop
 const SidebarItem = ({ icon, label, isActive, onClick }) => {
   return (
-    <button 
-      onClick={onClick}
-      className={`flex items-center gap-4 px-6 py-4 rounded-full transition-all w-full text-left font-bold
-        ${isActive 
-          ? 'bg-neutral-900 text-white shadow-md' 
-          : 'text-neutral-500 hover:text-neutral-900 hover:bg-neutral-100'}`}
-    >
+    <button onClick={onClick} className={`flex items-center gap-4 px-6 py-4 rounded-full transition-all w-full text-left font-bold ${isActive ? 'bg-neutral-900 text-white shadow-md' : 'text-neutral-500 hover:text-neutral-900 hover:bg-neutral-100'}`}>
       {React.cloneElement(icon, { className: `w-5 h-5` })}
       <span className="text-base">{label}</span>
     </button>
@@ -1128,11 +1216,7 @@ const SidebarItem = ({ icon, label, isActive, onClick }) => {
 // Bottom Nav Component for Mobile/Tablet
 const BottomNavItem = ({ icon, label, isActive, onClick }) => {
   return (
-    <button 
-      onClick={onClick}
-      className={`flex flex-col items-center gap-1 transition-all
-        ${isActive ? 'text-[#FDE047] scale-110' : 'text-neutral-400 hover:text-white'}`}
-    >
+    <button onClick={onClick} className={`flex flex-col items-center gap-1 transition-all ${isActive ? 'text-[#FDE047] scale-110' : 'text-neutral-400 hover:text-white'}`}>
       {React.cloneElement(icon, { className: `w-6 h-6` })}
       <span className={`text-[10px] font-bold mt-1 ${isActive ? 'text-[#FDE047]' : 'hidden'}`}>{label}</span>
     </button>

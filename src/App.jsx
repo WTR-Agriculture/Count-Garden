@@ -28,7 +28,8 @@ import {
   Share2,
   Image as ImageIcon,
   MessageSquare,
-  Download
+  Download,
+  Copy
 } from 'lucide-react';
 
 
@@ -124,10 +125,17 @@ export default function App() {
   const [activeTab, setActiveTab] = useState('record');
   const [isRecording, setIsRecording] = useState(false);
 
+  // Farm List
+  const [farmList, setFarmList] = useState(() => {
+    const local = localStorage.getItem('cg_farmList');
+    return local ? JSON.parse(local) : ['สวนคุณวิรัช'];
+  });
+
   const [setupData, setSetupData] = useState({
     date: getTodayThaiFormat(),
     round: 1,
-    fruit: fruits[0] || ''
+    fruit: fruits[0] || '',
+    farmName: (() => { const local = localStorage.getItem('cg_farmList'); const list = local ? JSON.parse(local) : ['สวนคุณวิรัช']; return list[0] || 'สวนของฉัน'; })()
   });
 
   // Categories specific to the currently selected fruit
@@ -171,6 +179,14 @@ export default function App() {
   const [newFruit, setNewFruit] = useState('');
   const [newCat, setNewCat] = useState('');
 
+  // Sharing State
+  const [shareModalRecord, setShareModalRecord] = useState(null);
+  const [toastMsg, setToastMsg] = useState('');
+  const [isGeneratingImg, setIsGeneratingImg] = useState(false);
+
+  // Show Toast
+  const showToast = (msg) => { setToastMsg(msg); setTimeout(() => setToastMsg(''), 3000); };
+
   // Safeguard: Ensure settingsActiveFruit is always valid
   useEffect(() => {
     if (fruits.length > 0 && !fruits.includes(settingsActiveFruit)) {
@@ -190,6 +206,10 @@ export default function App() {
   useEffect(() => {
     localStorage.setItem('cg_syncQueue', JSON.stringify(syncQueue));
   }, [syncQueue]);
+
+  useEffect(() => {
+    localStorage.setItem('cg_farmList', JSON.stringify(farmList));
+  }, [farmList]);
 
   // Sync Queue Processor
   const processSyncQueue = async () => {
@@ -280,8 +300,10 @@ export default function App() {
     if (!e.target.value) return;
     const dateObj = new Date(e.target.value);
     if (!isNaN(dateObj)) {
-      const thaiMonths = ["ม.ค.", "ก.พ.", "มี.ค.", "เม.ย.", "พ.ค.", "มิ.ย.", "ก.ค.", "ส.ค.", "ก.ย.", "ต.ค.", "พ.ย.", "ธ.ค."];
-      setSetupData(prev => ({ ...prev, date: `${dateObj.getDate()} ${thaiMonths[dateObj.getMonth()]} ${dateObj.getFullYear()}` }));
+      const day = String(dateObj.getDate()).padStart(2, '0');
+      const month = String(dateObj.getMonth() + 1).padStart(2, '0');
+      const year = dateObj.getFullYear();
+      setSetupData(prev => ({ ...prev, date: `${day}/${month}/${year}` }));
     }
   };
 
@@ -321,7 +343,7 @@ export default function App() {
 
   const handleConfirmRound = async () => {
     const historyEntry = {
-      id: editingId || Date.now().toString(), date: setupData.date, round: setupData.round, fruit: setupData.fruit, totalWeight: grandTotal,
+      id: editingId || Date.now().toString(), date: setupData.date, round: setupData.round, fruit: setupData.fruit, farmName: setupData.farmName, totalWeight: grandTotal,
       timestamp: new Date().toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' }),
       details: groupedRecords.map(g => ({ category: g.category, total: g.total, count: g.items.length, items: g.items.map(item => item.weight).reverse() }))
     };
@@ -332,6 +354,8 @@ export default function App() {
     setShowSummaryModal(false); setIsRecording(false); setRecords([]); setActiveCategory(''); setInputValue('');
     const nextRound = editingId ? Math.max(...historyRecords.map(r => typeof r.round === 'number' ? r.round : 0), 0) + 1 : setupData.round + 1;
     setSetupData(prev => ({ ...prev, round: nextRound, date: getTodayThaiFormat() }));
+
+    setShareModalRecord(historyEntry);
 
     // Save to GAS
     if (GAS_URL && !editingId) {
@@ -378,27 +402,29 @@ export default function App() {
       date: setupData.date,
       round: setupData.round,
       fruit: setupData.fruit,
+      farmName: setupData.farmName,
       totalWeight: grandTotal,
       details: groupedRecords.map(g => ({ category: g.category, total: g.total, items: g.items.map(item => item.weight).reverse() }))
     };
 
-    let text = `📊 รายงานน้ำหนัก [${data.fruit}]\n`;
-    text += `วันที่: ${formatDisplayDate(data.date)} (รอบที่ ${data.round})\n`;
+    let text = `🧾 สลิปชั่งน้ำหนัก: ${data.fruit}\n`;
+    text += `สวน: ${data.farmName || setupData.farmName}\n`;
+    text += `📅 วันที่: ${formatDisplayDate(data.date)} (รอบที่ ${data.round})\n`;
     text += `-------------------------\n`;
 
     data.details.forEach(d => {
       text += `✅ ${d.category}: ${d.total.toLocaleString()} กก.\n`;
-      text += `รายการ: (${d.items.join(', ')})\n\n`;
+      text += `(${d.items.join(', ')})\n\n`;
     });
 
-    text += `💰 ยอดรวมทั้งหมด: ${data.totalWeight.toLocaleString()} กก.\n`;
     text += `-------------------------\n`;
-    text += `บันทึกโดย: Count-Garden 🍎`;
+    text += `💰 ยอดรวมสุทธิ: ${data.totalWeight.toLocaleString()} กก.\n`;
+    text += `บันทึกโดย: AgriWeigh 🍎`;
 
     if (navigator.share) {
       navigator.share({ text: text }).catch(e => console.error('Share failed', e));
     } else {
-      navigator.clipboard.writeText(text).then(() => alert('คัดลอกรายงานเป็นข้อความแล้ว!'));
+      navigator.clipboard.writeText(text).then(() => showToast('คัดลอกข้อความสำเร็จ!')).catch(() => showToast('ไม่สามารถคัดลอกได้'));
     }
   };
 
@@ -407,31 +433,31 @@ export default function App() {
       date: setupData.date,
       round: setupData.round,
       fruit: setupData.fruit,
+      farmName: setupData.farmName,
       totalWeight: grandTotal,
       details: groupedRecords.map(g => ({ category: g.category, total: g.total, items: g.items.map(item => item.weight).reverse() }))
     };
 
-    setGasLoading(true);
+    const currentFarmName = data.farmName || setupData.farmName;
+    setIsGeneratingImg(true);
+
     try {
       const SCALE = 2;
-      const W = 480;
-      const PADDING = 40;
+      const W = 420;
+      const PADDING = 32;
       const CONTENT_W = W - PADDING * 2;
 
-      // Calculate canvas height dynamically based on content
-      const CAT_BASE_H = 80;
-      const detailH = data.details.reduce((acc, d) => {
-        const lines = [];
-        let line = '';
-        for (const item of d.items) {
-          const next = line ? line + '  •  ' + item : item;
-          if (next.length > 42 && line) { lines.push(line); line = item; }
-          else { line = next; }
-        }
-        if (line) lines.push(line);
-        return acc + CAT_BASE_H + (lines.length > 0 ? lines.length * 20 : 20) + 18;
-      }, 0);
-      const H = 110 + 140 + detailH + 110 + 60 + PADDING;
+      // Calculate card heights for each category
+      const cardHeights = data.details.map(d => {
+        const itemsText = d.items.join(', ');
+        const charsPerLine = 38;
+        const itemLines = Math.ceil(itemsText.length / charsPerLine) || 1;
+        return 60 + itemLines * 18 + 16; // header + item lines + padding
+      });
+      const totalCardsH = cardHeights.reduce((a, b) => a + b + 12, 0); // 12px gap between cards
+
+      // Total canvas height:  header(180) + cards + totalBar(80) + footer(60) + padding
+      const H = 200 + totalCardsH + 100 + 70 + PADDING * 2;
 
       const canvas = document.createElement('canvas');
       canvas.width = W * SCALE;
@@ -439,126 +465,136 @@ export default function App() {
       const ctx = canvas.getContext('2d');
       ctx.scale(SCALE, SCALE);
 
-      // Background
-      ctx.fillStyle = '#FFFFFF';
+      // --- Background ---
+      ctx.fillStyle = '#FDFBF7';
       ctx.fillRect(0, 0, W, H);
 
-      // Yellow top bar
-      ctx.fillStyle = '#FDE047';
-      ctx.fillRect(0, 0, W, 10);
-
-      let y = 30;
-
-      // Header
-      ctx.fillStyle = '#111111';
-      ctx.font = 'bold 28px sans-serif';
-      ctx.textAlign = 'center';
-      ctx.fillText('Count-Garden', W / 2, y + 28);
-      y += 40;
-      ctx.fillStyle = '#999999';
-      ctx.font = '11px sans-serif';
-      ctx.fillText('DIGITAL WEIGHT CERTIFICATE', W / 2, y + 12);
-      y += 30;
-
-      // Dashed separator
+      // Subtle border
       ctx.strokeStyle = '#E5E5E5';
-      ctx.lineWidth = 1.5;
-      ctx.setLineDash([6, 4]);
-      ctx.beginPath(); ctx.moveTo(PADDING, y); ctx.lineTo(W - PADDING, y); ctx.stroke();
-      ctx.setLineDash([]);
+      ctx.lineWidth = 1;
+      ctx.strokeRect(0.5, 0.5, W - 1, H - 1);
+
+      let y = PADDING;
+
+      // --- Logo Circle ---
+      const logoSize = 48;
+      ctx.fillStyle = '#1A1A1A';
+      ctx.beginPath(); ctx.arc(W / 2, y + logoSize / 2, logoSize / 2, 0, Math.PI * 2); ctx.fill();
+      // Asterisk inside circle
+      ctx.fillStyle = '#FFFFFF'; ctx.font = 'bold 24px sans-serif'; ctx.textAlign = 'center';
+      ctx.fillText('✻', W / 2, y + logoSize / 2 + 8);
+      y += logoSize + 16;
+
+      // --- Farm Name ---
+      ctx.fillStyle = '#1A1A1A';
+      ctx.font = 'bold 26px sans-serif'; ctx.textAlign = 'center';
+      ctx.fillText(currentFarmName, W / 2, y);
       y += 24;
 
-      // Info row
-      ctx.textAlign = 'left';
-      ctx.fillStyle = '#AAAAAA';
-      ctx.font = 'bold 10px sans-serif';
-      ctx.fillText('วันที่ / DATE', PADDING, y);
-      ctx.fillStyle = '#111111';
-      ctx.font = 'bold 16px sans-serif';
-      ctx.fillText(formatDisplayDate(data.date), PADDING, y + 18);
-      ctx.fillStyle = '#AAAAAA';
-      ctx.font = 'bold 10px sans-serif';
-      ctx.fillText('ผลไม้ / FRUIT', PADDING, y + 42);
-      ctx.fillStyle = '#111111';
-      ctx.font = 'bold 22px sans-serif';
-      ctx.fillText(data.fruit, PADDING, y + 64);
+      // --- Subtitle ---
+      ctx.fillStyle = '#888888';
+      ctx.font = '13px sans-serif';
+      ctx.fillText(`บิลชั่งน้ำหนัก ${data.fruit}`, W / 2, y);
+      y += 18;
 
-      // Round badge
-      const BW = 70, BH = 52, BX = W - PADDING - BW, BY = y - 6;
-      ctx.fillStyle = '#FDE047';
-      ctx.beginPath(); ctx.roundRect(BX, BY, BW, BH, 14); ctx.fill();
-      ctx.fillStyle = '#111111';
-      ctx.font = 'bold 10px sans-serif'; ctx.textAlign = 'center';
-      ctx.fillText('รอบที่', BX + BW / 2, BY + 16);
-      ctx.font = 'bold 30px sans-serif';
-      ctx.fillText(String(data.round), BX + BW / 2, BY + BH - 8);
-      y += 86;
+      // --- Date / Time / Round ---
+      ctx.fillStyle = '#AAAAAA';
+      ctx.font = '11px sans-serif';
+      ctx.fillText(`${formatDisplayDate(data.date)} • ${data.timestamp || ''} • รอบที่ ${data.round}`, W / 2, y);
+      y += 28;
 
-      // Dashed separator
-      ctx.strokeStyle = '#E5E5E5'; ctx.lineWidth = 1.5; ctx.setLineDash([6, 4]);
+      // --- Dashed Line ---
+      ctx.strokeStyle = '#D4D4D4'; ctx.lineWidth = 1.5; ctx.setLineDash([5, 4]);
       ctx.beginPath(); ctx.moveTo(PADDING, y); ctx.lineTo(W - PADDING, y); ctx.stroke();
       ctx.setLineDash([]);
-      y += 24;
+      y += 20;
 
-      // Category rows
+      // --- Category Cards ---
       const ACCENTS = ['#4ADE80', '#C084FC', '#FDE047', '#93C5FD', '#F9A8D4', '#FCA5A5'];
       data.details.forEach((d, i) => {
-        ctx.fillStyle = ACCENTS[i % ACCENTS.length];
-        ctx.fillRect(PADDING, y, 5, 18);
-        ctx.textAlign = 'left'; ctx.fillStyle = '#111111'; ctx.font = 'bold 15px sans-serif';
-        ctx.fillText(d.category, PADDING + 14, y + 14);
-        ctx.textAlign = 'right'; ctx.font = 'bold 16px sans-serif';
-        ctx.fillText(d.total.toLocaleString() + ' กก.', W - PADDING, y + 14);
-        y += 26;
+        const catHex = getCategoryHex(d.category) || ACCENTS[i % ACCENTS.length];
+        const itemsText = d.items.join(', ');
+        const charsPerLine = 38;
+        const itemLines = Math.ceil(itemsText.length / charsPerLine) || 1;
+        const cardH = 60 + itemLines * 18 + 16;
 
-        // Items
-        const lines = [];
-        let line = '';
-        for (const item of d.items) {
-          const next = line ? line + '  •  ' + item : item;
-          if (next.length > 42 && line) { lines.push(line); line = item; } else { line = next; }
+        // Card background
+        ctx.fillStyle = '#FFFFFF';
+        ctx.beginPath(); ctx.roundRect(PADDING, y, CONTENT_W, cardH, 16); ctx.fill();
+        // Card border
+        ctx.strokeStyle = '#F0F0F0'; ctx.lineWidth = 1;
+        ctx.beginPath(); ctx.roundRect(PADDING, y, CONTENT_W, cardH, 16); ctx.stroke();
+
+        // Color dot
+        ctx.fillStyle = catHex;
+        ctx.beginPath(); ctx.arc(PADDING + 20, y + 28, 6, 0, Math.PI * 2); ctx.fill();
+
+        // Category name
+        ctx.fillStyle = '#1A1A1A'; ctx.font = 'bold 18px sans-serif'; ctx.textAlign = 'left';
+        ctx.fillText(d.category, PADDING + 34, y + 33);
+
+        // Weight (right side)
+        ctx.fillStyle = '#1A1A1A'; ctx.font = 'black 20px sans-serif'; ctx.textAlign = 'right';
+        ctx.fillText(d.total.toLocaleString(), W - PADDING - 40, y + 33);
+        ctx.fillStyle = '#888888'; ctx.font = '12px sans-serif';
+        ctx.fillText('กก.', W - PADDING - 12, y + 33);
+
+        // Items text
+        ctx.fillStyle = '#777777'; ctx.font = '12px sans-serif'; ctx.textAlign = 'left';
+        const words = itemsText;
+        let startIdx = 0;
+        let lineY = y + 56;
+        while (startIdx < words.length) {
+          const lineText = words.substring(startIdx, startIdx + charsPerLine);
+          ctx.fillText(lineText, PADDING + 16, lineY);
+          lineY += 18;
+          startIdx += charsPerLine;
         }
-        if (line) lines.push(line);
-        const bubbleH = 16 + lines.length * 20;
-        ctx.fillStyle = '#F5F5F5';
-        ctx.beginPath(); ctx.roundRect(PADDING, y, CONTENT_W, bubbleH, 10); ctx.fill();
-        ctx.fillStyle = '#444444'; ctx.font = '12px sans-serif'; ctx.textAlign = 'left';
-        lines.forEach((l, li) => ctx.fillText(l, PADDING + 12, y + 16 + li * 20));
-        y += bubbleH + 18;
+
+        y += cardH + 12;
       });
 
-      // Total bar
-      ctx.fillStyle = '#1A1A1A';
-      ctx.beginPath(); ctx.roundRect(PADDING, y, CONTENT_W, 90, 18); ctx.fill();
-      ctx.fillStyle = '#888888'; ctx.font = 'bold 10px sans-serif'; ctx.textAlign = 'left';
-      ctx.fillText('ยอดรวมสุทธิ / TOTAL WEIGHT', PADDING + 20, y + 24);
-      ctx.fillStyle = '#777777'; ctx.font = '9px sans-serif';
-      ctx.fillText('Verified via Count-Garden App', PADDING + 20, y + 40);
-      ctx.fillStyle = '#FFFFFF'; ctx.font = 'bold 36px sans-serif'; ctx.textAlign = 'right';
-      ctx.fillText(data.totalWeight.toLocaleString(), W - PADDING - 40, y + 66);
-      ctx.fillStyle = '#888888'; ctx.font = 'bold 13px sans-serif';
-      ctx.fillText('kg.', W - PADDING - 8, y + 66);
-      y += 100;
+      y += 4;
 
-      // Footer
-      ctx.fillStyle = '#CCCCCC'; ctx.font = '9px sans-serif'; ctx.textAlign = 'center';
-      ctx.fillText('Count-Garden  •  Secure Digital Report', W / 2, y + 20);
+      // --- Total Bar ---
+      const totalBarH = 72;
+      ctx.fillStyle = '#1A1A1A';
+      ctx.beginPath(); ctx.roundRect(PADDING, y, CONTENT_W, totalBarH, 16); ctx.fill();
+
+      // "ยอดรวมสุทธิ" label
+      ctx.fillStyle = '#999999'; ctx.font = 'bold 13px sans-serif'; ctx.textAlign = 'left';
+      ctx.fillText('ยอดรวมสุทธิ', PADDING + 20, y + 30);
+
+      // Total weight (yellow, right)
+      ctx.fillStyle = '#FDE047'; ctx.font = 'bold 32px sans-serif'; ctx.textAlign = 'right';
+      ctx.fillText(data.totalWeight.toLocaleString(), W - PADDING - 48, y + 48);
+      ctx.fillStyle = '#999999'; ctx.font = 'bold 14px sans-serif';
+      ctx.fillText('กก.', W - PADDING - 14, y + 48);
+      y += totalBarH + 20;
+
+      // --- Footer ---
+      ctx.fillStyle = '#AAAAAA'; ctx.font = 'bold 11px sans-serif'; ctx.textAlign = 'center';
+      ctx.fillText('ขอบคุณที่ใช้บริการ', W / 2, y);
+      y += 16;
+      ctx.fillStyle = '#CCCCCC'; ctx.font = '9px sans-serif';
+      ctx.fillText('บันทึกโดย AgriWeigh', W / 2, y);
 
       const dataUrl = canvas.toDataURL('image/png');
 
       if (navigator.share && navigator.canShare) {
         const res = await fetch(dataUrl);
         const blob = await res.blob();
-        const file = new File([blob], `CG_Report_${Date.now()}.png`, { type: 'image/png' });
+        const file = new File([blob], `receipt-${data.fruit}-round${data.round}.png`, { type: 'image/png' });
         if (navigator.canShare({ files: [file] })) {
-          await navigator.share({ files: [file], title: 'Count-Garden Weight Report' });
+          await navigator.share({ files: [file], title: `ใบเสร็จ ${currentFarmName}` });
         } else { downloadImage(dataUrl); }
       } else { downloadImage(dataUrl); }
+      showToast('สร้างใบเสร็จสำเร็จ!');
     } catch (e) {
       console.error('Canvas image generation failed', e);
-      alert('ไม่สามารถสร้างรูปภาพได้ในขณะนี้');
+      showToast('เกิดข้อผิดพลาดในการสร้างรูปภาพ');
     } finally {
-      setGasLoading(false);
+      setIsGeneratingImg(false);
     }
   };
 
@@ -576,8 +612,9 @@ export default function App() {
     if (!e.target.value) return;
     const dateObj = new Date(e.target.value);
     if (!isNaN(dateObj)) {
-      const thaiMonths = ["ม.ค.", "ก.พ.", "มี.ค.", "เม.ย.", "พ.ค.", "มิ.ย.", "ก.ค.", "ส.ค.", "ก.ย.", "ต.ค.", "พ.ย.", "ธ.ค."];
-      setSearchTerm(`${dateObj.getDate()} ${thaiMonths[dateObj.getMonth()]}`);
+      const day = String(dateObj.getDate()).padStart(2, '0');
+      const month = String(dateObj.getMonth() + 1).padStart(2, '0');
+      setSearchTerm(`${day}/${month}`);
     }
   };
 
@@ -594,6 +631,18 @@ export default function App() {
         </h2>
 
         <div className="space-y-4 mb-8">
+          {/* Farm Selection */}
+          <div className="relative">
+            <label className="block text-xs font-semibold text-neutral-500 mb-1.5 ml-2 uppercase tracking-widest">สวน (Farm)</label>
+            <select
+              value={setupData.farmName}
+              onChange={(e) => setSetupData(prev => ({ ...prev, farmName: e.target.value }))}
+              className="w-full bg-white border-2 border-neutral-200 text-neutral-800 p-3.5 pl-6 pr-10 rounded-full font-bold text-sm appearance-none hover:border-neutral-300 transition-colors focus:outline-none focus:border-neutral-900 shadow-sm cursor-pointer"
+            >
+              {farmList.map(f => <option key={f} value={f}>{f}</option>)}
+            </select>
+            <ChevronDown className="w-4 h-4 text-neutral-400 absolute right-4 top-[38px] pointer-events-none" />
+          </div>
           <div>
             <label className="block text-xs font-semibold text-neutral-500 mb-1.5 ml-2">วันที่ (Date)</label>
             <div className="w-full bg-neutral-50 hover:bg-neutral-100 transition-colors text-neutral-800 p-3.5 rounded-full font-medium text-sm border border-neutral-100 flex items-center justify-center gap-2 relative overflow-hidden cursor-pointer shadow-sm">
@@ -842,11 +891,8 @@ export default function App() {
 
           {/* Share Actions */}
           <div className="flex gap-2 mb-3">
-            <button onClick={() => handleShareText()} className="flex-1 py-3 px-2 rounded-xl border border-neutral-200 bg-white hover:bg-neutral-50 flex items-center justify-center gap-2 text-xs font-bold text-neutral-600 transition-all active:scale-95">
-              <MessageSquare className="w-4 h-4 text-green-500" /> แชร์ข้อความ
-            </button>
-            <button onClick={() => handleShareImage()} className="flex-1 py-3 px-2 rounded-xl border border-neutral-200 bg-white hover:bg-neutral-50 flex items-center justify-center gap-2 text-xs font-bold text-neutral-600 transition-all active:scale-95">
-              <ImageIcon className="w-4 h-4 text-[#C084FC]" /> แชร์เป็นรูปภาพ
+            <button onClick={() => setShareModalRecord({ date: setupData.date, round: setupData.round, fruit: setupData.fruit, farmName: setupData.farmName, totalWeight: grandTotal, timestamp: new Date().toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' }), details: groupedRecords.map(g => ({ category: g.category, total: g.total, count: g.items.length, items: g.items.map(item => item.weight).reverse() })) })} className="flex-1 py-3 px-2 rounded-xl border border-blue-200 bg-blue-50 hover:bg-blue-100 flex items-center justify-center gap-2 text-xs font-bold text-blue-600 transition-all active:scale-95">
+              <Share2 className="w-4 h-4" /> แชร์บิลรอบนี้
             </button>
           </div>
 
@@ -940,11 +986,8 @@ export default function App() {
                               )
                             })}
                           </div>
-                          <div className="mt-3 flex justify-end gap-2 items-center">
-                            <div className="flex bg-white border border-neutral-100 p-1 rounded-full gap-1 shadow-sm mr-2">
-                              <button onClick={() => handleShareText(record)} className="p-2 text-neutral-400 hover:text-green-500 transition-colors" title="แชร์ข้อความ"><MessageSquare className="w-3.5 h-3.5" /></button>
-                              <button onClick={() => handleShareImage(record)} className="p-2 text-neutral-400 hover:text-[#C084FC] transition-colors" title="แชร์รูปภาพ"><ImageIcon className="w-3.5 h-3.5" /></button>
-                            </div>
+                          <div className="mt-3 flex justify-end gap-2 items-center flex-wrap">
+                             <button onClick={() => setShareModalRecord(record)} className="px-3 py-1.5 bg-blue-50 border border-blue-200 rounded-full text-[10px] font-bold text-blue-600 hover:bg-blue-100 shadow-sm flex items-center gap-1"><Share2 className="w-3 h-3" /> แชร์บิล</button>
                             <button onClick={() => setDeleteConfirmId(record.id)} className="px-3 py-1.5 bg-white border border-red-200 rounded-full text-[10px] font-bold text-red-500 hover:bg-red-50 shadow-sm flex items-center gap-1"><Trash2 className="w-3 h-3" /> ลบ</button>
                             <button onClick={() => handleEditHistory(record)} className="px-3 py-1.5 bg-white border border-neutral-200 rounded-full text-[10px] font-bold text-neutral-600 hover:bg-neutral-50 shadow-sm flex items-center gap-1"><Edit2 className="w-3 h-3" /> แก้ไขข้อมูล</button>
                           </div>
@@ -1003,11 +1046,8 @@ export default function App() {
                             )
                           })}
                         </div>
-                        <div className="mt-3 flex justify-end gap-2 items-center">
-                          <div className="flex bg-white border border-neutral-100 p-1 rounded-full gap-1 shadow-sm mr-2">
-                            <button onClick={() => handleShareText(record)} className="p-2 text-neutral-400 hover:text-green-500 transition-colors" title="แชร์ข้อความ"><MessageSquare className="w-3.5 h-3.5" /></button>
-                            <button onClick={() => handleShareImage(record)} className="p-2 text-neutral-400 hover:text-[#C084FC] transition-colors" title="แชร์รูปภาพ"><ImageIcon className="w-3.5 h-3.5" /></button>
-                          </div>
+                        <div className="mt-3 flex justify-end gap-2 items-center flex-wrap">
+                           <button onClick={() => setShareModalRecord(record)} className="px-3 py-1.5 bg-blue-50 border border-blue-200 rounded-full text-[10px] font-bold text-blue-600 hover:bg-blue-100 shadow-sm flex items-center gap-1"><Share2 className="w-3 h-3" /> แชร์บิล</button>
                           <button onClick={() => setDeleteConfirmId(record.id)} className="px-3 py-1.5 bg-white border border-red-200 rounded-full text-[10px] font-bold text-red-500 hover:bg-red-50 shadow-sm flex items-center gap-1"><Trash2 className="w-3 h-3" /> ลบ</button>
                           <button onClick={() => handleEditHistory(record)} className="px-3 py-1.5 bg-white border border-neutral-200 rounded-full text-[10px] font-bold text-neutral-600 hover:bg-neutral-50 shadow-sm flex items-center gap-1"><Edit2 className="w-3 h-3" /> แก้ไขข้อมูล</button>
                         </div>
@@ -1064,11 +1104,8 @@ export default function App() {
                                   )
                                 })}
                               </div>
-                              <div className="mt-5 flex justify-end gap-3 items-center">
-                                <div className="flex bg-white border border-neutral-100 p-1.5 rounded-full gap-2 shadow-sm mr-2">
-                                  <button onClick={() => handleShareText(record)} className="p-2 text-neutral-400 hover:text-green-500 transition-colors flex items-center gap-2" title="แชร์ข้อความ"><MessageSquare className="w-4 h-4" /> <span className="text-[10px] font-bold">แชร์ข้อความ</span></button>
-                                  <button onClick={() => handleShareImage(record)} className="p-2 text-neutral-400 hover:text-[#C084FC] transition-colors flex items-center gap-2" title="แชร์รูปภาพ"><ImageIcon className="w-4 h-4" /> <span className="text-[10px] font-bold">แชร์รูปภาพ</span></button>
-                                </div>
+                              <div className="mt-5 flex justify-end gap-3 items-center flex-wrap">
+                                 <button onClick={() => setShareModalRecord(record)} className="px-5 py-2.5 bg-blue-50 border border-blue-200 rounded-full text-sm font-bold text-blue-600 hover:bg-blue-100 shadow-sm flex items-center gap-2 transition-all active:scale-95"><Share2 className="w-4 h-4" /> แชร์บิลรอบนี้</button>
                                 <button onClick={() => handleEditHistory(record)} className="px-5 py-2.5 bg-white border border-neutral-200 rounded-full text-sm font-bold text-neutral-600 hover:bg-neutral-50 shadow-sm flex items-center gap-2 transition-all active:scale-95"><Edit2 className="w-4 h-4" /> แก้ไขข้อมูลรอบนี้</button>
                                 <button onClick={() => setDeleteConfirmId(record.id)} className="px-5 py-2.5 bg-white border border-red-200 rounded-full text-sm font-bold text-red-500 hover:bg-red-50 shadow-sm flex items-center gap-2 transition-all active:scale-95"><Trash2 className="w-4 h-4" /> ลบข้อมูล</button>
                               </div>
@@ -1331,6 +1368,32 @@ export default function App() {
         </div>
 
         <div className="flex-1 overflow-y-auto p-4 md:p-6 pb-28 space-y-6">
+          {/* Farm Management */}
+          <div className="bg-white p-5 lg:p-6 rounded-3xl border border-neutral-100 shadow-[0_2px_15px_rgb(0,0,0,0.02)] max-w-2xl">
+             <h3 className="font-extrabold text-neutral-800 mb-4 flex items-center gap-2">
+                <div className="w-8 h-8 rounded-full bg-blue-100 text-blue-500 flex items-center justify-center"><Settings className="w-4 h-4"/></div>
+                ข้อมูลสวน / ร้าน (Farm)
+             </h3>
+             <div className="flex gap-2 mb-4">
+                <input
+                  type="text" id="newFarmInput" placeholder="เพิ่มชื่อสวนใหม่..."
+                  onKeyDown={e => { if (e.key === 'Enter' && e.target.value.trim()) { const name = e.target.value.trim(); if (!farmList.includes(name)) { setFarmList(prev => [...prev, name]); } e.target.value = ''; }}}
+                  className="flex-1 bg-neutral-50 border border-neutral-200 rounded-xl px-4 py-2.5 text-sm outline-none focus:border-blue-400 focus:bg-white transition-colors"
+                />
+                <button onClick={() => { const input = document.getElementById('newFarmInput'); const name = input?.value?.trim(); if (name && !farmList.includes(name)) { setFarmList(prev => [...prev, name]); input.value = ''; }}} className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2.5 rounded-xl font-bold text-sm shadow-sm transition-all active:scale-95 flex items-center gap-1">
+                  <Plus className="w-4 h-4" /> เพิ่ม
+                </button>
+             </div>
+             <div className="space-y-2">
+                {farmList.map(farm => (
+                  <div key={farm} className="flex justify-between items-center p-3 px-4 bg-neutral-50 rounded-xl border border-neutral-100 hover:border-neutral-200 transition-colors group">
+                     <span className="font-bold text-neutral-800 text-sm">{farm}</span>
+                     <button onClick={() => { if (farmList.length <= 1) return; setFarmList(prev => prev.filter(f => f !== farm)); if (setupData.farmName === farm) setSetupData(prev => ({...prev, farmName: farmList.filter(f => f !== farm)[0]})); }} className={`text-neutral-300 hover:text-red-500 hover:bg-red-50 p-1.5 rounded-full transition-colors opacity-0 group-hover:opacity-100 focus:opacity-100 ${farmList.length <= 1 ? 'invisible' : ''}`}><Trash2 className="w-4 h-4" /></button>
+                  </div>
+                ))}
+             </div>
+          </div>
+
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
 
             <div className="bg-white p-5 lg:p-6 rounded-3xl border border-neutral-100 shadow-[0_2px_15px_rgb(0,0,0,0.02)]">
@@ -1485,6 +1548,39 @@ export default function App() {
               }} className="flex-1 py-3 rounded-full font-bold text-white bg-red-500 hover:bg-red-600 shadow-lg">ลบข้อมูล</button>
             </div>
           </div>
+        </div>
+      )}
+
+      {/* --- Toast Notification --- */}
+      {toastMsg && (
+        <div className="fixed top-4 left-1/2 -translate-x-1/2 z-[300] bg-neutral-900 text-white px-6 py-3 rounded-full shadow-2xl flex items-center gap-2 font-bold text-sm animate-in slide-in-from-top-4 fade-in duration-300">
+           <CheckCircle className="w-4 h-4 text-[#4ADE80]" /> {toastMsg}
+        </div>
+      )}
+
+      {/* --- Share Modal Bottom Sheet --- */}
+      {shareModalRecord && (
+        <div className="fixed inset-0 z-[200] bg-neutral-900/60 backdrop-blur-sm flex items-end md:items-center justify-center md:p-4">
+           <div className="bg-white w-full max-w-sm rounded-t-[2rem] md:rounded-[2rem] shadow-2xl flex flex-col animate-in slide-in-from-bottom-10 fade-in duration-300 p-6 md:p-8">
+              <div className="flex justify-between items-center mb-6">
+                 <h3 className="text-xl font-extrabold text-neutral-900 flex items-center gap-2">
+                    <Share2 className="w-5 h-5 text-blue-500" /> แชร์ใบเสร็จ
+                 </h3>
+                 <button onClick={() => setShareModalRecord(null)} className="p-2 bg-neutral-100 rounded-full text-neutral-500 hover:bg-neutral-200"><X className="w-4 h-4" /></button>
+              </div>
+              <div className="space-y-3">
+                 <button onClick={() => { handleShareText(shareModalRecord); setShareModalRecord(null); }} className="w-full flex items-center gap-4 bg-neutral-50 border border-neutral-200 p-4 rounded-2xl hover:bg-neutral-100 transition-colors active:scale-95 group">
+                    <div className="w-10 h-10 bg-white rounded-full flex items-center justify-center shadow-sm group-hover:shadow-md transition-all text-green-500"><MessageSquare className="w-5 h-5" /></div>
+                    <div className="text-left"><p className="font-bold text-neutral-900">แชร์ข้อความ (Share Text)</p><p className="text-[10px] text-neutral-500 font-medium">ส่งข้อความสรุปน้ำหนักผ่าน Line, Messenger</p></div>
+                 </button>
+                 <button onClick={() => { handleShareImage(shareModalRecord); setShareModalRecord(null); }} disabled={isGeneratingImg} className="w-full flex items-center gap-4 bg-blue-50 border border-blue-200 p-4 rounded-2xl hover:bg-blue-100 transition-colors active:scale-95 group disabled:opacity-70 disabled:active:scale-100">
+                    <div className="w-10 h-10 bg-white rounded-full flex items-center justify-center shadow-sm group-hover:shadow-md transition-all text-blue-600">
+                       {isGeneratingImg ? <Asterisk className="w-5 h-5 animate-spin-slow" /> : <ImageIcon className="w-5 h-5" />}
+                    </div>
+                    <div className="text-left"><p className="font-bold text-blue-900">{isGeneratingImg ? 'กำลังสร้างรูปภาพ...' : 'แชร์เป็นรูปภาพ (Share Image)'}</p><p className="text-[10px] text-blue-600/70 font-medium">สร้างใบเสร็จสวยงาม ส่งให้พ่อค้า</p></div>
+                 </button>
+              </div>
+           </div>
         </div>
       )}
 
