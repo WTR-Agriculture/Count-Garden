@@ -1085,6 +1085,41 @@ export default function App() {
     </div>
   );
 
+  // --- History Navigation Handlers ---
+  const handleJumpToRound = (roundId, sourceMbId) => {
+    const target = historyRecords.find(r => r.id === roundId);
+    if (!target) { showToast('ไม่พบข้อมูลรอบนี้แล้วค่ะ'); return; }
+
+    setNavContext({ type: 'masterBill', id: sourceMbId });
+    setSearchTerm('');
+    setFilterDate('');
+    setHistorySubTab('rounds');
+    setExpandedHistory([roundId]);
+
+    // Give some more time for tab transition
+    setTimeout(() => {
+      const el = document.getElementById(`round-card-${roundId}`);
+      if (el) {
+        el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        el.classList.add('ring-4', 'ring-[#C084FC]', 'ring-offset-2');
+        setTimeout(() => el.classList.remove('ring-4', 'ring-[#C084FC]', 'ring-offset-2'), 2500);
+      }
+    }, 250);
+  };
+
+  const handleBackToMaster = () => {
+    if (!navContext) return;
+    const mbId = navContext.id;
+    setHistorySubTab('masterBills');
+    setExpandedMasterBill(mbId);
+    setNavContext(null);
+
+    setTimeout(() => {
+      const el = document.getElementById(`master-card-${mbId}`);
+      if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }, 250);
+  };
+
   const renderHistoryScreen = () => (
     <div className="flex-1 flex flex-col bg-[#FDFBF7] min-h-full w-full overflow-hidden">
       <div className="p-4 md:p-6 shrink-0 relative overflow-hidden bg-white border-b border-neutral-100">
@@ -1860,41 +1895,6 @@ export default function App() {
     };
 
     // --- Finalize Master Bill ---
-      const handleJumpToRound = (roundId, sourceMbId) => {
-        // Find if round exists
-        const exists = historyRecords.find(r => r.id === roundId);
-        if (!exists) { showToast('ไม่พบข้อมูลรอบนี้แล้วค่ะ'); return; }
-
-        setNavContext({ type: 'masterBill', id: sourceMbId });
-        setSearchTerm('');
-        setFilterDate('');
-        setHistorySubTab('rounds');
-        setExpandedHistory([roundId]);
-
-        // Scroll after a short delay for tab switch
-        setTimeout(() => {
-          const el = document.getElementById(`round-card-${roundId}`);
-          if (el) {
-            el.scrollIntoView({ behavior: 'smooth', block: 'center' });
-            // Pulse effect to highlight
-            el.classList.add('ring-2', 'ring-[#C084FC]', 'ring-offset-2');
-            setTimeout(() => el.classList.remove('ring-2', 'ring-[#C084FC]', 'ring-offset-2'), 2000);
-          }
-        }, 100);
-      };
-
-      const handleBackToMaster = () => {
-        if (!navContext) return;
-        const mbId = navContext.id;
-        setHistorySubTab('masterBills');
-        setExpandedMasterBill(mbId);
-        setNavContext(null);
-
-        setTimeout(() => {
-          const el = document.getElementById(`master-card-${mbId}`);
-          if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
-        }, 100);
-      };
 
       const handleFinalizeMasterBill = async () => {
       setIsGeneratingMasterBill(true);
