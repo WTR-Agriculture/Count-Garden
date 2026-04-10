@@ -505,7 +505,9 @@ export default function App() {
       const payload = {
         action: 'saveRecord',
         payload: {
+          id: historyEntry.id,          // ✅ ส่ง ID เดียวกันกับที่แอปใช้ เพื่อให้ updateBillingStatus หาเจอ
           date: historyEntry.date, round: historyEntry.round, fruit: historyEntry.fruit,
+          farmName: historyEntry.farmName || '',
           totalWeight: historyEntry.totalWeight,
           items: groupedRecords.flatMap(g => g.items.map(item => ({ category: g.category, weight: item.weight })))
         }
