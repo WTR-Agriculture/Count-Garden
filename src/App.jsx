@@ -247,6 +247,14 @@ export default function App() {
       setSettingsActiveFruit(fruits[0]);
     }
   }, [fruits, settingsActiveFruit]);
+  // Safeguard: Ensure setupData.farmName is always valid relative to farmList
+  useEffect(() => {
+    if (farmList.length > 0) {
+      if (!farmList.includes(setupData.farmName)) {
+        setSetupData(prev => ({ ...prev, farmName: farmList[0] }));
+      }
+    }
+  }, [farmList]);
 
   // --- Persistence Effects ---
   useEffect(() => {
@@ -325,7 +333,14 @@ export default function App() {
         setMasterData(actualMaster);
         
         if (actualFarms.length > 0) {
+          // Sync with cloud: Overwrite local list with cloud data
           setFarmList(actualFarms);
+          localStorage.setItem('cg_farmList', JSON.stringify(actualFarms));
+          
+          // Force select the first cloud farm if current one is invalid
+          if (!actualFarms.includes(setupData.farmName)) {
+            setSetupData(prev => ({ ...prev, farmName: actualFarms[0] }));
+          }
         }
 
         const firstFruit = Object.keys(actualMaster)[0];
