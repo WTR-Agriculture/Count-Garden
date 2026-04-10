@@ -1799,6 +1799,8 @@ export default function App() {
       ? historyRecords.filter(r => r.billingStatus === 'Billed').slice(0, selectedRounds.length)
       : selectedData;
 
+    const masterFruit = snapshotData[0]?.fruit || '';
+
     const categorySummary = {};
     let totalWeight = 0;
     selectedData.forEach(r => {
@@ -1816,7 +1818,7 @@ export default function App() {
     // --- Share Text for Master Bill ---
     const handleShareMasterText = () => {
       const sortedRounds = [...selectedData].sort((a, b) => new Date(a.date) - new Date(b.date));
-      let text = `📋 บิลรวมน้ำหนัก (Master Invoice)\n`;
+      let text = `📋 บิลชั่งน้ำหนัก ${masterFruit}\n`;
       text += `📅 ช่วงวันที่: ${dateRange}\n`;
       text += `📦 จำนวน ${sortedRounds.length} รอบ\n\n`;
       text += `─────────────────\n`;
