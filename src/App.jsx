@@ -392,7 +392,6 @@ export default function App() {
   const handleShareImage = async (record) => {
     // We'll use a temporary state or a dedicated component for the image capture
     // But for this simplified version, we'll capture the hidden receipt template
-    if (!receiptRef.current) return;
     
     setGasLoading(true);
     try {
