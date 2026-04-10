@@ -30,7 +30,7 @@ import {
   MessageSquare,
   Download
 } from 'lucide-react';
-import { toPng } from 'html-to-image';
+
 
 // --- Static Default Data ---
 const DEFAULT_CATEGORY_COLORS = {
@@ -158,9 +158,6 @@ export default function App() {
   });
 
   const roundScrollRef = useRef(null);
-  const receiptRef = useRef(null);
-
-  const [activeShareRecord, setActiveShareRecord] = useState(null);
 
   // Dashboard State
   const [dashboardRange, setDashboardRange] = useState('daily'); 
@@ -390,49 +387,159 @@ export default function App() {
   };
 
   const handleShareImage = async (record) => {
-    // We'll use a temporary state or a dedicated component for the image capture
-    // But for this simplified version, we'll capture the hidden receipt template
-    
+    const data = record || {
+      date: setupData.date,
+      round: setupData.round,
+      fruit: setupData.fruit,
+      totalWeight: grandTotal,
+      details: groupedRecords.map(g => ({ category: g.category, total: g.total, items: g.items.map(item => item.weight).reverse() }))
+    };
+
     setGasLoading(true);
     try {
-      // Ensure the hidden element is updated (In a real app, you'd use a more robust way to sync)
-      // For now we'll assume the hidden template is reactive to a "activeShareRecord" state
-      setActiveShareRecord(record || {
-        date: setupData.date,
-        round: setupData.round,
-        fruit: setupData.fruit,
-        totalWeight: grandTotal,
-        details: groupedRecords.map(g => ({ category: g.category, total: g.total, items: g.items.map(item => item.weight).reverse() }))
-      });
+      const SCALE = 2;
+      const W = 480;
+      const PADDING = 40;
+      const CONTENT_W = W - PADDING * 2;
 
-      // Wait a tick for rendering (Increase for iOS stability)
-      await new Promise(r => setTimeout(r, 2000));
-
-      const dataUrl = await toPng(receiptRef.current, { 
-        cacheBust: true, 
-        pixelRatio: 2,
-        backgroundColor: '#ffffff'
-      });
-      
-      if (navigator.share && navigator.canShare) {
-        const reset = await fetch(dataUrl);
-        const blob = await reset.blob();
-        const file = new File([blob], `CG_Report_${Date.now()}.png`, { type: 'image/png' });
-        
-        if (navigator.canShare({ files: [file] })) {
-          await navigator.share({
-            files: [file],
-            title: 'Weight Report',
-            text: 'Sharing Weight Report from Count-Garden'
-          });
-        } else {
-          downloadImage(dataUrl);
+      // Calculate canvas height dynamically based on content
+      const CAT_BASE_H = 80;
+      const detailH = data.details.reduce((acc, d) => {
+        const lines = [];
+        let line = '';
+        for (const item of d.items) {
+          const next = line ? line + '  •  ' + item : item;
+          if (next.length > 42 && line) { lines.push(line); line = item; }
+          else { line = next; }
         }
-      } else {
-        downloadImage(dataUrl);
-      }
+        if (line) lines.push(line);
+        return acc + CAT_BASE_H + (lines.length > 0 ? lines.length * 20 : 20) + 18;
+      }, 0);
+      const H = 110 + 140 + detailH + 110 + 60 + PADDING;
+
+      const canvas = document.createElement('canvas');
+      canvas.width = W * SCALE;
+      canvas.height = H * SCALE;
+      const ctx = canvas.getContext('2d');
+      ctx.scale(SCALE, SCALE);
+
+      // Background
+      ctx.fillStyle = '#FFFFFF';
+      ctx.fillRect(0, 0, W, H);
+
+      // Yellow top bar
+      ctx.fillStyle = '#FDE047';
+      ctx.fillRect(0, 0, W, 10);
+
+      let y = 30;
+
+      // Header
+      ctx.fillStyle = '#111111';
+      ctx.font = 'bold 28px sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText('Count-Garden', W / 2, y + 28);
+      y += 40;
+      ctx.fillStyle = '#999999';
+      ctx.font = '11px sans-serif';
+      ctx.fillText('DIGITAL WEIGHT CERTIFICATE', W / 2, y + 12);
+      y += 30;
+
+      // Dashed separator
+      ctx.strokeStyle = '#E5E5E5';
+      ctx.lineWidth = 1.5;
+      ctx.setLineDash([6, 4]);
+      ctx.beginPath(); ctx.moveTo(PADDING, y); ctx.lineTo(W - PADDING, y); ctx.stroke();
+      ctx.setLineDash([]);
+      y += 24;
+
+      // Info row
+      ctx.textAlign = 'left';
+      ctx.fillStyle = '#AAAAAA';
+      ctx.font = 'bold 10px sans-serif';
+      ctx.fillText('วันที่ / DATE', PADDING, y);
+      ctx.fillStyle = '#111111';
+      ctx.font = 'bold 16px sans-serif';
+      ctx.fillText(data.date, PADDING, y + 18);
+      ctx.fillStyle = '#AAAAAA';
+      ctx.font = 'bold 10px sans-serif';
+      ctx.fillText('ผลไม้ / FRUIT', PADDING, y + 42);
+      ctx.fillStyle = '#111111';
+      ctx.font = 'bold 22px sans-serif';
+      ctx.fillText(data.fruit, PADDING, y + 64);
+
+      // Round badge
+      const BW = 70, BH = 52, BX = W - PADDING - BW, BY = y - 6;
+      ctx.fillStyle = '#FDE047';
+      ctx.beginPath(); ctx.roundRect(BX, BY, BW, BH, 14); ctx.fill();
+      ctx.fillStyle = '#111111';
+      ctx.font = 'bold 10px sans-serif'; ctx.textAlign = 'center';
+      ctx.fillText('รอบที่', BX + BW / 2, BY + 16);
+      ctx.font = 'bold 30px sans-serif';
+      ctx.fillText(String(data.round), BX + BW / 2, BY + BH - 8);
+      y += 86;
+
+      // Dashed separator
+      ctx.strokeStyle = '#E5E5E5'; ctx.lineWidth = 1.5; ctx.setLineDash([6, 4]);
+      ctx.beginPath(); ctx.moveTo(PADDING, y); ctx.lineTo(W - PADDING, y); ctx.stroke();
+      ctx.setLineDash([]);
+      y += 24;
+
+      // Category rows
+      const ACCENTS = ['#4ADE80', '#C084FC', '#FDE047', '#93C5FD', '#F9A8D4', '#FCA5A5'];
+      data.details.forEach((d, i) => {
+        ctx.fillStyle = ACCENTS[i % ACCENTS.length];
+        ctx.fillRect(PADDING, y, 5, 18);
+        ctx.textAlign = 'left'; ctx.fillStyle = '#111111'; ctx.font = 'bold 15px sans-serif';
+        ctx.fillText(d.category, PADDING + 14, y + 14);
+        ctx.textAlign = 'right'; ctx.font = 'bold 16px sans-serif';
+        ctx.fillText(d.total.toLocaleString() + ' กก.', W - PADDING, y + 14);
+        y += 26;
+
+        // Items
+        const lines = [];
+        let line = '';
+        for (const item of d.items) {
+          const next = line ? line + '  •  ' + item : item;
+          if (next.length > 42 && line) { lines.push(line); line = item; } else { line = next; }
+        }
+        if (line) lines.push(line);
+        const bubbleH = 16 + lines.length * 20;
+        ctx.fillStyle = '#F5F5F5';
+        ctx.beginPath(); ctx.roundRect(PADDING, y, CONTENT_W, bubbleH, 10); ctx.fill();
+        ctx.fillStyle = '#444444'; ctx.font = '12px sans-serif'; ctx.textAlign = 'left';
+        lines.forEach((l, li) => ctx.fillText(l, PADDING + 12, y + 16 + li * 20));
+        y += bubbleH + 18;
+      });
+
+      // Total bar
+      ctx.fillStyle = '#1A1A1A';
+      ctx.beginPath(); ctx.roundRect(PADDING, y, CONTENT_W, 90, 18); ctx.fill();
+      ctx.fillStyle = '#888888'; ctx.font = 'bold 10px sans-serif'; ctx.textAlign = 'left';
+      ctx.fillText('ยอดรวมสุทธิ / TOTAL WEIGHT', PADDING + 20, y + 24);
+      ctx.fillStyle = '#777777'; ctx.font = '9px sans-serif';
+      ctx.fillText('Verified via Count-Garden App', PADDING + 20, y + 40);
+      ctx.fillStyle = '#FFFFFF'; ctx.font = 'bold 36px sans-serif'; ctx.textAlign = 'right';
+      ctx.fillText(data.totalWeight.toLocaleString(), W - PADDING - 40, y + 66);
+      ctx.fillStyle = '#888888'; ctx.font = 'bold 13px sans-serif';
+      ctx.fillText('kg.', W - PADDING - 8, y + 66);
+      y += 100;
+
+      // Footer
+      ctx.fillStyle = '#CCCCCC'; ctx.font = '9px sans-serif'; ctx.textAlign = 'center';
+      ctx.fillText('Count-Garden  •  Secure Digital Report', W / 2, y + 20);
+
+      const dataUrl = canvas.toDataURL('image/png');
+
+      if (navigator.share && navigator.canShare) {
+        const res = await fetch(dataUrl);
+        const blob = await res.blob();
+        const file = new File([blob], `CG_Report_${Date.now()}.png`, { type: 'image/png' });
+        if (navigator.canShare({ files: [file] })) {
+          await navigator.share({ files: [file], title: 'Count-Garden Weight Report' });
+        } else { downloadImage(dataUrl); }
+      } else { downloadImage(dataUrl); }
     } catch (e) {
-      console.error('Image capture failed', e);
+      console.error('Canvas image generation failed', e);
       alert('ไม่สามารถสร้างรูปภาพได้ในขณะนี้');
     } finally {
       setGasLoading(false);
@@ -1403,73 +1510,6 @@ export default function App() {
           animation: spin-slow 12s linear infinite;
         }
       `}} />
-      {activeShareRecord && (
-        <div 
-          ref={receiptRef} 
-          className="bg-white p-10 text-neutral-900 font-sans shadow-2xl rounded-sm border-t-[12px] border-[#FDE047] flex flex-col" 
-          style={{ 
-            position: 'fixed', 
-            top: '0', 
-            left: '0', // Keep it in viewport so browser MUST render it
-            width: '450px',
-            minHeight: '600px',
-            zIndex: -50,
-            opacity: 0, // Invisible to user but rendered by browser
-            pointerEvents: 'none',
-            backgroundColor: '#ffffff'
-          }}
-        >
-           <div className="text-center mb-10">
-              <div className="text-3xl font-black flex items-center justify-center gap-3 mb-2">
-                 Count-Garden
-              </div>
-              <div className="text-[11px] font-bold text-neutral-400 tracking-[0.3em] uppercase underline decoration-[#FDE047] decoration-4 underline-offset-8">Digital Weight Certificate</div>
-           </div>
-           
-           <div className="flex justify-between items-end border-b-4 border-dashed border-neutral-100 pb-8 mb-8">
-              <div className="space-y-2">
-                 <div className="text-[10px] font-bold text-neutral-400 uppercase tracking-widest">วันที่ / Date</div>
-                 <div className="text-lg font-bold text-neutral-800">{activeShareRecord.date}</div>
-                 <div className="text-[10px] font-bold text-neutral-400 uppercase mt-4 tracking-widest">ผลไม้ / Fruit</div>
-                 <div className="text-2xl font-black text-neutral-900">{activeShareRecord.fruit}</div>
-              </div>
-              <div className="text-right">
-                 <div className="text-[10px] font-bold text-neutral-400 uppercase mb-2 tracking-widest">รอบที่ / Round</div>
-                 <div className="text-4xl font-black text-neutral-900 bg-[#FDE047] px-6 py-2 rounded-2xl shadow-sm inline-block">{activeShareRecord.round}</div>
-              </div>
-           </div>
-
-           <div className="space-y-6 mb-10 flex-1">
-              {activeShareRecord.details.map(d => (
-                 <div key={d.category} className="space-y-2.5">
-                    <div className="flex justify-between items-center bg-neutral-50/50 p-2 rounded-lg">
-                       <span className="text-sm font-black text-neutral-800 uppercase tracking-wider">{d.category}</span>
-                       <span className="text-lg font-black text-neutral-900">{d.total.toLocaleString()} <span className="text-xs text-neutral-400">กก. / kg.</span></span>
-                    </div>
-                    <div className="bg-neutral-50 p-5 rounded-2xl text-xs font-bold text-neutral-600 leading-relaxed border border-neutral-100 shadow-inner">
-                       {d.items.join(', ')}
-                    </div>
-                 </div>
-              ))}
-           </div>
-
-           <div className="bg-neutral-900 text-white p-8 rounded-[2rem] flex justify-between items-center shadow-xl mb-4">
-              <div>
-                 <div className="text-[10px] font-bold text-neutral-500 uppercase mb-1 tracking-[0.2em]">ยอดรวมสุทธิ / Total Weight</div>
-                 <div className="text-xs font-bold opacity-60 italic">Verified via Count-Garden App</div>
-              </div>
-              <div className="text-5xl font-black tracking-tighter leading-none">{activeShareRecord.totalWeight.toLocaleString()} <span className="text-sm font-bold text-neutral-500 ml-1">kg.</span></div>
-           </div>
-
-           <div className="mt-10 pt-8 border-t border-neutral-50 text-center">
-              <div className="text-[10px] font-bold text-neutral-300 uppercase tracking-[0.5em] mb-4">Thank you for trusting Count-Garden</div>
-              <div className="inline-flex items-center gap-2 px-4 py-2 bg-neutral-50 rounded-full border border-neutral-100">
-                 <span className="w-2 h-2 rounded-full bg-[#4ADE80] animate-pulse"></span>
-                 <span className="text-[9px] font-bold text-neutral-400 uppercase tracking-widest">Secure Digital Report</span>
-              </div>
-           </div>
-        </div>
-      )}
     </div>
   );
 }
