@@ -384,6 +384,9 @@ export default function App() {
 
   const formatDisplayDate = (dateStr) => {
     if (!dateStr) return '';
+    // ถ้าเป็นรูปแบบ dd/mm/yyyy อยู่แล้วให้คืนค่ากลับไปเลย กันการ parse ผิด
+    if (typeof dateStr === 'string' && /^\d{2}\/\d{2}\/\d{4}$/.test(dateStr)) return dateStr;
+    
     try {
       const d = new Date(dateStr);
       if (!isNaN(d.getTime())) {
@@ -393,6 +396,7 @@ export default function App() {
         return `${day}/${month}/${year}`;
       }
     } catch (e) { }
+    // สำหรับพวก ISO String หรือรูปแบบอื่นๆ
     return String(dateStr).split('T')[0];
   };
 
@@ -586,7 +590,11 @@ export default function App() {
         const blob = await res.blob();
         const file = new File([blob], `receipt-${data.fruit}-round${data.round}.png`, { type: 'image/png' });
         if (navigator.canShare({ files: [file] })) {
-          await navigator.share({ files: [file], title: `ใบเสร็จ ${currentFarmName}` });
+          await navigator.share({ 
+            files: [file], 
+            title: `ใบเสร็จ ${currentFarmName}`,
+            text: `🧾 ใบเสร็จชั่งน้ำหนัก ${data.fruit} - ${currentFarmName} (${formatDisplayDate(data.date)})`
+          });
         } else { downloadImage(dataUrl); }
       } else { downloadImage(dataUrl); }
       showToast('สร้างใบเสร็จสำเร็จ!');
