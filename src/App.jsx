@@ -316,9 +316,18 @@ export default function App() {
           </div>
           
           <div className="flex gap-3">
-            <div className="w-1/3">
+            <div className="w-1/3 relative">
               <label className="block text-xs font-semibold text-neutral-500 mb-1.5 ml-2">รอบ (Round)</label>
-              <div className="w-full bg-[#FDE047] text-neutral-900 p-3.5 rounded-full font-bold text-sm text-center shadow-sm">{setupData.round}</div>
+              <select 
+                value={setupData.round}
+                onChange={(e) => setSetupData(prev => ({...prev, round: parseInt(e.target.value)}))}
+                className="w-full bg-[#FDE047] text-neutral-900 p-3.5 pr-8 rounded-full font-bold text-sm text-center shadow-sm appearance-none outline-none cursor-pointer"
+              >
+                {[...Array(50)].map((_, i) => (
+                  <option key={i+1} value={i+1}>{i+1}</option>
+                ))}
+              </select>
+              <ChevronDown className="w-3.5 h-3.5 text-neutral-700 absolute right-3 top-[38px] pointer-events-none" />
             </div>
             <div className="w-2/3 relative">
               <label className="block text-xs font-semibold text-neutral-500 mb-1.5 ml-2">ผลไม้ (Fruit)</label>
@@ -1064,11 +1073,6 @@ export default function App() {
 
   return (
     <div className="w-full h-[100dvh] flex flex-col lg:flex-row bg-[#FDFBF7] overflow-hidden font-sans relative">
-      {gasLoading && (
-        <div className="fixed inset-0 z-[500] bg-white/60 backdrop-blur-sm flex items-center justify-center">
-          <div className="w-12 h-12 border-4 border-neutral-200 border-t-neutral-900 rounded-full animate-spin"></div>
-        </div>
-      )}
       
       {/* --- Desktop Sidebar (Light Theme) --- */}
       <div className="hidden lg:flex flex-col w-72 bg-[#FDFBF7] border-r border-neutral-200 z-30 shrink-0">
