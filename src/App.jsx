@@ -181,9 +181,15 @@ export default function App() {
   const [selectedRounds, setSelectedRounds] = useState([]);
   const [isGeneratingMasterBill, setIsGeneratingMasterBill] = useState(false);
   const [showMasterBillModal, setShowMasterBillModal] = useState(false);
-  const [masterBillSuccess, setMasterBillSuccess] = useState(false); // Show success+share view
-  const [filterDate, setFilterDate] = useState(''); // Added missing filterDate state
+  const [masterBillSuccess, setMasterBillSuccess] = useState(false);
+  const [filterDate, setFilterDate] = useState('');
   const [expandedHistory, setExpandedHistory] = useState([]);
+  const [historySubTab, setHistorySubTab] = useState('rounds'); // 'rounds' | 'masterBills'
+  const [masterBillsHistory, setMasterBillsHistory] = useState(() => {
+    const local = localStorage.getItem('cg_masterBillsHistory');
+    return local ? JSON.parse(local) : [];
+  });
+  const [expandedMasterBill, setExpandedMasterBill] = useState(null);
 
   // GAS Loading State
   const [gasLoading, setGasLoading] = useState(false);
@@ -296,6 +302,10 @@ export default function App() {
   }, [syncQueue]);
 
   useEffect(() => {
+    localStorage.setItem('cg_masterBillsHistory', JSON.stringify(masterBillsHistory));
+  }, [masterBillsHistory]);
+
+  useEffect(() => {
     localStorage.setItem('cg_farmList', JSON.stringify(farmList));
   }, [farmList]);
 
@@ -360,30 +370,25 @@ export default function App() {
     if (!GAS_URL) return;
     setGasLoading(true);
     try {
-      const [mRes, hRes] = await Promise.all([
+      const [mRes, hRes, mbRes] = await Promise.all([
         fetch(`${GAS_URL}?action=getMasterData`),
-        fetch(`${GAS_URL}?action=getHistory`)
+        fetch(`${GAS_URL}?action=getHistory`),
+        fetch(`${GAS_URL}?action=getMasterBills`)
       ]);
       const mData = await mRes.json();
       const hData = await hRes.json();
+      const mbData = await mbRes.json();
       if (!mData.error) {
-        // If backend returns new format { masterData, farms }
         const actualMaster = mData.masterData || mData;
         const actualFarms = mData.farms || [];
-
         setMasterData(actualMaster);
-        
         if (actualFarms.length > 0) {
-          // Sync with cloud: Overwrite local list with cloud data
           setFarmList(actualFarms);
           localStorage.setItem('cg_farmList', JSON.stringify(actualFarms));
-          
-          // Force select the first cloud farm if current one is invalid
           if (!actualFarms.includes(setupData.farmName)) {
             setSetupData(prev => ({ ...prev, farmName: actualFarms[0] }));
           }
         }
-
         const firstFruit = Object.keys(actualMaster)[0];
         if (firstFruit) {
           setSetupData(prev => ({ ...prev, fruit: firstFruit }));
@@ -391,6 +396,7 @@ export default function App() {
         }
       }
       if (Array.isArray(hData)) setHistoryRecords(hData);
+      if (Array.isArray(mbData) && mbData.length > 0) setMasterBillsHistory(mbData);
     } catch (e) { console.error('GAS fetch failed', e); }
     finally { setGasLoading(false); }
   };
@@ -1085,18 +1091,17 @@ export default function App() {
         <div className="flex justify-between items-center relative z-10">
           <h2 className="text-2xl lg:text-3xl font-extrabold tracking-tight text-neutral-900 flex items-center gap-2">History <span className="text-neutral-300 font-normal">|</span> <span className="text-[#C084FC] font-bold text-lg lg:text-xl">ประวัติ</span></h2>
           <div className="flex items-center gap-2">
-            <button 
-              onClick={() => {
-                setIsSelectionMode(!isSelectionMode);
-                setSelectedRounds([]);
-              }}
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[11px] lg:text-xs font-bold transition-all shadow-sm ${isSelectionMode ? 'bg-[#C084FC] text-white' : 'bg-white border border-neutral-200 text-neutral-700 hover:bg-neutral-50'}`}
-            >
-              <ListChecks className="w-3.5 h-3.5" />
-              {isSelectionMode ? 'Cancel' : 'สรุปรวมบิล'}
-            </button>
-            <button 
-              onClick={loadGASData} 
+            {historySubTab === 'rounds' && (
+              <button
+                onClick={() => { setIsSelectionMode(!isSelectionMode); setSelectedRounds([]); }}
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[11px] lg:text-xs font-bold transition-all shadow-sm ${isSelectionMode ? 'bg-[#C084FC] text-white' : 'bg-white border border-neutral-200 text-neutral-700 hover:bg-neutral-50'}`}
+              >
+                <ListChecks className="w-3.5 h-3.5" />
+                {isSelectionMode ? 'Cancel' : 'สรุปรวมบิล'}
+              </button>
+            )}
+            <button
+              onClick={loadGASData}
               disabled={gasLoading}
               className={`p-2 rounded-full transition-all ${gasLoading ? 'animate-spin text-[#C084FC] bg-purple-50' : 'text-neutral-400 hover:text-[#C084FC] hover:bg-purple-50 active:scale-90'}`}
               title="รีเฟรชข้อมูล"
@@ -1106,10 +1111,32 @@ export default function App() {
           </div>
         </div>
 
-        <div className="mt-4 flex flex-col gap-3 relative z-10 w-full">
-          {/* Active Filter Chips */}
-          {filterDate && (
-            <div className="flex flex-wrap items-center gap-2 mb-1 px-1">
+        {/* Sub Tabs */}
+        <div className="mt-4 flex gap-1 bg-neutral-100 p-1 rounded-2xl relative z-10">
+          <button
+            onClick={() => { setHistorySubTab('rounds'); setIsSelectionMode(false); setSelectedRounds([]); }}
+            className={`flex-1 flex items-center justify-center gap-1.5 py-2 rounded-xl text-xs font-bold transition-all ${
+              historySubTab === 'rounds' ? 'bg-white shadow text-neutral-900' : 'text-neutral-500 hover:text-neutral-700'
+            }`}
+          >
+            <List className="w-3.5 h-3.5" /> รายรอบ
+          </button>
+          <button
+            onClick={() => { setHistorySubTab('masterBills'); setIsSelectionMode(false); setSelectedRounds([]); }}
+            className={`flex-1 flex items-center justify-center gap-1.5 py-2 rounded-xl text-xs font-bold transition-all ${
+              historySubTab === 'masterBills' ? 'bg-white shadow text-[#C084FC]' : 'text-neutral-500 hover:text-[#C084FC]'
+            }`}
+          >
+            <ImageIcon className="w-3.5 h-3.5" /> บิลรวม
+            {masterBillsHistory.length > 0 && (
+              <span className="bg-[#C084FC] text-white text-[9px] w-4 h-4 rounded-full flex items-center justify-center font-black">{masterBillsHistory.length}</span>
+            )}
+          </button>
+        </div>
+
+          {/* Active Filter Chips - rounds only */}
+          {historySubTab === 'rounds' && filterDate && (
+            <div className="flex flex-wrap items-center gap-2 mb-1 px-1 mt-3">
               <span className="bg-[#C084FC]/10 text-[#C084FC] border border-[#C084FC]/20 px-3 py-1.5 rounded-full text-xs font-bold flex items-center gap-2 animate-in slide-in-from-left-2 duration-300">
                 <Calendar className="w-3.5 h-3.5" />
                 กรองวันที่: {formatDisplayDate(filterDate)}
@@ -1118,29 +1145,170 @@ export default function App() {
             </div>
           )}
 
-          <div className="flex gap-2 items-center w-full">
-            <div className="flex-1 bg-neutral-50 border border-neutral-200 rounded-full flex items-center px-3 py-1.5 shadow-sm focus-within:ring-2 focus-within:ring-[#C084FC]/20 focus-within:border-[#C084FC] transition-all">
-              <Search className="w-3.5 h-3.5 text-neutral-400 mr-1.5" />
-              <input type="text" placeholder="ค้นหา... (ผลไม้, รอบ, สวน)" value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} className="bg-transparent border-none outline-none text-xs w-full text-neutral-700 font-medium placeholder-neutral-300" />
-              {searchTerm && (<button onClick={() => setSearchTerm('')} className="text-neutral-400 hover:text-neutral-600 px-1 transition-colors"><X className="w-3.5 h-3.5" /></button>)}
+          {historySubTab === 'rounds' && (
+            <div className="flex gap-2 items-center w-full mt-3">
+              <div className="flex-1 bg-neutral-50 border border-neutral-200 rounded-full flex items-center px-3 py-1.5 shadow-sm focus-within:ring-2 focus-within:ring-[#C084FC]/20 focus-within:border-[#C084FC] transition-all">
+                <Search className="w-3.5 h-3.5 text-neutral-400 mr-1.5" />
+                <input type="text" placeholder="ค้นหา... (ผลไม้, รอบ, สวน)" value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} className="bg-transparent border-none outline-none text-xs w-full text-neutral-700 font-medium placeholder-neutral-300" />
+                {searchTerm && (<button onClick={() => setSearchTerm('')} className="text-neutral-400 hover:text-neutral-600 px-1 transition-colors"><X className="w-3.5 h-3.5" /></button>)}
+              </div>
+              <div className="relative shrink-0">
+                <button className={`border rounded-full w-8 h-8 flex items-center justify-center transition-all shadow-sm active:scale-95 shrink-0 overflow-hidden relative ${filterDate ? 'bg-[#C084FC] border-[#C084FC] text-white' : 'bg-white border-neutral-200 text-neutral-500 hover:bg-neutral-50'}`}>
+                  <Calendar className="w-3.5 h-3.5" />
+                  <input type="date" onClick={(e) => { try { if (e.target.showPicker) e.target.showPicker(); } catch (err) { } }} onChange={handleHistorySearchDateChange} className="absolute inset-0 w-full h-full opacity-0 cursor-pointer" />
+                </button>
+              </div>
+              <div className="flex lg:hidden bg-neutral-100 p-0.5 rounded-full border border-neutral-200 shadow-inner shrink-0">
+                <button onClick={() => setViewMode('list')} className={`w-7 h-7 flex items-center justify-center rounded-full transition-all ${viewMode === 'list' ? 'bg-white shadow-[0_2px_5px_rgba(0,0,0,0.1)] text-neutral-900 font-bold' : 'text-neutral-400 hover:text-neutral-600'}`}><List className="w-3.5 h-3.5" /></button>
+                <button onClick={() => setViewMode('card')} className={`w-7 h-7 flex items-center justify-center rounded-full transition-all ${viewMode === 'card' ? 'bg-white shadow-[0_2px_5px_rgba(0,0,0,0.1)] text-neutral-900 font-bold' : 'text-neutral-400 hover:text-neutral-600'}`}><LayoutGrid className="w-3.5 h-3.5" /></button>
+              </div>
             </div>
-
-            <div className="relative shrink-0">
-              <button className={`border rounded-full w-8 h-8 flex items-center justify-center transition-all shadow-sm active:scale-95 shrink-0 overflow-hidden relative ${filterDate ? 'bg-[#C084FC] border-[#C084FC] text-white' : 'bg-white border-neutral-200 text-neutral-500 hover:bg-neutral-50'}`}>
-                <Calendar className="w-3.5 h-3.5" />
-                <input type="date" onClick={(e) => { try { if (e.target.showPicker) e.target.showPicker(); } catch (err) { } }} onChange={handleHistorySearchDateChange} className="absolute inset-0 w-full h-full opacity-0 cursor-pointer" />
-              </button>
-            </div>
-
-            <div className="flex lg:hidden bg-neutral-100 p-0.5 rounded-full border border-neutral-200 shadow-inner shrink-0">
-              <button onClick={() => setViewMode('list')} className={`w-7 h-7 flex items-center justify-center rounded-full transition-all ${viewMode === 'list' ? 'bg-white shadow-[0_2px_5px_rgba(0,0,0,0.1)] text-neutral-900 font-bold' : 'text-neutral-400 hover:text-neutral-600'}`}><List className="w-3.5 h-3.5" /></button>
-              <button onClick={() => setViewMode('card')} className={`w-7 h-7 flex items-center justify-center rounded-full transition-all ${viewMode === 'card' ? 'bg-white shadow-[0_2px_5px_rgba(0,0,0,0.1)] text-neutral-900 font-bold' : 'text-neutral-400 hover:text-neutral-600'}`}><LayoutGrid className="w-3.5 h-3.5" /></button>
-            </div>
-          </div>
-        </div>
+          )}
       </div>
 
-      <div className="flex-1 overflow-y-auto p-3 md:p-6 pb-28 hide-scrollbar">
+      {/* BODY: conditionally show rounds or master bills */}
+      {historySubTab === 'masterBills' ? (
+        <div className="flex-1 overflow-y-auto p-3 md:p-6 pb-28 hide-scrollbar">
+          {masterBillsHistory.length === 0 ? (
+            <div className="h-full flex flex-col items-center justify-center text-neutral-400 mt-16">
+              <div className="w-16 h-16 bg-neutral-100 rounded-full flex items-center justify-center mb-3">
+                <ImageIcon className="w-6 h-6 text-neutral-300" />
+              </div>
+              <p className="font-bold text-base text-neutral-700">ยังไม่มีบิลรวม</p>
+              <p className="text-[11px] text-center max-w-[200px] mt-1 font-medium">เมื่อสร้างบิลรวมสำเร็จ ประวัติจะมาแสดงที่นี่ค่ะ</p>
+              <button
+                onClick={() => setHistorySubTab('rounds')}
+                className="mt-4 px-5 py-2.5 bg-[#C084FC] text-white rounded-full text-xs font-bold shadow-md hover:bg-[#A855F7] transition-all"
+              >ไปเลือกรอบเพื่อรวมบิล</button>
+            </div>
+          ) : (
+            <div className="space-y-4 max-w-3xl mx-auto">
+              {masterBillsHistory.map(bill => {
+                const isExpanded = expandedMasterBill === bill.id;
+                const dateFrom = bill.dateFrom ? formatDisplayDate(bill.dateFrom) : '-';
+                const dateTo = bill.dateTo ? formatDisplayDate(bill.dateTo) : '-';
+                const dateLabel = bill.dateFrom === bill.dateTo ? dateFrom : `${dateFrom} - ${dateTo}`;
+                const catEntries = Object.entries(bill.categorySummary || {}).sort((a,b) => b[1]-a[1]);
+
+                const handleReshareText = () => {
+                  let text = `📋 บิลรวมน้ำหนัก (Master Invoice)\n`;
+                  text += `📅 ช่วงวันที่: ${dateLabel}\n`;
+                  text += `📦 จำนวน ${bill.roundCount} รอบ\n\n─────────────────\nสรุปตามประเภท:\n`;
+                  catEntries.forEach(([cat, w]) => { text += `✅ ${cat}: ${Number(w).toLocaleString()} กก.\n`; });
+                  text += `─────────────────\n💰 ยอดรวมสุทธิ: ${Number(bill.totalWeight).toLocaleString()} กก.\n\n🌾 บันทึกโดย AgriWeigh`;
+                  if (navigator.share) navigator.share({ text }).catch(console.error);
+                  else navigator.clipboard.writeText(text).then(() => showToast('คัดลอกสำเร็จ!')).catch(() => showToast('ไม่สามารถคัดลอกได้'));
+                };
+
+                const handleReshareImage = async () => {
+                  setIsGeneratingImg(true);
+                  try {
+                    const SCALE = 2, W = 420, PADDING = 32, CONTENT_W = W - PADDING * 2;
+                    const catSectionH = catEntries.length * 68 + 60;
+                    const H = 220 + catSectionH + 100;
+                    const canvas = document.createElement('canvas');
+                    canvas.width = W * SCALE; canvas.height = H * SCALE;
+                    const ctx = canvas.getContext('2d');
+                    ctx.scale(SCALE, SCALE);
+                    ctx.fillStyle = '#FDFBF7'; ctx.fillRect(0, 0, W, H);
+                    ctx.strokeStyle = '#E5E5E5'; ctx.lineWidth = 1; ctx.strokeRect(0.5, 0.5, W-1, H-1);
+                    // Header
+                    ctx.fillStyle = '#1A1A1A'; ctx.beginPath(); ctx.roundRect(0, 0, W, 140, [0,0,32,32]); ctx.fill();
+                    ctx.fillStyle = '#C084FC'; ctx.globalAlpha = 0.2; ctx.beginPath(); ctx.arc(W-30, 30, 80, 0, Math.PI*2); ctx.fill(); ctx.globalAlpha = 1;
+                    ctx.fillStyle = '#C084FC'; ctx.beginPath(); ctx.arc(W/2, 38, 20, 0, Math.PI*2); ctx.fill();
+                    ctx.fillStyle = '#FFF'; ctx.font = 'bold 18px sans-serif'; ctx.textAlign = 'center'; ctx.fillText('✻', W/2, 44);
+                    ctx.fillStyle = '#FFF'; ctx.font = 'bold 22px sans-serif'; ctx.fillText('Master Invoice', W/2, 82);
+                    ctx.fillStyle = '#999'; ctx.font = '11px sans-serif'; ctx.fillText(dateLabel, W/2, 102);
+                    ctx.fillStyle = '#666'; ctx.font = '10px sans-serif'; ctx.fillText(`ยอดสุทธิ ${Number(bill.totalWeight).toLocaleString()} กก.  •  ${bill.roundCount} รอบ`, W/2, 120);
+                    let y = 160;
+                    ctx.fillStyle = '#C084FC'; ctx.font = 'bold 10px sans-serif'; ctx.textAlign = 'left'; ctx.fillText('สรุปยอดตามประเภท', PADDING, y); y += 18;
+                    catEntries.forEach(([cat, weight]) => {
+                      const catHex = getCategoryHex(cat);
+                      ctx.fillStyle = '#FFF'; ctx.beginPath(); ctx.roundRect(PADDING, y, CONTENT_W, 52, 12); ctx.fill();
+                      ctx.strokeStyle = '#F0F0F0'; ctx.lineWidth = 1; ctx.beginPath(); ctx.roundRect(PADDING, y, CONTENT_W, 52, 12); ctx.stroke();
+                      ctx.fillStyle = catHex; ctx.beginPath(); ctx.arc(PADDING+18, y+26, 5, 0, Math.PI*2); ctx.fill();
+                      ctx.fillStyle = '#1A1A1A'; ctx.font = 'bold 15px sans-serif'; ctx.textAlign = 'left'; ctx.fillText(cat, PADDING+30, y+30);
+                      ctx.font = 'bold 18px sans-serif'; ctx.textAlign = 'right'; ctx.fillText(Number(weight).toLocaleString(), W-PADDING-36, y+30);
+                      ctx.fillStyle = '#888'; ctx.font = '11px sans-serif'; ctx.fillText('กก.', W-PADDING-10, y+30); y += 60;
+                    });
+                    ctx.fillStyle = '#1A1A1A'; ctx.beginPath(); ctx.roundRect(PADDING, y, CONTENT_W, 64, 14); ctx.fill();
+                    ctx.fillStyle = '#999'; ctx.font = 'bold 11px sans-serif'; ctx.textAlign = 'left'; ctx.fillText('ยอดรวมสุทธิ', PADDING+16, y+24);
+                    ctx.fillStyle = '#FDE047'; ctx.font = 'bold 28px sans-serif'; ctx.textAlign = 'right'; ctx.fillText(Number(bill.totalWeight).toLocaleString(), W-PADDING-42, y+46);
+                    ctx.fillStyle = '#999'; ctx.font = 'bold 12px sans-serif'; ctx.fillText('กก.', W-PADDING-12, y+46); y += 80;
+                    ctx.fillStyle = '#CCC'; ctx.font = '9px sans-serif'; ctx.textAlign = 'center'; ctx.fillText('บันทึกโดย AgriWeigh Pro', W/2, y);
+                    const dataUrl = canvas.toDataURL('image/png');
+                    if (navigator.share && navigator.canShare) {
+                      const res = await fetch(dataUrl); const blob = await res.blob();
+                      const file = new File([blob], `master-bill-${bill.id}.png`, { type: 'image/png' });
+                      if (navigator.canShare({ files: [file] })) { await navigator.share({ files: [file], title: 'Master Invoice' }); }
+                      else downloadImage(dataUrl);
+                    } else downloadImage(dataUrl);
+                    showToast('สร้างรูปได้สำเร็จ!');
+                  } catch(e) { console.error(e); showToast('เกิดข้อผิดพลาด'); } finally { setIsGeneratingImg(false); }
+                };
+
+                return (
+                  <div key={bill.id} className="bg-white rounded-2xl border border-neutral-100 shadow-[0_2px_10px_rgb(0,0,0,0.03)] overflow-hidden transition-all hover:border-neutral-200">
+                    {/* Bill Card Header */}
+                    <div className="p-4 flex items-center gap-3 cursor-pointer" onClick={() => setExpandedMasterBill(isExpanded ? null : bill.id)}>
+                      <div className="w-10 h-10 rounded-full bg-[#C084FC]/10 flex items-center justify-center shrink-0">
+                        <ImageIcon className="w-5 h-5 text-[#C084FC]" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="font-extrabold text-neutral-900 text-sm">{dateLabel}</div>
+                        <div className="flex items-center gap-2 mt-0.5">
+                          <span className="text-[10px] font-medium text-neutral-500">{bill.roundCount} รอบ</span>
+                          <span className="w-1 h-1 rounded-full bg-neutral-300"></span>
+                          <span className="text-[10px] font-bold text-[#C084FC]">{catEntries.length} ประเภท</span>
+                        </div>
+                      </div>
+                      <div className="text-right shrink-0">
+                        <div className="text-xl font-black text-neutral-900">{Number(bill.totalWeight).toLocaleString()}</div>
+                        <div className="text-[10px] font-bold text-neutral-400">กก.</div>
+                      </div>
+                      <ChevronDown className={`w-4 h-4 text-neutral-400 transition-transform shrink-0 ${isExpanded ? 'rotate-180' : ''}`} />
+                    </div>
+
+                    {/* Expanded Detail */}
+                    {isExpanded && (
+                      <div className="border-t border-neutral-100 bg-neutral-50/50">
+                        <div className="p-4 space-y-2">
+                          {catEntries.map(([cat, w]) => (
+                            <div key={cat} className="flex justify-between items-center">
+                              <div className="flex items-center gap-2">
+                                <div className="w-2 h-2 rounded-full" style={{ backgroundColor: getCategoryHex(cat) }}></div>
+                                <span className="text-sm font-bold text-neutral-700">{cat}</span>
+                              </div>
+                              <span className="text-sm font-black text-neutral-900">{Number(w).toLocaleString()} <span className="text-neutral-400 font-medium text-xs">กก.</span></span>
+                            </div>
+                          ))}
+                        </div>
+                        <div className="p-4 pt-0 flex gap-2">
+                          <button
+                            onClick={handleReshareText}
+                            className="flex-1 flex items-center justify-center gap-2 py-2.5 bg-neutral-900 text-white rounded-xl text-xs font-bold hover:bg-neutral-700 active:scale-95 transition-all"
+                          >
+                            <MessageSquare className="w-3.5 h-3.5 text-[#4ADE80]" /> แชร์เป็นข้อความ
+                          </button>
+                          <button
+                            onClick={handleReshareImage}
+                            disabled={isGeneratingImg}
+                            className="flex-1 flex items-center justify-center gap-2 py-2.5 bg-white border-2 border-[#C084FC] text-[#7C3AED] rounded-xl text-xs font-bold hover:bg-[#C084FC]/5 active:scale-95 transition-all disabled:opacity-60"
+                          >
+                            {isGeneratingImg ? <><RotateCcw className="w-3.5 h-3.5 animate-spin" /> สร้าง...</> : <><ImageIcon className="w-3.5 h-3.5" /> แชร์เป็นรูป</>}
+                          </button>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </div>
+      ) : (
+        <div className="flex-1 overflow-y-auto p-3 md:p-6 pb-28 hide-scrollbar">
+
         {filteredHistory.length === 0 ? (
           <div className="h-full flex flex-col items-center justify-center text-neutral-400">
             <div className="w-16 h-16 bg-neutral-100 rounded-full flex items-center justify-center mb-3"><Search className="w-6 h-6 text-neutral-300" /></div>
@@ -1360,7 +1528,8 @@ export default function App() {
             </div>
           </>
         )}
-      </div>
+        </div>
+      )}
 
       {/* Floating Selection Bar */}
       {isSelectionMode && (
@@ -1567,23 +1736,46 @@ export default function App() {
     // --- Finalize Master Bill ---
     const handleFinalizeMasterBill = async () => {
       setIsGeneratingMasterBill(true);
-      // ✅ Optimistic UI: Update local state immediately
+
+      // ✅ 1. Build master bill snapshot
       const billedIds = [...selectedRounds];
+      const dates = selectedData.map(r => r.date).sort();
+      const masterBillSnapshot = {
+        id: `mb-${Date.now()}`,
+        createdAt: new Date().toISOString(),
+        dateFrom: dates[0],
+        dateTo: dates[dates.length - 1],
+        totalWeight,
+        roundCount: selectedData.length,
+        roundIds: billedIds,
+        categorySummary
+      };
+
+      // ✅ 2. Optimistic UI: Update historyRecords status immediately
       setHistoryRecords(prev => prev.map(r =>
         billedIds.includes(r.id) ? { ...r, billingStatus: 'Billed' } : r
       ));
 
-      // Show success view immediately
+      // ✅ 3. Save snapshot to Master Bills history
+      setMasterBillsHistory(prev => [masterBillSnapshot, ...prev]);
+
+      // ✅ 4. Show success
       setMasterBillSuccess(true);
       setIsGeneratingMasterBill(false);
 
-      // Try to sync with Google Sheet in the background
+      // ✅ 5. Background sync to GAS
       if (GAS_URL) {
         try {
-          await fetch(GAS_URL, {
-            method: 'POST',
-            body: JSON.stringify({ action: 'updateBillingStatus', payload: { ids: billedIds, status: 'Billed' } })
-          });
+          await Promise.all([
+            fetch(GAS_URL, {
+              method: 'POST',
+              body: JSON.stringify({ action: 'updateBillingStatus', payload: { ids: billedIds, status: 'Billed' } })
+            }),
+            fetch(GAS_URL, {
+              method: 'POST',
+              body: JSON.stringify({ action: 'saveMasterBill', payload: masterBillSnapshot })
+            })
+          ]);
         } catch (e) {
           console.error('Master bill GAS sync failed (UI already updated)', e);
         }

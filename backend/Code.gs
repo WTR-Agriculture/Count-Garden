@@ -13,6 +13,7 @@ function doGet(e) {
   const action = e.parameter.action;
   if (action === 'getMasterData') return getMasterData();
   if (action === 'getHistory') return getHistory();
+  if (action === 'getMasterBills') return getMasterBills();
   return jsonResponse({ error: 'Invalid action' });
 }
 
@@ -26,6 +27,8 @@ function doPost(e) {
   if (action === 'deleteCategory') return deleteCategory(data.payload);
   if (action === 'addFarm') return addFarm(data.payload);
   if (action === 'deleteFarm') return deleteFarm(data.payload);
+  if (action === 'saveMasterBill') return saveMasterBill(data.payload);
+  if (action === 'updateBillingStatus') return updateBillingStatus(data.payload);
   return jsonResponse({ error: 'Invalid action' });
 }
 
@@ -146,6 +149,47 @@ function updateBillingStatus(payload) {
   return jsonResponse({ success: true });
 }
 
+// --- WRITE: Master Bills ---
+function saveMasterBill(payload) {
+  const SS = getSS();
+  let masterSheet = SS.getSheetByName('MasterBills');
+  if (!masterSheet) {
+    masterSheet = SS.insertSheet('MasterBills');
+    masterSheet.appendRow(['MasterBillID', 'CreatedAt', 'DateFrom', 'DateTo', 'TotalWeight', 'RoundCount', 'RoundIds', 'CategorySummary']);
+  }
+  const { id, createdAt, dateFrom, dateTo, totalWeight, roundCount, roundIds, categorySummary } = payload;
+  masterSheet.appendRow([
+    id,
+    createdAt,
+    dateFrom,
+    dateTo,
+    totalWeight,
+    roundCount,
+    JSON.stringify(roundIds),
+    JSON.stringify(categorySummary)
+  ]);
+  return jsonResponse({ success: true });
+}
+
+// --- READ: Master Bills ---
+function getMasterBills() {
+  const SS = getSS();
+  const masterSheet = SS.getSheetByName('MasterBills');
+  if (!masterSheet) return jsonResponse([]);
+  const rows = masterSheet.getDataRange().getValues().slice(1);
+  const bills = rows.map(r => ({
+    id: r[0],
+    createdAt: r[1],
+    dateFrom: r[2],
+    dateTo: r[3],
+    totalWeight: r[4],
+    roundCount: r[5],
+    roundIds: JSON.parse(r[6] || '[]'),
+    categorySummary: JSON.parse(r[7] || '{}')
+  })).reverse();
+  return jsonResponse(bills);
+}
+
 // --- WRITE: Settings - Fruits ---
 function addFruit(payload) {
   const SS = getSS();
@@ -240,7 +284,7 @@ function jsonResponse(data) {
 
 function setup() {
   const SS = getSS();
-  ['Fruits', 'Categories', 'Records', 'RecordItems', 'Farms'].forEach(name => {
+  ['Fruits', 'Categories', 'Records', 'RecordItems', 'Farms', 'MasterBills'].forEach(name => {
     if (!SS.getSheetByName(name)) SS.insertSheet(name);
   });
 
