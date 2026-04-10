@@ -405,10 +405,14 @@ export default function App() {
         details: groupedRecords.map(g => ({ category: g.category, total: g.total, items: g.items.map(item => item.weight).reverse() }))
       });
 
-      // Wait a tick for rendering
-      await new Promise(r => setTimeout(r, 500));
+      // Wait a tick for rendering (Increase for iOS stability)
+      await new Promise(r => setTimeout(r, 2000));
 
-      const dataUrl = await toPng(receiptRef.current, { cacheBust: true, pixelRatio: 2 });
+      const dataUrl = await toPng(receiptRef.current, { 
+        cacheBust: true, 
+        pixelRatio: 2,
+        backgroundColor: '#ffffff'
+      });
       
       if (navigator.share && navigator.canShare) {
         const reset = await fetch(dataUrl);
