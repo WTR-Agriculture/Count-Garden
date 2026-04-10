@@ -175,7 +175,7 @@ export default function App() {
   });
   const [searchTerm, setSearchTerm] = useState('');
   const [viewMode, setViewMode] = useState('list');
-  
+
   // Master Billing Selection States
   const [isSelectionMode, setIsSelectionMode] = useState(false);
   const [selectedRounds, setSelectedRounds] = useState([]);
@@ -216,7 +216,7 @@ export default function App() {
   const [shareModalRecord, setShareModalRecord] = useState(null);
   const [toastMsg, setToastMsg] = useState('');
   const [isGeneratingImg, setIsGeneratingImg] = useState(false);
-  
+
   // PWA Install State
   const [deferredPrompt, setDeferredPrompt] = useState(null);
   const [showInstallBanner, setShowInstallBanner] = useState(false);
@@ -462,15 +462,15 @@ export default function App() {
 
   const handleEditHistory = (recordToEdit) => {
     let flatRecords = [];
-    recordToEdit.details.forEach(detail => { 
-      detail.items.forEach((itemWeight, idx) => { 
-        flatRecords.push({ 
-          id: `edit-${Date.now()}-${idx}-${Math.random()}`, 
-          category: detail.category, 
-          weight: itemWeight, 
-          timestamp: recordToEdit.timestamp 
-        }); 
-      }); 
+    recordToEdit.details.forEach(detail => {
+      detail.items.forEach((itemWeight, idx) => {
+        flatRecords.push({
+          id: `edit-${Date.now()}-${idx}-${Math.random()}`,
+          category: detail.category,
+          weight: itemWeight,
+          timestamp: recordToEdit.timestamp
+        });
+      });
     });
     setSetupData({ date: recordToEdit.date, round: recordToEdit.round, fruit: recordToEdit.fruit, farmName: recordToEdit.farmName || '' });
     setRecords(flatRecords.reverse()); // Reverse back to Latest -> First for Recording UI
@@ -489,10 +489,10 @@ export default function App() {
     const historyEntry = {
       id: editingId || Date.now().toString(), date: setupData.date, round: setupData.round, fruit: setupData.fruit, farmName: setupData.farmName, totalWeight: grandTotal,
       timestamp: new Date().toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' }),
-      details: groupedRecords.map(g => ({ 
-        category: g.category, 
-        total: g.total, 
-        count: g.items.length, 
+      details: groupedRecords.map(g => ({
+        category: g.category,
+        total: g.total,
+        count: g.items.length,
         items: g.items.map(item => item.weight).reverse() // Store as First -> Last
       }))
     };
@@ -542,9 +542,9 @@ export default function App() {
       fruit: setupData.fruit,
       farmName: setupData.farmName,
       totalWeight: grandTotal,
-      details: groupedRecords.map(g => ({ 
-        category: g.category, 
-        total: g.total, 
+      details: groupedRecords.map(g => ({
+        category: g.category,
+        total: g.total,
         items: g.items.map(item => item.weight).reverse() // Sequence as First -> Last
       }))
     };
@@ -577,9 +577,9 @@ export default function App() {
       fruit: setupData.fruit,
       farmName: setupData.farmName,
       totalWeight: grandTotal,
-      details: groupedRecords.map(g => ({ 
-        category: g.category, 
-        total: g.total, 
+      details: groupedRecords.map(g => ({
+        category: g.category,
+        total: g.total,
         items: g.items.map(item => item.weight).reverse() // Sequence as First -> Last
       }))
     };
@@ -732,8 +732,8 @@ export default function App() {
         const blob = await res.blob();
         const file = new File([blob], `receipt-${data.fruit}-round${data.round}.png`, { type: 'image/png' });
         if (navigator.canShare({ files: [file] })) {
-          await navigator.share({ 
-            files: [file], 
+          await navigator.share({
+            files: [file],
             title: `ใบเสร็จ ${currentFarmName}`,
             text: `🧾 ใบเสร็จชั่งน้ำหนัก ${data.fruit} - ${currentFarmName} (${formatDisplayDate(data.date)})`
           });
@@ -792,8 +792,8 @@ export default function App() {
             )}
           </h2>
           <div className="flex-1 flex justify-end">
-            <button 
-              onClick={loadGASData} 
+            <button
+              onClick={loadGASData}
               disabled={gasLoading}
               className={`p-2 rounded-full transition-all ${gasLoading ? 'animate-spin text-[#4ADE80] bg-green-50' : 'text-neutral-400 hover:text-[#4ADE80] hover:bg-green-50 active:scale-90'}`}
               title="รีเฟรชข้อมูล"
@@ -893,7 +893,7 @@ export default function App() {
       <div className={`p-3 lg:px-6 lg:py-4 flex flex-wrap justify-between items-center z-20 shrink-0 gap-3 w-full transition-colors border-b ${editingId ? 'bg-amber-50 border-amber-100' : 'bg-[#FDFBF7] border-transparent'}`}>
         <div className="flex flex-wrap items-center gap-2 text-neutral-600 font-medium flex-1">
           <button onClick={handleEditSetup} className={`bg-white border ${editingId ? 'border-amber-200 text-amber-600 bg-amber-50/50' : 'border-neutral-200'} px-3 py-1.5 rounded-full text-[11px] lg:text-xs font-bold shadow-sm flex items-center gap-1.5 hover:bg-neutral-50 shrink-0 transition-colors`}>
-            <Edit2 className={`w-3 h-3 ${editingId ? 'text-amber-500' : 'text-neutral-400'}`} /> 
+            <Edit2 className={`w-3 h-3 ${editingId ? 'text-amber-500' : 'text-neutral-400'}`} />
             {editingId ? `แก้หัวข้อรอบ ${setupData.round}` : formatDisplayDate(setupData.date)}
           </button>
           <div className={`${editingId ? 'bg-amber-400' : 'bg-[#4ADE80]'} text-neutral-900 px-3 py-1.5 rounded-full text-[11px] lg:text-xs font-bold shadow-sm shrink-0`}>
@@ -1115,17 +1115,15 @@ export default function App() {
         <div className="mt-4 flex gap-1 bg-neutral-100 p-1 rounded-2xl relative z-10">
           <button
             onClick={() => { setHistorySubTab('rounds'); setIsSelectionMode(false); setSelectedRounds([]); }}
-            className={`flex-1 flex items-center justify-center gap-1.5 py-2 rounded-xl text-xs font-bold transition-all ${
-              historySubTab === 'rounds' ? 'bg-white shadow text-neutral-900' : 'text-neutral-500 hover:text-neutral-700'
-            }`}
+            className={`flex-1 flex items-center justify-center gap-1.5 py-2 rounded-xl text-xs font-bold transition-all ${historySubTab === 'rounds' ? 'bg-white shadow text-neutral-900' : 'text-neutral-500 hover:text-neutral-700'
+              }`}
           >
             <List className="w-3.5 h-3.5" /> รายรอบ
           </button>
           <button
             onClick={() => { setHistorySubTab('masterBills'); setIsSelectionMode(false); setSelectedRounds([]); }}
-            className={`flex-1 flex items-center justify-center gap-1.5 py-2 rounded-xl text-xs font-bold transition-all ${
-              historySubTab === 'masterBills' ? 'bg-white shadow text-[#C084FC]' : 'text-neutral-500 hover:text-[#C084FC]'
-            }`}
+            className={`flex-1 flex items-center justify-center gap-1.5 py-2 rounded-xl text-xs font-bold transition-all ${historySubTab === 'masterBills' ? 'bg-white shadow text-[#C084FC]' : 'text-neutral-500 hover:text-[#C084FC]'
+              }`}
           >
             <ImageIcon className="w-3.5 h-3.5" /> บิลรวม
             {masterBillsHistory.length > 0 && (
@@ -1134,36 +1132,36 @@ export default function App() {
           </button>
         </div>
 
-          {/* Active Filter Chips - rounds only */}
-          {historySubTab === 'rounds' && filterDate && (
-            <div className="flex flex-wrap items-center gap-2 mb-1 px-1 mt-3">
-              <span className="bg-[#C084FC]/10 text-[#C084FC] border border-[#C084FC]/20 px-3 py-1.5 rounded-full text-xs font-bold flex items-center gap-2 animate-in slide-in-from-left-2 duration-300">
-                <Calendar className="w-3.5 h-3.5" />
-                กรองวันที่: {formatDisplayDate(filterDate)}
-                <button onClick={clearDateFilter} className="hover:text-red-500 transition-colors p-0.5 rounded-full hover:bg-white"><X className="w-3.5 h-3.5" /></button>
-              </span>
-            </div>
-          )}
+        {/* Active Filter Chips - rounds only */}
+        {historySubTab === 'rounds' && filterDate && (
+          <div className="flex flex-wrap items-center gap-2 mb-1 px-1 mt-3">
+            <span className="bg-[#C084FC]/10 text-[#C084FC] border border-[#C084FC]/20 px-3 py-1.5 rounded-full text-xs font-bold flex items-center gap-2 animate-in slide-in-from-left-2 duration-300">
+              <Calendar className="w-3.5 h-3.5" />
+              กรองวันที่: {formatDisplayDate(filterDate)}
+              <button onClick={clearDateFilter} className="hover:text-red-500 transition-colors p-0.5 rounded-full hover:bg-white"><X className="w-3.5 h-3.5" /></button>
+            </span>
+          </div>
+        )}
 
-          {historySubTab === 'rounds' && (
-            <div className="flex gap-2 items-center w-full mt-3">
-              <div className="flex-1 bg-neutral-50 border border-neutral-200 rounded-full flex items-center px-3 py-1.5 shadow-sm focus-within:ring-2 focus-within:ring-[#C084FC]/20 focus-within:border-[#C084FC] transition-all">
-                <Search className="w-3.5 h-3.5 text-neutral-400 mr-1.5" />
-                <input type="text" placeholder="ค้นหา... (ผลไม้, รอบ, สวน)" value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} className="bg-transparent border-none outline-none text-xs w-full text-neutral-700 font-medium placeholder-neutral-300" />
-                {searchTerm && (<button onClick={() => setSearchTerm('')} className="text-neutral-400 hover:text-neutral-600 px-1 transition-colors"><X className="w-3.5 h-3.5" /></button>)}
-              </div>
-              <div className="relative shrink-0">
-                <button className={`border rounded-full w-8 h-8 flex items-center justify-center transition-all shadow-sm active:scale-95 shrink-0 overflow-hidden relative ${filterDate ? 'bg-[#C084FC] border-[#C084FC] text-white' : 'bg-white border-neutral-200 text-neutral-500 hover:bg-neutral-50'}`}>
-                  <Calendar className="w-3.5 h-3.5" />
-                  <input type="date" onClick={(e) => { try { if (e.target.showPicker) e.target.showPicker(); } catch (err) { } }} onChange={handleHistorySearchDateChange} className="absolute inset-0 w-full h-full opacity-0 cursor-pointer" />
-                </button>
-              </div>
-              <div className="flex lg:hidden bg-neutral-100 p-0.5 rounded-full border border-neutral-200 shadow-inner shrink-0">
-                <button onClick={() => setViewMode('list')} className={`w-7 h-7 flex items-center justify-center rounded-full transition-all ${viewMode === 'list' ? 'bg-white shadow-[0_2px_5px_rgba(0,0,0,0.1)] text-neutral-900 font-bold' : 'text-neutral-400 hover:text-neutral-600'}`}><List className="w-3.5 h-3.5" /></button>
-                <button onClick={() => setViewMode('card')} className={`w-7 h-7 flex items-center justify-center rounded-full transition-all ${viewMode === 'card' ? 'bg-white shadow-[0_2px_5px_rgba(0,0,0,0.1)] text-neutral-900 font-bold' : 'text-neutral-400 hover:text-neutral-600'}`}><LayoutGrid className="w-3.5 h-3.5" /></button>
-              </div>
+        {historySubTab === 'rounds' && (
+          <div className="flex gap-2 items-center w-full mt-3">
+            <div className="flex-1 bg-neutral-50 border border-neutral-200 rounded-full flex items-center px-3 py-1.5 shadow-sm focus-within:ring-2 focus-within:ring-[#C084FC]/20 focus-within:border-[#C084FC] transition-all">
+              <Search className="w-3.5 h-3.5 text-neutral-400 mr-1.5" />
+              <input type="text" placeholder="ค้นหา... (ผลไม้, รอบ, สวน)" value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} className="bg-transparent border-none outline-none text-xs w-full text-neutral-700 font-medium placeholder-neutral-300" />
+              {searchTerm && (<button onClick={() => setSearchTerm('')} className="text-neutral-400 hover:text-neutral-600 px-1 transition-colors"><X className="w-3.5 h-3.5" /></button>)}
             </div>
-          )}
+            <div className="relative shrink-0">
+              <button className={`border rounded-full w-8 h-8 flex items-center justify-center transition-all shadow-sm active:scale-95 shrink-0 overflow-hidden relative ${filterDate ? 'bg-[#C084FC] border-[#C084FC] text-white' : 'bg-white border-neutral-200 text-neutral-500 hover:bg-neutral-50'}`}>
+                <Calendar className="w-3.5 h-3.5" />
+                <input type="date" onClick={(e) => { try { if (e.target.showPicker) e.target.showPicker(); } catch (err) { } }} onChange={handleHistorySearchDateChange} className="absolute inset-0 w-full h-full opacity-0 cursor-pointer" />
+              </button>
+            </div>
+            <div className="flex lg:hidden bg-neutral-100 p-0.5 rounded-full border border-neutral-200 shadow-inner shrink-0">
+              <button onClick={() => setViewMode('list')} className={`w-7 h-7 flex items-center justify-center rounded-full transition-all ${viewMode === 'list' ? 'bg-white shadow-[0_2px_5px_rgba(0,0,0,0.1)] text-neutral-900 font-bold' : 'text-neutral-400 hover:text-neutral-600'}`}><List className="w-3.5 h-3.5" /></button>
+              <button onClick={() => setViewMode('card')} className={`w-7 h-7 flex items-center justify-center rounded-full transition-all ${viewMode === 'card' ? 'bg-white shadow-[0_2px_5px_rgba(0,0,0,0.1)] text-neutral-900 font-bold' : 'text-neutral-400 hover:text-neutral-600'}`}><LayoutGrid className="w-3.5 h-3.5" /></button>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* BODY: conditionally show rounds or master bills */}
@@ -1188,14 +1186,14 @@ export default function App() {
                 const dateFrom = bill.dateFrom ? formatDisplayDate(bill.dateFrom) : '-';
                 const dateTo = bill.dateTo ? formatDisplayDate(bill.dateTo) : '-';
                 const dateLabel = bill.dateFrom === bill.dateTo ? dateFrom : `${dateFrom} - ${dateTo}`;
-                const catEntries = Object.entries(bill.categorySummary || {}).sort((a,b) => b[1]-a[1]);
+                const catEntries = Object.entries(bill.categorySummary || {}).sort((a, b) => b[1] - a[1]);
 
                 const handleReshareText = () => {
                   let text = `📋 บิลรวมน้ำหนัก (Master Invoice)\n`;
                   text += `📅 ช่วงวันที่: ${dateLabel}\n`;
                   text += `📦 จำนวน ${bill.roundCount} รอบ\n\n─────────────────\nสรุปตามประเภท:\n`;
                   catEntries.forEach(([cat, w]) => { text += `✅ ${cat}: ${Number(w).toLocaleString()} กก.\n`; });
-                  text += `─────────────────\n💰 ยอดรวมสุทธิ: ${Number(bill.totalWeight).toLocaleString()} กก.\n\n🌾 บันทึกโดย AgriWeigh`;
+                  text += `─────────────────\n💰 ยอดรวมสุทธิ: ${Number(bill.totalWeight).toLocaleString()} กก.\n\n🌾`;
                   if (navigator.share) navigator.share({ text }).catch(console.error);
                   else navigator.clipboard.writeText(text).then(() => showToast('คัดลอกสำเร็จ!')).catch(() => showToast('ไม่สามารถคัดลอกได้'));
                 };
@@ -1211,10 +1209,10 @@ export default function App() {
                     const ctx = canvas.getContext('2d');
                     ctx.scale(SCALE, SCALE);
                     ctx.fillStyle = '#FDFBF7'; ctx.fillRect(0, 0, W, H);
-                    ctx.strokeStyle = '#E5E5E5'; ctx.lineWidth = 1; ctx.strokeRect(0.5, 0.5, W-1, H-1);
+                    ctx.strokeStyle = '#E5E5E5'; ctx.lineWidth = 1; ctx.strokeRect(0.5, 0.5, W - 1, H - 1);
                     // Header
-                    ctx.fillStyle = '#1A1A1A'; ctx.beginPath(); ctx.roundRect(0, 0, W, 140, [0,0,32,32]); ctx.fill();
-                    ctx.fillStyle = '#C084FC'; ctx.globalAlpha = 0.2; ctx.beginPath(); ctx.arc(W-30, 30, 80, 0, Math.PI*2); ctx.fill(); ctx.globalAlpha = 1;
+                    ctx.fillStyle = '#1A1A1A'; ctx.beginPath(); ctx.roundRect(0, 0, W, 140, [0, 0, 32, 32]); ctx.fill();
+                    ctx.fillStyle = '#C084FC'; ctx.globalAlpha = 0.2; ctx.beginPath(); ctx.arc(W - 30, 30, 80, 0, Math.PI * 2); ctx.fill(); ctx.globalAlpha = 1;
                     ctx.fillStyle = '#C084FC'; ctx.beginPath(); ctx.arc(W/2, 38, 20, 0, Math.PI*2); ctx.fill();
                     ctx.fillStyle = '#FFF'; ctx.font = 'bold 18px sans-serif'; ctx.textAlign = 'center'; ctx.fillText('✻', W/2, 44);
                     ctx.fillStyle = '#FFF'; ctx.font = 'bold 22px sans-serif'; ctx.fillText('Master Invoice', W/2, 82);
@@ -1227,16 +1225,16 @@ export default function App() {
                       const catHex = getCategoryHex(cat);
                       ctx.fillStyle = '#FFF'; ctx.beginPath(); ctx.roundRect(PADDING, y, CONTENT_W, 52, 12); ctx.fill();
                       ctx.strokeStyle = '#F0F0F0'; ctx.lineWidth = 1; ctx.beginPath(); ctx.roundRect(PADDING, y, CONTENT_W, 52, 12); ctx.stroke();
-                      ctx.fillStyle = catHex; ctx.beginPath(); ctx.arc(PADDING+18, y+26, 5, 0, Math.PI*2); ctx.fill();
-                      ctx.fillStyle = '#1A1A1A'; ctx.font = 'bold 15px sans-serif'; ctx.textAlign = 'left'; ctx.fillText(cat, PADDING+30, y+30);
-                      ctx.font = 'bold 18px sans-serif'; ctx.textAlign = 'right'; ctx.fillText(Number(weight).toLocaleString(), W-PADDING-36, y+30);
-                      ctx.fillStyle = '#888'; ctx.font = '11px sans-serif'; ctx.fillText('กก.', W-PADDING-10, y+30); y += 60;
+                      ctx.fillStyle = catHex; ctx.beginPath(); ctx.arc(PADDING + 18, y + 26, 5, 0, Math.PI * 2); ctx.fill();
+                      ctx.fillStyle = '#1A1A1A'; ctx.font = 'bold 15px sans-serif'; ctx.textAlign = 'left'; ctx.fillText(cat, PADDING + 30, y + 30);
+                      ctx.font = 'bold 18px sans-serif'; ctx.textAlign = 'right'; ctx.fillText(Number(weight).toLocaleString(), W - PADDING - 36, y + 30);
+                      ctx.fillStyle = '#888'; ctx.font = '11px sans-serif'; ctx.fillText('กก.', W - PADDING - 10, y + 30); y += 60;
                     });
                     ctx.fillStyle = '#1A1A1A'; ctx.beginPath(); ctx.roundRect(PADDING, y, CONTENT_W, 64, 14); ctx.fill();
-                    ctx.fillStyle = '#999'; ctx.font = 'bold 11px sans-serif'; ctx.textAlign = 'left'; ctx.fillText('ยอดรวมสุทธิ', PADDING+16, y+24);
-                    ctx.fillStyle = '#FDE047'; ctx.font = 'bold 28px sans-serif'; ctx.textAlign = 'right'; ctx.fillText(Number(bill.totalWeight).toLocaleString(), W-PADDING-42, y+46);
-                    ctx.fillStyle = '#999'; ctx.font = 'bold 12px sans-serif'; ctx.fillText('กก.', W-PADDING-12, y+46); y += 80;
-                    ctx.fillStyle = '#CCC'; ctx.font = '9px sans-serif'; ctx.textAlign = 'center'; ctx.fillText('บันทึกโดย AgriWeigh Pro', W/2, y);
+                    ctx.fillStyle = '#999'; ctx.font = 'bold 11px sans-serif'; ctx.textAlign = 'left'; ctx.fillText('ยอดรวมสุทธิ', PADDING + 16, y + 24);
+                    ctx.fillStyle = '#FDE047'; ctx.font = 'bold 28px sans-serif'; ctx.textAlign = 'right'; ctx.fillText(Number(bill.totalWeight).toLocaleString(), W - PADDING - 42, y + 46);
+                    ctx.fillStyle = '#999'; ctx.font = 'bold 12px sans-serif'; ctx.fillText('กก.', W - PADDING - 12, y + 46); y += 80;
+                    ctx.fillStyle = '#CCC'; ctx.font = '9px sans-serif'; ctx.textAlign = 'center'; ctx.fillText('บันทึกโดย AgriWeigh Pro', W / 2, y);
                     const dataUrl = canvas.toDataURL('image/png');
                     if (navigator.share && navigator.canShare) {
                       const res = await fetch(dataUrl); const blob = await res.blob();
@@ -1245,7 +1243,7 @@ export default function App() {
                       else downloadImage(dataUrl);
                     } else downloadImage(dataUrl);
                     showToast('สร้างรูปได้สำเร็จ!');
-                  } catch(e) { console.error(e); showToast('เกิดข้อผิดพลาด'); } finally { setIsGeneratingImg(false); }
+                  } catch (e) { console.error(e); showToast('เกิดข้อผิดพลาด'); } finally { setIsGeneratingImg(false); }
                 };
 
                 return (
@@ -1311,48 +1309,115 @@ export default function App() {
       ) : (
         <div className="flex-1 overflow-y-auto p-3 md:p-6 pb-28 hide-scrollbar">
 
-        {filteredHistory.length === 0 ? (
-          <div className="h-full flex flex-col items-center justify-center text-neutral-400">
-            <div className="w-16 h-16 bg-neutral-100 rounded-full flex items-center justify-center mb-3"><Search className="w-6 h-6 text-neutral-300" /></div>
-            <p className="font-bold text-base text-neutral-700">ไม่พบข้อมูล</p>
-            <p className="text-[11px] text-center max-w-[200px] mt-1 font-medium">ลองเปลี่ยนคำค้นหา หรือเลือกวันที่จากปฏิทินอีกครั้ง</p>
-          </div>
-        ) : (
-          <>
-            <div className="block lg:hidden space-y-3 max-w-3xl mx-auto">
-              {filteredHistory.map(record => {
-                const isExpanded = expandedHistory.includes(record.id);
-                if (viewMode === 'list') {
-                  return (
-                    <div key={record.id} className="bg-white rounded-2xl border border-neutral-100 shadow-[0_2px_10px_rgb(0,0,0,0.02)] overflow-hidden transition-all hover:border-neutral-200">
-                      <div className="p-3 flex justify-between items-center cursor-pointer" onClick={() => isSelectionMode ? toggleSelection(record.id) : toggleHistoryExpand(record.id)}>
-                        <div className="flex items-center gap-3">
-                          {isSelectionMode && (
-                            <div className={`w-5 h-5 rounded-md border-2 flex items-center justify-center transition-all ${selectedRounds.includes(record.id) ? 'bg-[#C084FC] border-[#C084FC]' : 'border-neutral-200 bg-white shadow-inner'}`}>
-                              {selectedRounds.includes(record.id) && <CheckCircle className="w-3.5 h-3.5 text-white" />}
+          {filteredHistory.length === 0 ? (
+            <div className="h-full flex flex-col items-center justify-center text-neutral-400">
+              <div className="w-16 h-16 bg-neutral-100 rounded-full flex items-center justify-center mb-3"><Search className="w-6 h-6 text-neutral-300" /></div>
+              <p className="font-bold text-base text-neutral-700">ไม่พบข้อมูล</p>
+              <p className="text-[11px] text-center max-w-[200px] mt-1 font-medium">ลองเปลี่ยนคำค้นหา หรือเลือกวันที่จากปฏิทินอีกครั้ง</p>
+            </div>
+          ) : (
+            <>
+              <div className="block lg:hidden space-y-3 max-w-3xl mx-auto">
+                {filteredHistory.map(record => {
+                  const isExpanded = expandedHistory.includes(record.id);
+                  if (viewMode === 'list') {
+                    return (
+                      <div key={record.id} className="bg-white rounded-2xl border border-neutral-100 shadow-[0_2px_10px_rgb(0,0,0,0.02)] overflow-hidden transition-all hover:border-neutral-200">
+                        <div className="p-3 flex justify-between items-center cursor-pointer" onClick={() => isSelectionMode ? toggleSelection(record.id) : toggleHistoryExpand(record.id)}>
+                          <div className="flex items-center gap-3">
+                            {isSelectionMode && (
+                              <div className={`w-5 h-5 rounded-md border-2 flex items-center justify-center transition-all ${selectedRounds.includes(record.id) ? 'bg-[#C084FC] border-[#C084FC]' : 'border-neutral-200 bg-white shadow-inner'}`}>
+                                {selectedRounds.includes(record.id) && <CheckCircle className="w-3.5 h-3.5 text-white" />}
+                              </div>
+                            )}
+                            <div className={`w-10 h-10 rounded-full flex items-center justify-center font-bold text-xs shadow-sm shrink-0 whitespace-nowrap transition-colors ${record.billingStatus === 'Billed' ? 'bg-green-100 text-green-700' : 'bg-[#4ADE80] text-neutral-900'}`}>ร.{record.round}</div>
+                            <div>
+                              <div className="font-bold text-neutral-900 text-sm flex items-center gap-1.5">
+                                {record.fruit}
+                                {record.billingStatus === 'Billed' ? (
+                                  <span className="bg-green-100 text-green-600 text-[7px] px-1 py-0.5 rounded-full font-bold border border-green-200 uppercase tracking-tighter">Billed</span>
+                                ) : (
+                                  <span className="bg-amber-100 text-amber-600 text-[7px] px-1 py-0.5 rounded-full font-bold border border-amber-200 uppercase tracking-tighter">Pending</span>
+                                )}
+                                <span className="bg-neutral-100 text-neutral-500 text-[8px] px-1.5 py-0.5 rounded-full font-bold">{record.details.length} ประเภท</span>
+                              </div>
+                              <div className="text-[9px] text-neutral-400 font-medium flex items-center gap-1 mt-0.5"><Calendar className="w-2.5 h-2.5" />{formatDisplayDate(record.date)} • {record.timestamp}</div>
                             </div>
-                          )}
-                          <div className={`w-10 h-10 rounded-full flex items-center justify-center font-bold text-xs shadow-sm shrink-0 whitespace-nowrap transition-colors ${record.billingStatus === 'Billed' ? 'bg-green-100 text-green-700' : 'bg-[#4ADE80] text-neutral-900'}`}>ร.{record.round}</div>
-                          <div>
-                            <div className="font-bold text-neutral-900 text-sm flex items-center gap-1.5">
-                              {record.fruit} 
-                              {record.billingStatus === 'Billed' ? (
-                                <span className="bg-green-100 text-green-600 text-[7px] px-1 py-0.5 rounded-full font-bold border border-green-200 uppercase tracking-tighter">Billed</span>
-                              ) : (
-                                <span className="bg-amber-100 text-amber-600 text-[7px] px-1 py-0.5 rounded-full font-bold border border-amber-200 uppercase tracking-tighter">Pending</span>
-                              )}
-                              <span className="bg-neutral-100 text-neutral-500 text-[8px] px-1.5 py-0.5 rounded-full font-bold">{record.details.length} ประเภท</span>
-                            </div>
-                            <div className="text-[9px] text-neutral-400 font-medium flex items-center gap-1 mt-0.5"><Calendar className="w-2.5 h-2.5" />{formatDisplayDate(record.date)} • {record.timestamp}</div>
+                          </div>
+                          <div className="text-right">
+                            <div className="text-lg font-black tracking-tight text-neutral-900">{record.totalWeight.toLocaleString()} <span className="text-[9px] font-bold text-neutral-500">กก.</span></div>
+                            <div className="text-[9px] text-[#C084FC] font-bold flex items-center justify-end gap-0.5 mt-0.5">{isExpanded ? 'ปิด' : 'รายละเอียด'} <ChevronDown className={`w-3 h-3 transition-transform ${isExpanded ? 'rotate-180' : ''}`} /></div>
                           </div>
                         </div>
-                        <div className="text-right">
-                          <div className="text-lg font-black tracking-tight text-neutral-900">{record.totalWeight.toLocaleString()} <span className="text-[9px] font-bold text-neutral-500">กก.</span></div>
-                          <div className="text-[9px] text-[#C084FC] font-bold flex items-center justify-end gap-0.5 mt-0.5">{isExpanded ? 'ปิด' : 'รายละเอียด'} <ChevronDown className={`w-3 h-3 transition-transform ${isExpanded ? 'rotate-180' : ''}`} /></div>
+                        {isExpanded && (
+                          <div className="px-3 pb-3 bg-neutral-50 border-t border-neutral-100 pt-3">
+                            <div className="flex flex-col gap-2">
+                              {record.details.map(detail => {
+                                const catColor = getCategoryColorClass(detail.category).split(' ')[0];
+                                return (
+                                  <div key={detail.category} className="bg-white p-2.5 rounded-xl border border-neutral-100 shadow-sm flex flex-col gap-2">
+                                    <div className="flex items-center gap-2">
+                                      <div className={`w-1.5 h-8 rounded-full ${catColor}`}></div>
+                                      <div className="flex-1 flex justify-between items-start">
+                                        <div><div className="text-xs font-bold text-neutral-900">{detail.category}</div><div className="text-[9px] font-medium text-neutral-400">{detail.count} รายการ</div></div>
+                                        <div className="text-base font-black tracking-tight text-neutral-800">{detail.total.toLocaleString()} <span className="text-[9px] font-medium text-neutral-500">กก.</span></div>
+                                      </div>
+                                    </div>
+                                    {detail.items && detail.items.length > 0 && (
+                                      <div className="pt-1.5 border-t border-neutral-50 flex flex-wrap gap-1">
+                                        {detail.items.map((weight, idx) => (<span key={idx} className="bg-neutral-50 border border-neutral-100 px-1.5 py-0.5 rounded text-[10px] font-bold text-neutral-600 shadow-sm">{weight}</span>))}
+                                      </div>
+                                    )}
+                                  </div>
+                                )
+                              })}
+                            </div>
+                            <div className="mt-3 flex justify-end gap-2 items-center flex-wrap">
+                              <button onClick={() => setShareModalRecord(record)} className="px-3 py-1.5 bg-blue-50 border border-blue-200 rounded-full text-[10px] font-bold text-blue-600 hover:bg-blue-100 shadow-sm flex items-center gap-1"><Share2 className="w-3 h-3" /> แชร์บิล</button>
+                              <button onClick={() => setDeleteConfirmId(record.id)} className="px-3 py-1.5 bg-white border border-red-200 rounded-full text-[10px] font-bold text-red-500 hover:bg-red-50 shadow-sm flex items-center gap-1"><Trash2 className="w-3 h-3" /> ลบ</button>
+                              <button onClick={() => handleEditHistory(record)} className="px-3 py-1.5 bg-white border border-neutral-200 rounded-full text-[10px] font-bold text-neutral-600 hover:bg-neutral-50 shadow-sm flex items-center gap-1"><Edit2 className="w-3 h-3" /> แก้ไขข้อมูล</button>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    );
+                  }
+                  return (
+                    <div key={record.id} className="bg-white rounded-3xl border border-neutral-100 shadow-[0_2px_15px_rgb(0,0,0,0.02)] overflow-hidden transition-all hover:border-neutral-200">
+                      <div onClick={() => isSelectionMode ? toggleSelection(record.id) : toggleHistoryExpand(record.id)} className="p-4 cursor-pointer">
+                        <div className="flex justify-between items-start mb-3">
+                          <div className="flex items-center gap-3">
+                            {isSelectionMode && (
+                              <div className={`w-6 h-6 rounded-lg border-2 flex items-center justify-center transition-all ${selectedRounds.includes(record.id) ? 'bg-[#C084FC] border-[#C084FC]' : 'border-neutral-200 bg-white'}`}>
+                                {selectedRounds.includes(record.id) && <CheckCircle className="w-4 h-4 text-white" />}
+                              </div>
+                            )}
+                            <div className="flex items-center gap-1.5 text-[10px] font-semibold text-neutral-500">
+                              <span className="flex items-center gap-1 bg-neutral-100 px-2 py-0.5 rounded-md"><Calendar className="w-2.5 h-2.5" /> {formatDisplayDate(record.date)}</span>
+                              <span className="flex items-center gap-1 bg-neutral-100 px-2 py-0.5 rounded-md"><Clock className="w-2.5 h-2.5" /> {record.timestamp}</span>
+                            </div>
+                          </div>
+                          <div className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold shadow-sm whitespace-nowrap transition-colors ${record.billingStatus === 'Billed' ? 'bg-green-100 text-green-700' : 'bg-[#4ADE80] text-neutral-900'}`}>{record.billingStatus === 'Billed' ? 'บันทึกบิลแล้ว' : `รอบที่ ${record.round}`}</div>
+                        </div>
+                        <div className="flex items-end justify-between">
+                          <div>
+                            <p className="text-[9px] font-bold text-neutral-400 uppercase tracking-widest mb-0.5">ผลไม้</p>
+                            <div className="flex items-center gap-1.5">
+                              <h3 className="text-lg font-bold text-neutral-900">{record.fruit}</h3>
+                              <span className="bg-neutral-100 text-neutral-500 text-[9px] px-1.5 py-0.5 rounded-full font-bold">{record.details.length} ประเภท</span>
+                            </div>
+                          </div>
+                          <div className="text-right">
+                            <p className="text-[9px] font-bold text-neutral-400 uppercase tracking-widest mb-0.5">ยอดรวมสุทธิ</p>
+                            <div className="text-2xl font-black tracking-tight text-neutral-900 text-[#C084FC]">{record.totalWeight.toLocaleString()} <span className="text-[11px] font-bold text-neutral-500">กก.</span></div>
+                          </div>
+                        </div>
+                        <div className="mt-3.5 flex items-center justify-center gap-1 text-[10px] font-bold text-[#C084FC]/60">
+                          {isExpanded ? 'ปิดรายละเอียด' : 'ดูรายละเอียดประเภท'} <ChevronDown className={`w-3.5 h-3.5 transition-transform ${isExpanded ? 'rotate-180' : ''}`} />
                         </div>
                       </div>
                       {isExpanded && (
-                        <div className="px-3 pb-3 bg-neutral-50 border-t border-neutral-100 pt-3">
+                        <div className="px-4 pb-4 bg-neutral-50 border-t border-neutral-100 pt-3.5">
                           <div className="flex flex-col gap-2">
                             {record.details.map(detail => {
                               const catColor = getCategoryColorClass(detail.category).split(' ')[0];
@@ -1382,154 +1447,87 @@ export default function App() {
                         </div>
                       )}
                     </div>
-                  );
-                }
-                return (
-                  <div key={record.id} className="bg-white rounded-3xl border border-neutral-100 shadow-[0_2px_15px_rgb(0,0,0,0.02)] overflow-hidden transition-all hover:border-neutral-200">
-                    <div onClick={() => isSelectionMode ? toggleSelection(record.id) : toggleHistoryExpand(record.id)} className="p-4 cursor-pointer">
-                      <div className="flex justify-between items-start mb-3">
-                        <div className="flex items-center gap-3">
-                          {isSelectionMode && (
-                            <div className={`w-6 h-6 rounded-lg border-2 flex items-center justify-center transition-all ${selectedRounds.includes(record.id) ? 'bg-[#C084FC] border-[#C084FC]' : 'border-neutral-200 bg-white'}`}>
-                              {selectedRounds.includes(record.id) && <CheckCircle className="w-4 h-4 text-white" />}
-                            </div>
-                          )}
-                          <div className="flex items-center gap-1.5 text-[10px] font-semibold text-neutral-500">
-                            <span className="flex items-center gap-1 bg-neutral-100 px-2 py-0.5 rounded-md"><Calendar className="w-2.5 h-2.5" /> {formatDisplayDate(record.date)}</span>
-                            <span className="flex items-center gap-1 bg-neutral-100 px-2 py-0.5 rounded-md"><Clock className="w-2.5 h-2.5" /> {record.timestamp}</span>
-                          </div>
-                        </div>
-                        <div className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold shadow-sm whitespace-nowrap transition-colors ${record.billingStatus === 'Billed' ? 'bg-green-100 text-green-700' : 'bg-[#4ADE80] text-neutral-900'}`}>{record.billingStatus === 'Billed' ? 'บันทึกบิลแล้ว' : `รอบที่ ${record.round}`}</div>
-                      </div>
-                      <div className="flex items-end justify-between">
-                        <div>
-                          <p className="text-[9px] font-bold text-neutral-400 uppercase tracking-widest mb-0.5">ผลไม้</p>
-                          <div className="flex items-center gap-1.5">
-                            <h3 className="text-lg font-bold text-neutral-900">{record.fruit}</h3>
-                            <span className="bg-neutral-100 text-neutral-500 text-[9px] px-1.5 py-0.5 rounded-full font-bold">{record.details.length} ประเภท</span>
-                          </div>
-                        </div>
-                        <div className="text-right">
-                          <p className="text-[9px] font-bold text-neutral-400 uppercase tracking-widest mb-0.5">ยอดรวมสุทธิ</p>
-                          <div className="text-2xl font-black tracking-tight text-neutral-900 text-[#C084FC]">{record.totalWeight.toLocaleString()} <span className="text-[11px] font-bold text-neutral-500">กก.</span></div>
-                        </div>
-                      </div>
-                      <div className="mt-3.5 flex items-center justify-center gap-1 text-[10px] font-bold text-[#C084FC]/60">
-                        {isExpanded ? 'ปิดรายละเอียด' : 'ดูรายละเอียดประเภท'} <ChevronDown className={`w-3.5 h-3.5 transition-transform ${isExpanded ? 'rotate-180' : ''}`} />
-                      </div>
-                    </div>
-                    {isExpanded && (
-                      <div className="px-4 pb-4 bg-neutral-50 border-t border-neutral-100 pt-3.5">
-                        <div className="flex flex-col gap-2">
-                          {record.details.map(detail => {
-                            const catColor = getCategoryColorClass(detail.category).split(' ')[0];
-                            return (
-                              <div key={detail.category} className="bg-white p-2.5 rounded-xl border border-neutral-100 shadow-sm flex flex-col gap-2">
-                                <div className="flex items-center gap-2">
-                                  <div className={`w-1.5 h-8 rounded-full ${catColor}`}></div>
-                                  <div className="flex-1 flex justify-between items-start">
-                                    <div><div className="text-xs font-bold text-neutral-900">{detail.category}</div><div className="text-[9px] font-medium text-neutral-400">{detail.count} รายการ</div></div>
-                                    <div className="text-base font-black tracking-tight text-neutral-800">{detail.total.toLocaleString()} <span className="text-[9px] font-medium text-neutral-500">กก.</span></div>
-                                  </div>
-                                </div>
-                                {detail.items && detail.items.length > 0 && (
-                                  <div className="pt-1.5 border-t border-neutral-50 flex flex-wrap gap-1">
-                                    {detail.items.map((weight, idx) => (<span key={idx} className="bg-neutral-50 border border-neutral-100 px-1.5 py-0.5 rounded text-[10px] font-bold text-neutral-600 shadow-sm">{weight}</span>))}
-                                  </div>
-                                )}
-                              </div>
-                            )
-                          })}
-                        </div>
-                        <div className="mt-3 flex justify-end gap-2 items-center flex-wrap">
-                          <button onClick={() => setShareModalRecord(record)} className="px-3 py-1.5 bg-blue-50 border border-blue-200 rounded-full text-[10px] font-bold text-blue-600 hover:bg-blue-100 shadow-sm flex items-center gap-1"><Share2 className="w-3 h-3" /> แชร์บิล</button>
-                          <button onClick={() => setDeleteConfirmId(record.id)} className="px-3 py-1.5 bg-white border border-red-200 rounded-full text-[10px] font-bold text-red-500 hover:bg-red-50 shadow-sm flex items-center gap-1"><Trash2 className="w-3 h-3" /> ลบ</button>
-                          <button onClick={() => handleEditHistory(record)} className="px-3 py-1.5 bg-white border border-neutral-200 rounded-full text-[10px] font-bold text-neutral-600 hover:bg-neutral-50 shadow-sm flex items-center gap-1"><Edit2 className="w-3 h-3" /> แก้ไขข้อมูล</button>
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                )
-              })}
-            </div>
+                  )
+                })}
+              </div>
 
-            <div className="hidden lg:block bg-white rounded-3xl border border-neutral-100 shadow-[0_2px_15px_rgb(0,0,0,0.02)] overflow-hidden">
-              <table className="w-full text-left border-collapse">
-                <thead>
-                  <tr className="bg-neutral-50 border-b border-neutral-100 text-neutral-500 text-xs uppercase tracking-widest">
-                    {isSelectionMode && <th className="p-4 pl-6 w-10"></th>}
-                    <th className="p-4 pl-6 font-bold">วันที่</th><th className="p-4 font-bold">เวลา</th><th className="p-4 font-bold text-center">รอบ</th><th className="p-4 font-bold">ผลไม้</th><th className="p-4 font-bold">สถานะบิล</th><th className="p-4 font-bold text-right">ยอดรวมสุทธิ</th><th className="p-4 pr-6 font-bold text-center">จัดการ</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {filteredHistory.map((record, index) => {
-                    const isExpanded = expandedHistory.includes(record.id);
-                    const isLast = index === filteredHistory.length - 1;
-                    const isSelected = selectedRounds.includes(record.id);
-                    return (
-                      <React.Fragment key={record.id}>
-                        <tr onClick={() => isSelectionMode ? toggleSelection(record.id) : toggleHistoryExpand(record.id)} className={`hover:bg-neutral-50/50 cursor-pointer transition-colors group ${!isExpanded && !isLast ? 'border-b border-neutral-50' : ''} ${isExpanded ? 'bg-neutral-50/50 border-b border-neutral-100' : ''} ${isSelected ? 'bg-[#C084FC]/5' : ''}`}>
-                          {isSelectionMode && (
-                            <td className="p-4 pl-6">
-                              <div className={`w-5 h-5 rounded-md border-2 flex items-center justify-center transition-all ${isSelected ? 'bg-[#C084FC] border-[#C084FC]' : 'border-neutral-200 bg-white'}`}>
-                                {isSelected && <CheckCircle className="w-3.5 h-3.5 text-white" />}
-                              </div>
-                            </td>
-                          )}
-                          <td className="p-4 pl-6 text-sm font-semibold text-neutral-700"><span className="flex items-center gap-2"><Calendar className="w-4 h-4 text-neutral-400" /> {formatDisplayDate(record.date)}</span></td>
-                          <td className="p-4 text-sm font-medium text-neutral-500"><span className="flex items-center gap-2"><Clock className="w-4 h-4 text-neutral-400" /> {record.timestamp}</span></td>
-                          <td className="p-4 text-center"><span className={`px-3 py-1 rounded-full text-xs font-bold shadow-sm whitespace-nowrap ${record.billingStatus === 'Billed' ? 'bg-green-50 text-green-600' : 'bg-[#4ADE80] text-neutral-900'}`}>{record.round}</span></td>
-                          <td className="p-4"><span className="text-base font-bold text-neutral-900">{record.fruit}</span></td>
-                          <td className="p-4">
-                            {record.billingStatus === 'Billed' ? (
-                              <span className="flex items-center gap-1.5 text-xs font-bold text-green-600 uppercase tracking-tight"><CheckCircle className="w-3.5 h-3.5" /> Billed</span>
-                            ) : (
-                              <span className="flex items-center gap-1.5 text-xs font-bold text-amber-500 uppercase tracking-tight"><Clock className="w-3.5 h-3.5" /> Pending</span>
+              <div className="hidden lg:block bg-white rounded-3xl border border-neutral-100 shadow-[0_2px_15px_rgb(0,0,0,0.02)] overflow-hidden">
+                <table className="w-full text-left border-collapse">
+                  <thead>
+                    <tr className="bg-neutral-50 border-b border-neutral-100 text-neutral-500 text-xs uppercase tracking-widest">
+                      {isSelectionMode && <th className="p-4 pl-6 w-10"></th>}
+                      <th className="p-4 pl-6 font-bold">วันที่</th><th className="p-4 font-bold">เวลา</th><th className="p-4 font-bold text-center">รอบ</th><th className="p-4 font-bold">ผลไม้</th><th className="p-4 font-bold">สถานะบิล</th><th className="p-4 font-bold text-right">ยอดรวมสุทธิ</th><th className="p-4 pr-6 font-bold text-center">จัดการ</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {filteredHistory.map((record, index) => {
+                      const isExpanded = expandedHistory.includes(record.id);
+                      const isLast = index === filteredHistory.length - 1;
+                      const isSelected = selectedRounds.includes(record.id);
+                      return (
+                        <React.Fragment key={record.id}>
+                          <tr onClick={() => isSelectionMode ? toggleSelection(record.id) : toggleHistoryExpand(record.id)} className={`hover:bg-neutral-50/50 cursor-pointer transition-colors group ${!isExpanded && !isLast ? 'border-b border-neutral-50' : ''} ${isExpanded ? 'bg-neutral-50/50 border-b border-neutral-100' : ''} ${isSelected ? 'bg-[#C084FC]/5' : ''}`}>
+                            {isSelectionMode && (
+                              <td className="p-4 pl-6">
+                                <div className={`w-5 h-5 rounded-md border-2 flex items-center justify-center transition-all ${isSelected ? 'bg-[#C084FC] border-[#C084FC]' : 'border-neutral-200 bg-white'}`}>
+                                  {isSelected && <CheckCircle className="w-3.5 h-3.5 text-white" />}
+                                </div>
+                              </td>
                             )}
-                          </td>
-                          <td className="p-4 text-right"><span className="text-xl font-black tracking-tight text-neutral-900">{record.totalWeight.toLocaleString()}</span><span className="text-xs font-bold text-neutral-500 ml-1">กก.</span></td>
-                          <td className="p-4 pr-6 text-center"><div className="flex items-center justify-center"><button className={`p-2 rounded-full transition-all ${isExpanded ? 'bg-[#C084FC] text-white shadow-md' : 'text-neutral-400 hover:text-neutral-700 hover:bg-neutral-100 shadow-sm bg-white border border-neutral-200'}`}><ChevronDown className={`w-4 h-4 transition-transform ${isExpanded ? 'rotate-180' : ''}`} /></button></div></td>
-                        </tr>
-                        {isExpanded && (
-                          <tr className="bg-neutral-50/80 border-b border-neutral-100">
-                            <td colSpan="7" className="p-6 lg:px-8">
-                              <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-                                {record.details.map(detail => {
-                                  const catColor = getCategoryColorClass(detail.category).split(' ')[0];
-                                  return (
-                                    <div key={detail.category} className="bg-white p-4 rounded-2xl border border-neutral-200 shadow-sm flex flex-col gap-3 hover:border-neutral-300 transition-colors">
-                                      <div className="flex items-center gap-3">
-                                        <div className={`w-2 h-10 rounded-full ${catColor}`}></div>
-                                        <div className="flex-1 flex justify-between items-start">
-                                          <div><div className="text-sm font-bold text-neutral-900">{detail.category}</div><div className="text-xs font-medium text-neutral-500 mt-0.5">{detail.count} รายการ</div></div>
-                                          <div className="text-lg font-black tracking-tight text-neutral-800">{detail.total.toLocaleString()} <span className="text-xs font-medium text-neutral-500">กก.</span></div>
-                                        </div>
-                                      </div>
-                                      {detail.items && detail.items.length > 0 && (
-                                        <div className="pt-2 border-t border-neutral-100 flex flex-wrap gap-1.5">
-                                          {detail.items.map((weight, idx) => (<span key={idx} className="bg-neutral-50 border border-neutral-200 px-2 py-1 rounded-md text-xs font-bold text-neutral-600 shadow-sm">{weight}</span>))}
-                                        </div>
-                                      )}
-                                    </div>
-                                  )
-                                })}
-                              </div>
-                              <div className="mt-5 flex justify-end gap-3 items-center flex-wrap">
-                                <button onClick={() => setShareModalRecord(record)} className="px-5 py-2.5 bg-blue-50 border border-blue-200 rounded-full text-sm font-bold text-blue-600 hover:bg-blue-100 shadow-sm flex items-center gap-2 transition-all active:scale-95"><Share2 className="w-4 h-4" /> แชร์บิลรอบนี้</button>
-                                <button onClick={() => handleEditHistory(record)} className="px-5 py-2.5 bg-white border border-neutral-200 rounded-full text-sm font-bold text-neutral-600 hover:bg-neutral-50 shadow-sm flex items-center gap-2 transition-all active:scale-95"><Edit2 className="w-4 h-4" /> แก้ไขข้อมูลรอบนี้</button>
-                                <button onClick={() => setDeleteConfirmId(record.id)} className="px-5 py-2.5 bg-white border border-red-200 rounded-full text-sm font-bold text-red-500 hover:bg-red-50 shadow-sm flex items-center gap-2 transition-all active:scale-95"><Trash2 className="w-4 h-4" /> ลบข้อมูล</button>
-                              </div>
+                            <td className="p-4 pl-6 text-sm font-semibold text-neutral-700"><span className="flex items-center gap-2"><Calendar className="w-4 h-4 text-neutral-400" /> {formatDisplayDate(record.date)}</span></td>
+                            <td className="p-4 text-sm font-medium text-neutral-500"><span className="flex items-center gap-2"><Clock className="w-4 h-4 text-neutral-400" /> {record.timestamp}</span></td>
+                            <td className="p-4 text-center"><span className={`px-3 py-1 rounded-full text-xs font-bold shadow-sm whitespace-nowrap ${record.billingStatus === 'Billed' ? 'bg-green-50 text-green-600' : 'bg-[#4ADE80] text-neutral-900'}`}>{record.round}</span></td>
+                            <td className="p-4"><span className="text-base font-bold text-neutral-900">{record.fruit}</span></td>
+                            <td className="p-4">
+                              {record.billingStatus === 'Billed' ? (
+                                <span className="flex items-center gap-1.5 text-xs font-bold text-green-600 uppercase tracking-tight"><CheckCircle className="w-3.5 h-3.5" /> Billed</span>
+                              ) : (
+                                <span className="flex items-center gap-1.5 text-xs font-bold text-amber-500 uppercase tracking-tight"><Clock className="w-3.5 h-3.5" /> Pending</span>
+                              )}
                             </td>
+                            <td className="p-4 text-right"><span className="text-xl font-black tracking-tight text-neutral-900">{record.totalWeight.toLocaleString()}</span><span className="text-xs font-bold text-neutral-500 ml-1">กก.</span></td>
+                            <td className="p-4 pr-6 text-center"><div className="flex items-center justify-center"><button className={`p-2 rounded-full transition-all ${isExpanded ? 'bg-[#C084FC] text-white shadow-md' : 'text-neutral-400 hover:text-neutral-700 hover:bg-neutral-100 shadow-sm bg-white border border-neutral-200'}`}><ChevronDown className={`w-4 h-4 transition-transform ${isExpanded ? 'rotate-180' : ''}`} /></button></div></td>
                           </tr>
-                        )}
-                      </React.Fragment>
-                    )
-                  })}
-                </tbody>
-              </table>
-            </div>
-          </>
-        )}
+                          {isExpanded && (
+                            <tr className="bg-neutral-50/80 border-b border-neutral-100">
+                              <td colSpan="7" className="p-6 lg:px-8">
+                                <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+                                  {record.details.map(detail => {
+                                    const catColor = getCategoryColorClass(detail.category).split(' ')[0];
+                                    return (
+                                      <div key={detail.category} className="bg-white p-4 rounded-2xl border border-neutral-200 shadow-sm flex flex-col gap-3 hover:border-neutral-300 transition-colors">
+                                        <div className="flex items-center gap-3">
+                                          <div className={`w-2 h-10 rounded-full ${catColor}`}></div>
+                                          <div className="flex-1 flex justify-between items-start">
+                                            <div><div className="text-sm font-bold text-neutral-900">{detail.category}</div><div className="text-xs font-medium text-neutral-500 mt-0.5">{detail.count} รายการ</div></div>
+                                            <div className="text-lg font-black tracking-tight text-neutral-800">{detail.total.toLocaleString()} <span className="text-xs font-medium text-neutral-500">กก.</span></div>
+                                          </div>
+                                        </div>
+                                        {detail.items && detail.items.length > 0 && (
+                                          <div className="pt-2 border-t border-neutral-100 flex flex-wrap gap-1.5">
+                                            {detail.items.map((weight, idx) => (<span key={idx} className="bg-neutral-50 border border-neutral-200 px-2 py-1 rounded-md text-xs font-bold text-neutral-600 shadow-sm">{weight}</span>))}
+                                          </div>
+                                        )}
+                                      </div>
+                                    )
+                                  })}
+                                </div>
+                                <div className="mt-5 flex justify-end gap-3 items-center flex-wrap">
+                                  <button onClick={() => setShareModalRecord(record)} className="px-5 py-2.5 bg-blue-50 border border-blue-200 rounded-full text-sm font-bold text-blue-600 hover:bg-blue-100 shadow-sm flex items-center gap-2 transition-all active:scale-95"><Share2 className="w-4 h-4" /> แชร์บิลรอบนี้</button>
+                                  <button onClick={() => handleEditHistory(record)} className="px-5 py-2.5 bg-white border border-neutral-200 rounded-full text-sm font-bold text-neutral-600 hover:bg-neutral-50 shadow-sm flex items-center gap-2 transition-all active:scale-95"><Edit2 className="w-4 h-4" /> แก้ไขข้อมูลรอบนี้</button>
+                                  <button onClick={() => setDeleteConfirmId(record.id)} className="px-5 py-2.5 bg-white border border-red-200 rounded-full text-sm font-bold text-red-500 hover:bg-red-50 shadow-sm flex items-center gap-2 transition-all active:scale-95"><Trash2 className="w-4 h-4" /> ลบข้อมูล</button>
+                                </div>
+                              </td>
+                            </tr>
+                          )}
+                        </React.Fragment>
+                      )
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            </>
+          )}
         </div>
       )}
 
@@ -1542,13 +1540,13 @@ export default function App() {
               <span className="text-lg font-black">{selectedRounds.length} <span className="text-xs font-bold text-neutral-500">รายการ</span></span>
             </div>
             <div className="flex gap-2">
-              <button 
+              <button
                 onClick={() => { setIsSelectionMode(false); setSelectedRounds([]); }}
                 className="px-4 py-2 rounded-full text-xs font-bold text-neutral-400 hover:text-white transition-colors"
               >
                 ยกเลิก
               </button>
-              <button 
+              <button
                 disabled={selectedRounds.length === 0}
                 onClick={() => setShowMasterBillModal(true)}
                 className="bg-[#C084FC] hover:bg-[#A855F7] disabled:bg-neutral-700 disabled:text-neutral-500 text-white px-6 py-2 rounded-full text-xs font-black shadow-lg shadow-purple-900/20 active:scale-95 transition-all flex items-center gap-2"
@@ -1587,13 +1585,13 @@ export default function App() {
 
     // --- Share Text for Master Bill ---
     const handleShareMasterText = () => {
-      const sortedRounds = [...selectedData].sort((a,b) => new Date(a.date) - new Date(b.date));
+      const sortedRounds = [...selectedData].sort((a, b) => new Date(a.date) - new Date(b.date));
       let text = `📋 บิลรวมน้ำหนัก (Master Invoice)\n`;
       text += `📅 ช่วงวันที่: ${dateRange}\n`;
       text += `📦 จำนวน ${sortedRounds.length} รอบ\n\n`;
       text += `─────────────────\n`;
       text += `สรุปตามประเภท:\n`;
-      Object.entries(categorySummary).sort((a,b) => b[1]-a[1]).forEach(([cat, weight]) => {
+      Object.entries(categorySummary).sort((a, b) => b[1] - a[1]).forEach(([cat, weight]) => {
         text += `✅ ${cat}: ${weight.toLocaleString()} กก.\n`;
       });
       text += `─────────────────\n`;
@@ -1602,7 +1600,7 @@ export default function App() {
       sortedRounds.forEach(r => {
         text += `  • รอบ ${r.round} (${formatDisplayDate(r.date)}): ${r.totalWeight.toLocaleString()} กก.\n`;
       });
-      text += `\n🌾 บันทึกโดย AgriWeigh`;
+
 
       if (navigator.share) {
         navigator.share({ text }).catch(e => console.error('Share failed', e));
@@ -1619,8 +1617,8 @@ export default function App() {
         const W = 420;
         const PADDING = 32;
         const CONTENT_W = W - PADDING * 2;
-        const sortedRounds = [...selectedData].sort((a,b) => new Date(a.date) - new Date(b.date));
-        const catEntries = Object.entries(categorySummary).sort((a,b) => b[1]-a[1]);
+        const sortedRounds = [...selectedData].sort((a, b) => new Date(a.date) - new Date(b.date));
+        const catEntries = Object.entries(categorySummary).sort((a, b) => b[1] - a[1]);
         const catSectionH = catEntries.length * 68 + 60;
         const auditSectionH = sortedRounds.length * 36 + 60;
         const H = 220 + catSectionH + auditSectionH + 100;
@@ -1635,7 +1633,7 @@ export default function App() {
         ctx.fillStyle = '#FDFBF7';
         ctx.fillRect(0, 0, W, H);
         ctx.strokeStyle = '#E5E5E5'; ctx.lineWidth = 1;
-        ctx.strokeRect(0.5, 0.5, W-1, H-1);
+        ctx.strokeRect(0.5, 0.5, W - 1, H - 1);
 
         let y = PADDING;
 
@@ -1643,22 +1641,22 @@ export default function App() {
         ctx.fillStyle = '#1A1A1A';
         ctx.beginPath(); ctx.roundRect(0, 0, W, 140, [0, 0, 32, 32]); ctx.fill();
         ctx.fillStyle = '#C084FC'; ctx.globalAlpha = 0.2;
-        ctx.beginPath(); ctx.arc(W - 30, 30, 80, 0, Math.PI*2); ctx.fill();
+        ctx.beginPath(); ctx.arc(W - 30, 30, 80, 0, Math.PI * 2); ctx.fill();
         ctx.globalAlpha = 1;
 
         // Logo
         ctx.fillStyle = '#C084FC';
-        ctx.beginPath(); ctx.arc(W/2, 38, 20, 0, Math.PI*2); ctx.fill();
+        ctx.beginPath(); ctx.arc(W / 2, 38, 20, 0, Math.PI * 2); ctx.fill();
         ctx.fillStyle = '#FFFFFF'; ctx.font = 'bold 18px sans-serif'; ctx.textAlign = 'center';
-        ctx.fillText('✻', W/2, 44);
+        ctx.fillText('✻', W / 2, 44);
 
         // Title
         ctx.fillStyle = '#FFFFFF'; ctx.font = 'bold 22px sans-serif'; ctx.textAlign = 'center';
-        ctx.fillText('Master Invoice', W/2, 82);
+        ctx.fillText('Master Invoice', W / 2, 82);
         ctx.fillStyle = '#999999'; ctx.font = '11px sans-serif';
-        ctx.fillText(dateRange, W/2, 102);
+        ctx.fillText(dateRange, W / 2, 102);
         ctx.fillStyle = '#666666'; ctx.font = '10px sans-serif';
-        ctx.fillText(`รวม ${sortedRounds.length} รอบ  •  ยอดสุทธิ ${totalWeight.toLocaleString()} กก.`, W/2, 120);
+        ctx.fillText(`รวม ${sortedRounds.length} รอบ  •  ยอดสุทธิ ${totalWeight.toLocaleString()} กก.`, W / 2, 120);
 
         y = 160;
 
@@ -1675,13 +1673,13 @@ export default function App() {
           ctx.strokeStyle = '#F0F0F0'; ctx.lineWidth = 1;
           ctx.beginPath(); ctx.roundRect(PADDING, y, CONTENT_W, 52, 12); ctx.stroke();
           ctx.fillStyle = catHex;
-          ctx.beginPath(); ctx.arc(PADDING+18, y+26, 5, 0, Math.PI*2); ctx.fill();
+          ctx.beginPath(); ctx.arc(PADDING + 18, y + 26, 5, 0, Math.PI * 2); ctx.fill();
           ctx.fillStyle = '#1A1A1A'; ctx.font = 'bold 15px sans-serif'; ctx.textAlign = 'left';
-          ctx.fillText(cat, PADDING+30, y+30);
+          ctx.fillText(cat, PADDING + 30, y + 30);
           ctx.font = 'bold 18px sans-serif'; ctx.textAlign = 'right';
-          ctx.fillText(weight.toLocaleString(), W-PADDING-36, y+30);
+          ctx.fillText(weight.toLocaleString(), W - PADDING - 36, y + 30);
           ctx.fillStyle = '#888'; ctx.font = '11px sans-serif';
-          ctx.fillText('กก.', W-PADDING-10, y+30);
+          ctx.fillText('กก.', W - PADDING - 10, y + 30);
           y += 60;
         });
 
@@ -1689,16 +1687,16 @@ export default function App() {
         ctx.fillStyle = '#1A1A1A';
         ctx.beginPath(); ctx.roundRect(PADDING, y, CONTENT_W, 64, 14); ctx.fill();
         ctx.fillStyle = '#999'; ctx.font = 'bold 11px sans-serif'; ctx.textAlign = 'left';
-        ctx.fillText('ยอดรวมสุทธิ', PADDING+16, y+24);
+        ctx.fillText('ยอดรวมสุทธิ', PADDING + 16, y + 24);
         ctx.fillStyle = '#FDE047'; ctx.font = 'bold 28px sans-serif'; ctx.textAlign = 'right';
-        ctx.fillText(totalWeight.toLocaleString(), W-PADDING-42, y+46);
+        ctx.fillText(totalWeight.toLocaleString(), W - PADDING - 42, y + 46);
         ctx.fillStyle = '#999'; ctx.font = 'bold 12px sans-serif';
-        ctx.fillText('กก.', W-PADDING-12, y+46);
+        ctx.fillText('กก.', W - PADDING - 12, y + 46);
         y += 80;
 
         // Audit Log
-        ctx.strokeStyle = '#E5E5E5'; ctx.lineWidth = 1; ctx.setLineDash([4,4]);
-        ctx.beginPath(); ctx.moveTo(PADDING, y); ctx.lineTo(W-PADDING, y); ctx.stroke();
+        ctx.strokeStyle = '#E5E5E5'; ctx.lineWidth = 1; ctx.setLineDash([4, 4]);
+        ctx.beginPath(); ctx.moveTo(PADDING, y); ctx.lineTo(W - PADDING, y); ctx.stroke();
         ctx.setLineDash([]);
         y += 16;
         ctx.fillStyle = '#AAAAAA'; ctx.font = 'bold 9px sans-serif'; ctx.textAlign = 'left';
@@ -1708,14 +1706,14 @@ export default function App() {
           ctx.fillStyle = '#555'; ctx.font = 'bold 11px sans-serif'; ctx.textAlign = 'left';
           ctx.fillText(`รอบ ${r.round}  •  ${formatDisplayDate(r.date)}`, PADDING, y);
           ctx.fillStyle = '#1A1A1A'; ctx.font = 'bold 11px sans-serif'; ctx.textAlign = 'right';
-          ctx.fillText(`${r.totalWeight.toLocaleString()} กก.`, W-PADDING, y);
+          ctx.fillText(`${r.totalWeight.toLocaleString()} กก.`, W - PADDING, y);
           y += 28;
         });
         y += 8;
 
         // Footer
         ctx.fillStyle = '#CCCCCC'; ctx.font = '9px sans-serif'; ctx.textAlign = 'center';
-        ctx.fillText('บันทึกโดย AgriWeigh Pro', W/2, y);
+        ctx.fillText('บันทึกโดย AgriWeigh Pro', W / 2, y);
 
         const dataUrl = canvas.toDataURL('image/png');
         if (navigator.share && navigator.canShare) {
@@ -1727,7 +1725,7 @@ export default function App() {
           } else { downloadImage(dataUrl); }
         } else { downloadImage(dataUrl); }
         showToast('สร้างใบสรุปรวมสำเร็จ!');
-      } catch(e) {
+      } catch (e) {
         console.error('Master image failed', e);
         showToast('เกิดข้อผิดพลาดในการสร้างรูปภาพ');
       } finally {
@@ -1820,7 +1818,7 @@ export default function App() {
                 <h4 className="font-extrabold text-neutral-800 text-sm uppercase tracking-wider">สรุปยอดรวมตามประเภท</h4>
               </div>
               <div className="space-y-3">
-                {Object.entries(categorySummary).sort((a,b) => b[1]-a[1]).map(([cat, weight]) => (
+                {Object.entries(categorySummary).sort((a, b) => b[1] - a[1]).map(([cat, weight]) => (
                   <div key={cat} className="flex justify-between items-center p-4 bg-neutral-50 rounded-2xl border border-neutral-100 shadow-sm">
                     <div className="flex items-center gap-3">
                       <div className="w-2 h-2 rounded-full" style={{ backgroundColor: getCategoryHex(cat) }}></div>
@@ -1841,7 +1839,7 @@ export default function App() {
                 <h4 className="font-extrabold text-neutral-400 text-[10px] uppercase tracking-widest">แจกแจงรายรอบ (Audit Log)</h4>
               </div>
               <div className="space-y-3">
-                {[...selectedData].sort((a,b) => new Date(a.date) - new Date(b.date)).map(r => (
+                {[...selectedData].sort((a, b) => new Date(a.date) - new Date(b.date)).map(r => (
                   <div key={r.id} className="flex justify-between items-center">
                     <div className="text-[11px] font-bold text-neutral-600 flex items-center gap-2">
                       <span className="w-4 h-4 bg-white border border-neutral-200 rounded-full flex items-center justify-center text-[8px]">{r.round}</span>
@@ -1967,8 +1965,8 @@ export default function App() {
             <h2 className="text-2xl lg:text-3xl font-extrabold tracking-tight text-neutral-900 flex items-center gap-2">
               Statistics <span className="text-neutral-300 font-normal">|</span> <span className="text-[#FDE047] font-bold text-lg lg:text-xl drop-shadow-sm">สถิติ</span>
             </h2>
-            <button 
-              onClick={loadGASData} 
+            <button
+              onClick={loadGASData}
               disabled={gasLoading}
               className={`p-2 rounded-full transition-all ${gasLoading ? 'animate-spin text-amber-500 bg-amber-50' : 'text-neutral-400 hover:text-amber-500 hover:bg-amber-50 active:scale-90'}`}
               title="รีเฟรชข้อมูล"
@@ -2151,8 +2149,8 @@ export default function App() {
             <h2 className="text-2xl lg:text-3xl font-extrabold tracking-tight text-neutral-900 flex items-center gap-2">
               Settings <span className="text-neutral-300 font-normal">|</span> <span className="text-neutral-400 font-bold text-lg lg:text-xl drop-shadow-sm">ตั้งค่าระบบ</span>
             </h2>
-            <button 
-              onClick={loadGASData} 
+            <button
+              onClick={loadGASData}
               disabled={gasLoading}
               className={`p-2 rounded-full transition-all ${gasLoading ? 'animate-spin text-blue-500 bg-blue-50' : 'text-neutral-400 hover:text-blue-500 hover:bg-blue-50 active:scale-90'}`}
               title="รีเฟรชข้อมูล"
@@ -2170,29 +2168,33 @@ export default function App() {
               <div className="w-8 h-8 rounded-full bg-blue-100 text-blue-500 flex items-center justify-center"><Settings className="w-4 h-4" /></div>
               ข้อมูลสวน / ร้าน (Farm)
             </h3>
-            
+
             <div className="flex gap-2 mb-4">
               <input
                 type="text" id="newFarmInput" placeholder="เพิ่มชื่อสวนใหม่..."
-                onKeyDown={e => { if (e.key === 'Enter') { const name = e.target.value.trim(); if (name) { 
-                  if (!farmList.includes(name)) { 
-                    setFarmList(prev => [...prev, name]); 
-                    if (GAS_URL) fetch(GAS_URL, { method: 'POST', body: JSON.stringify({ action: 'addFarm', payload: { farmName: name } }) });
+                onKeyDown={e => {
+                  if (e.key === 'Enter') {
+                    const name = e.target.value.trim(); if (name) {
+                      if (!farmList.includes(name)) {
+                        setFarmList(prev => [...prev, name]);
+                        if (GAS_URL) fetch(GAS_URL, { method: 'POST', body: JSON.stringify({ action: 'addFarm', payload: { farmName: name } }) });
+                      }
+                      e.target.value = '';
+                    }
                   }
-                  e.target.value = ''; 
-                }}}}
+                }}
                 className="flex-1 bg-neutral-50 border border-neutral-200 rounded-xl px-4 py-2.5 text-sm outline-none focus:border-blue-400 focus:bg-white transition-colors"
               />
-              <button 
-                onClick={() => { 
-                  const input = document.getElementById('newFarmInput'); 
-                  const name = input?.value?.trim(); 
-                  if (name && !farmList.includes(name)) { 
-                    setFarmList(prev => [...prev, name]); 
+              <button
+                onClick={() => {
+                  const input = document.getElementById('newFarmInput');
+                  const name = input?.value?.trim();
+                  if (name && !farmList.includes(name)) {
+                    setFarmList(prev => [...prev, name]);
                     if (GAS_URL) fetch(GAS_URL, { method: 'POST', body: JSON.stringify({ action: 'addFarm', payload: { farmName: name } }) });
-                    input.value = ''; 
-                  } 
-                }} 
+                    input.value = '';
+                  }
+                }}
                 className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2.5 rounded-xl font-bold text-sm shadow-sm transition-all active:scale-95 flex items-center gap-1"
               >
                 <Plus className="w-4 h-4" /> เพิ่ม
@@ -2203,9 +2205,9 @@ export default function App() {
               {farmList.map(farm => (
                 <div key={farm} className="flex justify-between items-center p-3 px-4 bg-neutral-50 rounded-xl border border-neutral-100 hover:border-neutral-200 transition-colors group">
                   <span className="font-bold text-neutral-800 text-sm">{farm}</span>
-                  <button onClick={() => { 
-                    if (farmList.length <= 1) return; 
-                    setFarmList(prev => prev.filter(f => f !== farm)); 
+                  <button onClick={() => {
+                    if (farmList.length <= 1) return;
+                    setFarmList(prev => prev.filter(f => f !== farm));
                     if (setupData.farmName === farm) setSetupData(prev => ({ ...prev, farmName: farmList.filter(f => f !== farm)[0] }));
                     if (GAS_URL) fetch(GAS_URL, { method: 'POST', body: JSON.stringify({ action: 'deleteFarm', payload: { farmName: farm } }) });
                   }}
@@ -2296,7 +2298,7 @@ export default function App() {
               อรรถประโยชน์ (System Utilities)
             </h3>
             <p className="text-[11px] text-neutral-500 mb-4">ส่วนนี้ใช้สำหรับการทดสอบระบบและการตั้งค่าขั้นสูง</p>
-            <button 
+            <button
               onClick={() => { setShowInstallBanner(true); sessionStorage.removeItem('cg_install_dismissed'); }}
               className="w-full bg-neutral-900 hover:bg-black text-white px-5 py-3 rounded-xl font-bold text-sm shadow-md transition-all active:scale-95 flex items-center justify-center gap-2"
             >
@@ -2375,7 +2377,7 @@ export default function App() {
           <div className="bg-white/95 backdrop-blur-md border border-neutral-100 rounded-2xl shadow-[0_10px_40px_rgba(0,0,0,0.08)] p-4 flex items-center gap-4 relative overflow-hidden group">
             {/* Background Decorative Sparkle */}
             <div className="absolute -right-4 -top-4 w-20 h-20 bg-[#4ADE80]/10 rounded-full blur-2xl group-hover:bg-[#C084FC]/10 transition-colors duration-700"></div>
-            
+
             <div className="shrink-0 relative">
               <img src="/icon-192.png" alt="App Icon" className="w-12 h-12 rounded-xl shadow-sm border border-neutral-50" />
               <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-[#4ADE80] rounded-full border-2 border-white flex items-center justify-center">
@@ -2389,17 +2391,17 @@ export default function App() {
             </div>
 
             <div className="flex items-center gap-3 relative z-10">
-              <button 
+              <button
                 onClick={handleInstallClick}
                 className="bg-[#4ADE80] hover:bg-[#22C55E] text-white px-5 py-2.5 rounded-full font-bold text-sm shadow-md shadow-[#4ADE80]/20 transition-all active:scale-95 whitespace-nowrap"
               >
                 เพิ่ม
               </button>
-              <button 
-                onClick={(e) => { 
-                  e.stopPropagation(); 
-                  setShowInstallBanner(false); 
-                  sessionStorage.setItem('cg_install_dismissed', 'true'); 
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setShowInstallBanner(false);
+                  sessionStorage.setItem('cg_install_dismissed', 'true');
                 }}
                 className="p-3 -mr-2 text-neutral-400 hover:text-neutral-600 hover:bg-neutral-100 rounded-full transition-all active:scale-90"
                 aria-label="ปิด"
