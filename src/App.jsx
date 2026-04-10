@@ -190,6 +190,7 @@ export default function App() {
     return local ? JSON.parse(local) : [];
   });
   const [expandedMasterBill, setExpandedMasterBill] = useState(null);
+  const [navContext, setNavContext] = useState(null); // { type: 'masterBill', id: 'xxx' }
 
   // GAS Loading State
   const [gasLoading, setGasLoading] = useState(false);
@@ -1262,7 +1263,7 @@ export default function App() {
                 };
 
                 return (
-                  <div key={bill.id} className="bg-white rounded-2xl border border-neutral-100 shadow-[0_2px_10px_rgb(0,0,0,0.03)] overflow-hidden transition-all hover:border-neutral-200">
+                  <div key={bill.id} id={`master-card-${bill.id}`} className="bg-white rounded-2xl border border-neutral-100 shadow-[0_2px_10px_rgb(0,0,0,0.03)] overflow-hidden transition-all hover:border-neutral-200 scroll-mt-24">
                     {/* Bill Card Header */}
                     <div className="p-4 flex items-center gap-3 cursor-pointer" onClick={() => setExpandedMasterBill(isExpanded ? null : bill.id)}>
                       <div className="flex-1 min-w-0">
@@ -1289,10 +1290,13 @@ export default function App() {
 
                     {/* Expanded Detail */}
                     {isExpanded && (
-                      <div className="border-t border-neutral-100 bg-neutral-50/50">
+                      <div className="border-t border-neutral-100 bg-neutral-50/50 pb-4">
                         <div className="p-4 space-y-2">
+                          <div className="text-[10px] font-bold text-neutral-400 uppercase tracking-widest mb-2 flex items-center gap-2">
+                            <List className="w-3 h-3" /> ยอดตามประเภท (รวม)
+                          </div>
                           {catEntries.map(([cat, w]) => (
-                            <div key={cat} className="flex justify-between items-center">
+                            <div key={cat} className="flex justify-between items-center bg-white p-2.5 rounded-xl border border-neutral-100/60 shadow-sm">
                               <div className="flex items-center gap-2">
                                 <div className="w-2 h-2 rounded-full" style={{ backgroundColor: getCategoryHex(cat) }}></div>
                                 <span className="text-sm font-bold text-neutral-700">{cat}</span>
@@ -1301,7 +1305,32 @@ export default function App() {
                             </div>
                           ))}
                         </div>
-                        <div className="p-4 pt-0 flex gap-2">
+
+                        {/* Drill-down Round List */}
+                        <div className="px-4 pb-4">
+                          <div className="text-[10px] font-bold text-[#C084FC] uppercase tracking-widest mb-3 mt-2 flex items-center gap-2">
+                            <RotateCcw className="w-3 h-3" /> รอบที่รวมอยู่ในบิลนี้ (คลิกเพื่อดูรายละเอียด)
+                          </div>
+                          <div className="flex flex-wrap gap-2">
+                            {bill.roundIds.map(rid => {
+                              const r = historyRecords.find(hr => hr.id === rid);
+                              if (!r) return null;
+                              return (
+                                <button
+                                  key={rid}
+                                  onClick={() => handleJumpToRound(rid, bill.id)}
+                                  className="bg-white border border-[#C084FC]/30 hover:border-[#C084FC] hover:bg-purple-50 px-3 py-2 rounded-xl flex flex-col items-center gap-0.5 transition-all active:scale-95 group"
+                                >
+                                  <span className="text-[10px] font-bold text-neutral-400 group-hover:text-[#C084FC]">รอบที่</span>
+                                  <span className="text-sm font-black text-neutral-900 group-hover:text-[#C084FC]">{r.round}</span>
+                                  <span className="text-[8px] font-medium text-neutral-400">{r.date.split('/')[0]}/{r.date.split('/')[1]}</span>
+                                </button>
+                              );
+                            })}
+                          </div>
+                        </div>
+
+                        <div className="px-4 flex gap-2">
                           <button
                             onClick={handleReshareText}
                             className="flex-1 flex items-center justify-center gap-2 py-2.5 bg-neutral-900 text-white rounded-xl text-xs font-bold hover:bg-neutral-700 active:scale-95 transition-all"
@@ -1327,6 +1356,28 @@ export default function App() {
       </div>
 ) : (
         <div className="flex-1 overflow-y-auto p-3 md:p-6 pb-28 hide-scrollbar">
+          {/* Back to Master Bill Context Button */}
+          {navContext && (
+            <div className="mb-4 sticky top-0 z-20 animate-in slide-in-from-top-4 duration-500">
+              <button
+                onClick={handleBackToMaster}
+                className="w-full bg-[#1A1A1A] text-white flex items-center justify-between px-5 py-3.5 rounded-[1.5rem] shadow-xl border border-white/10 active:scale-[0.98] transition-all group"
+              >
+                <div className="flex items-center gap-3">
+                  <div className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center group-hover:bg-[#C084FC] transition-colors">
+                    <ArrowLeft className="w-4 h-4" />
+                  </div>
+                  <div className="text-left">
+                    <div className="text-[10px] font-bold text-neutral-400 uppercase tracking-widest">กำลังดูรายละเอียดจาก</div>
+                    <div className="text-xs font-black text-white">ย้อนกลับไปที่บิลรวมเดิม</div>
+                  </div>
+                </div>
+                <div className="w-8 h-8 rounded-full bg-[#C084FC]/20 flex items-center justify-center text-[#C084FC]">
+                  <ImageIcon className="w-4 h-4" />
+                </div>
+              </button>
+            </div>
+          )}
 
           {filteredHistory.length === 0 ? (
             <div className="h-full flex flex-col items-center justify-center text-neutral-400">
@@ -1341,7 +1392,7 @@ export default function App() {
                   const isExpanded = expandedHistory.includes(record.id);
                   if (viewMode === 'list') {
                     return (
-                      <div key={record.id} className="bg-white rounded-2xl border border-neutral-100 shadow-[0_2px_10px_rgb(0,0,0,0.02)] overflow-hidden transition-all hover:border-neutral-200">
+                      <div key={record.id} id={`round-card-${record.id}`} className="bg-white rounded-2xl border border-neutral-100 shadow-[0_2px_10px_rgb(0,0,0,0.02)] overflow-hidden transition-all hover:border-neutral-200 scroll-mt-24">
                         <div className="p-3 flex justify-between items-center cursor-pointer" onClick={() => isSelectionMode ? toggleSelection(record.id) : toggleHistoryExpand(record.id)}>
                           <div className="flex items-center gap-3">
                             {isSelectionMode && (
@@ -1402,7 +1453,7 @@ export default function App() {
                     );
                   }
                   return (
-                    <div key={record.id} className="bg-white rounded-3xl border border-neutral-100 shadow-[0_2px_15px_rgb(0,0,0,0.02)] overflow-hidden transition-all hover:border-neutral-200">
+                    <div key={record.id} id={`round-card-${record.id}`} className="bg-white rounded-3xl border border-neutral-100 shadow-[0_2px_15px_rgb(0,0,0,0.02)] overflow-hidden transition-all hover:border-neutral-200 scroll-mt-24">
                       <div onClick={() => isSelectionMode ? toggleSelection(record.id) : toggleHistoryExpand(record.id)} className="p-4 cursor-pointer">
                         <div className="flex justify-between items-start mb-3">
                           <div className="flex items-center gap-3">
@@ -1753,7 +1804,43 @@ export default function App() {
     };
 
     // --- Finalize Master Bill ---
-    const handleFinalizeMasterBill = async () => {
+      const handleJumpToRound = (roundId, sourceMbId) => {
+        // Find if round exists
+        const exists = historyRecords.find(r => r.id === roundId);
+        if (!exists) { showToast('ไม่พบข้อมูลรอบนี้แล้วค่ะ'); return; }
+
+        setNavContext({ type: 'masterBill', id: sourceMbId });
+        setSearchTerm('');
+        setFilterDate('');
+        setHistorySubTab('rounds');
+        setExpandedHistory([roundId]);
+
+        // Scroll after a short delay for tab switch
+        setTimeout(() => {
+          const el = document.getElementById(`round-card-${roundId}`);
+          if (el) {
+            el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            // Pulse effect to highlight
+            el.classList.add('ring-2', 'ring-[#C084FC]', 'ring-offset-2');
+            setTimeout(() => el.classList.remove('ring-2', 'ring-[#C084FC]', 'ring-offset-2'), 2000);
+          }
+        }, 100);
+      };
+
+      const handleBackToMaster = () => {
+        if (!navContext) return;
+        const mbId = navContext.id;
+        setHistorySubTab('masterBills');
+        setExpandedMasterBill(mbId);
+        setNavContext(null);
+
+        setTimeout(() => {
+          const el = document.getElementById(`master-card-${mbId}`);
+          if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }, 100);
+      };
+
+      const handleFinalizeMasterBill = async () => {
       setIsGeneratingMasterBill(true);
 
       // ✅ 1. Build master bill snapshot
