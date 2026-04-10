@@ -1453,12 +1453,12 @@ export default function App() {
       </div>
 ) : (
         <div className="flex-1 overflow-y-auto p-3 md:p-6 pb-28 hide-scrollbar">
-          {/* Back to Master Bill Context Button */}
+          {/* Back to Master Bill Context Button - Static style */}
           {navContext && (
-            <div className="mb-4 sticky top-0 z-20 animate-in slide-in-from-top-4 duration-500">
+            <div className="mb-4 px-1 animate-in slide-in-from-top-4 duration-500">
               <button
                 onClick={handleBackToMaster}
-                className="w-full bg-[#1A1A1A] text-white flex items-center justify-between px-5 py-3.5 rounded-[1.5rem] shadow-xl border border-white/10 active:scale-[0.98] transition-all group"
+                className="w-full bg-[#1A1A1A] text-white flex items-center justify-between px-5 py-3.5 rounded-[1.5rem] shadow-lg border border-white/10 active:scale-[0.98] transition-all group"
               >
                 <div className="flex items-center gap-3">
                   <div className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center group-hover:bg-[#C084FC] transition-colors">
