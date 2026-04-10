@@ -1300,17 +1300,12 @@ export default function App() {
                 return viewMode === 'list' ? (
                   <div key={bill.id} id={`master-card-${bill.id}`} className="bg-white rounded-2xl border border-neutral-100 shadow-[0_2px_8px_rgb(0,0,0,0.02)] overflow-hidden transition-all hover:border-neutral-200 scroll-mt-24">
                     <div className="p-3 flex justify-between items-center cursor-pointer" onClick={() => setExpandedMasterBill(isExpanded ? null : bill.id)}>
-                      <div className="flex items-center gap-3">
-                        <div className="w-9 h-9 rounded-full bg-purple-50 flex items-center justify-center shrink-0 border border-purple-100">
-                           <span className="text-[10px] font-black text-[#C084FC]">MB</span>
+                      <div className="flex-1 min-w-0">
+                        <div className="font-bold text-neutral-900 text-sm flex items-center gap-2 mb-0.5">
+                          {bill.fruit && <span className="text-[8px] bg-[#C084FC] text-white px-1.5 py-0.5 rounded font-black uppercase tracking-tighter shrink-0">{bill.fruit}</span>}
+                          <span>{dateLabel}</span>
                         </div>
-                        <div className="min-w-0">
-                          <div className="font-bold text-neutral-900 text-sm flex items-center gap-2">
-                            {bill.fruit && <span className="text-[8px] bg-[#C084FC] text-white px-1.5 py-0.5 rounded font-black uppercase tracking-tighter">{bill.fruit}</span>}
-                            <span className="truncate">{dateLabel}</span>
-                          </div>
-                          <div className="text-[9px] text-neutral-400 font-medium flex items-center gap-1 mt-0.5"><Calendar className="w-2.5 h-2.5" />{bill.roundCount} รอบ • {catEntries.length} ประเภท</div>
-                        </div>
+                        <div className="text-[9px] text-neutral-400 font-medium flex items-center gap-1"><Calendar className="w-2.5 h-2.5" />{bill.roundCount} รอบ • {catEntries.length} ประเภท</div>
                       </div>
                       <div className="text-right flex items-center gap-3">
                         <div className="text-lg font-black tracking-tight text-neutral-900">{Number(bill.totalWeight).toLocaleString()} <span className="text-[9px] font-bold text-neutral-500 font-normal">กก.</span></div>
