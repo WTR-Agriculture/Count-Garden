@@ -155,14 +155,15 @@ function saveMasterBill(payload) {
   let masterSheet = SS.getSheetByName('MasterBills');
   if (!masterSheet) {
     masterSheet = SS.insertSheet('MasterBills');
-    masterSheet.appendRow(['MasterBillID', 'CreatedAt', 'DateFrom', 'DateTo', 'TotalWeight', 'RoundCount', 'RoundIds', 'CategorySummary']);
+    masterSheet.appendRow(['MasterBillID', 'CreatedAt', 'DateFrom', 'DateTo', 'Fruit', 'TotalWeight', 'RoundCount', 'RoundIds', 'CategorySummary']);
   }
-  const { id, createdAt, dateFrom, dateTo, totalWeight, roundCount, roundIds, categorySummary } = payload;
+  const { id, createdAt, dateFrom, dateTo, fruit, totalWeight, roundCount, roundIds, categorySummary } = payload;
   masterSheet.appendRow([
     id,
     createdAt,
     dateFrom,
     dateTo,
+    fruit || '',
     totalWeight,
     roundCount,
     JSON.stringify(roundIds),
@@ -182,10 +183,11 @@ function getMasterBills() {
     createdAt: r[1],
     dateFrom: r[2],
     dateTo: r[3],
-    totalWeight: r[4],
-    roundCount: r[5],
-    roundIds: JSON.parse(r[6] || '[]'),
-    categorySummary: JSON.parse(r[7] || '{}')
+    fruit: r[4] || '',
+    totalWeight: r[5],
+    roundCount: r[6],
+    roundIds: JSON.parse(r[7] || '[]'),
+    categorySummary: JSON.parse(r[8] || '{}')
   })).reverse();
   return jsonResponse(bills);
 }

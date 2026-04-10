@@ -1218,9 +1218,10 @@ export default function App() {
                     ctx.fillStyle = '#C084FC'; ctx.beginPath(); ctx.arc(W/2, 38, 20, 0, Math.PI*2); ctx.fill();
                     ctx.fillStyle = '#FFF'; ctx.font = 'bold 18px sans-serif'; ctx.textAlign = 'center'; ctx.fillText('✻', W/2, 44);
                     ctx.fillStyle = '#FFF'; ctx.font = 'bold 22px sans-serif'; ctx.fillText('Master Invoice', W/2, 82);
-                    ctx.fillStyle = '#999'; ctx.font = '11px sans-serif'; ctx.fillText(dateLabel, W/2, 102);
-                    ctx.fillStyle = '#666'; ctx.font = '10px sans-serif'; ctx.fillText(`ยอดสุทธิ ${Number(bill.totalWeight).toLocaleString()} กก.  •  ${bill.roundCount} รอบ`, W/2, 120);
-                    let y = 160;
+                    ctx.fillStyle = '#999'; ctx.font = 'bold 14px sans-serif'; ctx.fillText(bill.fruit || '', W/2, 102);
+                    ctx.fillStyle = '#777'; ctx.font = '11px sans-serif'; ctx.fillText(dateLabel, W/2, 122);
+                    ctx.fillStyle = '#666'; ctx.font = '10px sans-serif'; ctx.fillText(`ยอดสุทธิ ${Number(bill.totalWeight).toLocaleString()} กก.  •  ${bill.roundCount} รอบ`, W/2, 140);
+                    let y = 180;
                     ctx.fillStyle = '#C084FC'; ctx.font = 'bold 10px sans-serif'; ctx.textAlign = 'left'; ctx.fillText('สรุปยอดตามประเภท', PADDING, y); y += 18;
                     catEntries.forEach(([cat, weight]) => {
                       const catHex = getCategoryHex(cat);
@@ -1257,6 +1258,7 @@ export default function App() {
                       <div className="flex-1 min-w-0">
                         <div className="font-extrabold text-neutral-900 text-sm">{dateLabel}</div>
                         <div className="flex items-center gap-2 mt-0.5">
+                          {bill.fruit && <span className="text-[9px] font-black bg-[#C084FC] text-white px-1.5 py-0.5 rounded-md uppercase">{bill.fruit}</span>}
                           <span className="text-[10px] font-medium text-neutral-500">{bill.roundCount} รอบ</span>
                           <span className="w-1 h-1 rounded-full bg-neutral-300"></span>
                           <span className="text-[10px] font-bold text-[#C084FC]">{catEntries.length} ประเภท</span>
@@ -1740,11 +1742,13 @@ export default function App() {
       // ✅ 1. Build master bill snapshot
       const billedIds = [...selectedRounds];
       const dates = selectedData.map(r => r.date).sort();
+      const masterFruit = selectedData[0]?.fruit || '';
       const masterBillSnapshot = {
         id: `mb-${Date.now()}`,
         createdAt: new Date().toISOString(),
         dateFrom: dates[0],
         dateTo: dates[dates.length - 1],
+        fruit: masterFruit,
         totalWeight,
         roundCount: selectedData.length,
         roundIds: billedIds,
